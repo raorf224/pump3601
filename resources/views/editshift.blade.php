@@ -2504,8 +2504,5 @@
 		}
 
 
-
-		// Add another driver form
-
 	</script>
 @endsection
