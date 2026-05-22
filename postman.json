@@ -1,0 +1,236 @@
+{
+  "info": {
+    "name": "Pump360 APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Chart of Accounts",
+      "item": [
+        {
+          "name": "Get All Chart of Accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/chart-of-accounts",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "chart-of-accounts"]
+            }
+          }
+        },
+        {
+          "name": "Get Single Chart of Account",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/chart-of-accounts/:id",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "chart-of-accounts", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Create Chart of Account",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"station_id\": 11,\n    \"account_code\": \"6000\",\n    \"name\": \"New Income Account\",\n    \"type\": \"income\",\n    \"parent_id\": null\n}"
+            },
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/chart-of-accounts",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "chart-of-accounts"]
+            }
+          }
+        },
+        {
+          "name": "Update Chart of Account",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Account Name\",\n    \"type\": \"expense\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/chart-of-accounts/:id",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "chart-of-accounts", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Delete Chart of Account",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/chart-of-accounts/:id",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "chart-of-accounts", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Journal Entries",
+      "item": [
+        {
+          "name": "Get All Journal Entries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/journal-entries",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "journal-entries"]
+            }
+          }
+        },
+        {
+          "name": "Get Single Journal Entry",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/journal-entries/:id",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "journal-entries", ":id"],
+              "variable": [{ "key": "id", "value": "2" }]
+            }
+          }
+        },
+        {
+          "name": "Create Journal Entry",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"station_id\": 11,\n    \"entry_date\": \"2025-09-25\",\n    \"description\": \"Fuel sale on credit\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/journal-entries",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "journal-entries"]
+            }
+          }
+        },
+        {
+          "name": "Update Journal Entry",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"description\": \"Updated description for journal entry\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/journal-entries/:id",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "journal-entries", ":id"],
+              "variable": [{ "key": "id", "value": "2" }]
+            }
+          }
+        },
+        {
+          "name": "Delete Journal Entry",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/journal-entries/:id",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "journal-entries", ":id"],
+              "variable": [{ "key": "id", "value": "2" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Journal Entry Lines",
+      "item": [
+        {
+          "name": "Get All Journal Entry Lines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/journal-entry-lines",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "journal-entry-lines"]
+            }
+          }
+        },
+        {
+          "name": "Get Single Journal Entry Line",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/journal-entry-lines/:id",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "journal-entry-lines", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Create Journal Entry Line",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"journal_entry_id\": 2,\n    \"account_id\": 1,\n    \"party_id\": 3,\n    \"debit\": 5000.00,\n    \"credit\": 0.00\n}"
+            },
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/journal-entry-lines",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "journal-entry-lines"]
+            }
+          }
+        },
+        {
+          "name": "Update Journal Entry Line",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"debit\": 6000.00,\n    \"credit\": 0.00\n}"
+            },
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/journal-entry-lines/:id",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "journal-entry-lines", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Delete Journal Entry Line",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost/Pump360/public/api/journal-entry-lines/:id",
+              "host": ["localhost"],
+              "path": ["Pump360", "public", "api", "journal-entry-lines", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

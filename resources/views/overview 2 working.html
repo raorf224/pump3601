@@ -1,0 +1,2015 @@
+@extends('partials.layouts.master')
+
+@section('title', 'Overview | FabKin Admin & Dashboards Template')
+
+@section('title-sub', 'Logistics')
+@section('pagetitle', 'Overview')
+@section('css')
+    <link rel="stylesheet" href="{{ asset('assets/libs/choices.js/public/assets/styles/choices.min.css') }}">
+    <!--datatable css-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" />
+    <!--datatable responsive css-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap.min.css" />
+@endsection
+@section('content')
+
+    <!-- Begin page -->
+    <div id="layout-wrapper">
+        <div class="row">
+            <div class="col-xl-9">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <!-- Status badge if needed -->
+                            </div>
+                        </div>
+
+                        <!-- Statistics Cards -->
+                        <div class="row g-3">
+                            <!-- Tanks -->
+                            <div class="col-md-6 col-xl-3">
+                                <div class="card border">
+                                    <div class="card-body">
+                                        <div class="d-flex gap-4 border-bottom pb-5 mb-5">
+                                            <div
+                                                class="h-50px w-50px bg-primary text-white d-flex align-items-center justify-content-center rounded fs-3">
+                                                <i class="bi bi-fuel-pump"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="mb-2" id="tanks-count">0</h5>
+                                                <p class="text-muted mb-0 fs-12">Tanks</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dispensers -->
+                            <div class="col-md-6 col-xl-3">
+                                <div class="card border">
+                                    <div class="card-body">
+                                        <div class="d-flex gap-4 border-bottom pb-5 mb-5">
+                                            <div
+                                                class="h-50px w-50px bg-success text-white d-flex align-items-center justify-content-center rounded fs-3">
+                                                <i class="bi bi-fuel-pump"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="mb-2" id="dispensers-count">0</h5>
+                                                <p class="text-muted mb-0 fs-12">Dispensers</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Nozzles -->
+                            <div class="col-md-6 col-xl-3">
+                                <div class="card border">
+                                    <div class="card-body">
+                                        <div class="d-flex gap-4 border-bottom pb-5 mb-5">
+                                            <div
+                                                class="h-50px w-50px bg-info text-white d-flex align-items-center justify-content-center rounded fs-3">
+                                                <i class="bi bi-droplet"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="mb-2" id="nozzles-count">0</h5>
+                                                <p class="text-muted mb-0 fs-12">Nozzles</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Products -->
+                            <div class="col-md-6 col-xl-3">
+                                <div class="card border">
+                                    <div class="card-body">
+                                        <div class="d-flex gap-4 border-bottom pb-5 mb-5">
+                                            <div
+                                                class="h-50px w-50px bg-secondary text-white d-flex align-items-center justify-content-center rounded fs-3">
+                                                <i class="bi bi-box-seam"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="mb-2" id="products-count">0</h5>
+                                                <p class="text-muted mb-0 fs-12">Products</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-4 py-5">
+                            <div class="col-md-6 col-xl-4">
+                                <div class="card mb-0 border">
+                                    <div class="card-body">
+                                        <h6 class="mb-4 text-uppercase"><i class="bi bi-ticket-detailed me-2"></i>Order
+                                            Information</h6>
+                                        <ul class="list-unstyled mb-0">
+                                            <li><span class="fs-12 text-muted">Pick up Date:</span>
+                                                <p class="fw-medium">14:40:15 17, Feb 2024</p>
+                                            </li>
+                                            <li><span class="fs-12 text-muted">Drop of Estimation:</span>
+                                                <p class="fw-medium">7 days</p>
+                                            </li>
+                                            <li><span class="fs-12 text-muted">Insurance:</span>
+                                                <p class="fw-medium mb-0">SafeHorizon Insurance</p>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-xl-4">
+                                <div class="card mb-0 card-h-100 border">
+                                    <div class="card-body">
+                                        <h6 class="mb-4 text-uppercase"><i class="bi bi-geo-alt me-2"></i>Location</h6>
+                                        <ul class="list-unstyled mb-0">
+                                            <li><span class="fs-12 text-muted">Pick Up Location:</span>
+                                                <p class="fw-medium">123 Main Street, New York, NY</p>
+                                            </li>
+                                            <li><span class="fs-12 text-muted">Drop Off Location:</span>
+                                                <p class="fw-medium mb-0">456 Elm Avenue, Brooklyn, NY</p>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-xl-4">
+                                <div class="card mb-0 border">
+                                    <div class="card-body">
+                                        <h6 class="mb-4 text-uppercase"><i class="bi bi-info-square me-2"></i>Cusomer
+                                            Information</h6>
+                                        <ul class="list-unstyled  mb-0">
+                                            <li><span class="fs-12 text-muted">Full Name:</span>
+                                                <p class="fw-medium" id="fullname"></p>
+                                            </li>
+                                            <li><span class="fs-12 text-muted">Email:</span>
+                                                <p class="fw-medium" id="email"></p>
+                                            </li>
+                                            <li><span class="fs-12 text-muted">Phone Number:</span>
+                                                <p class="fw-medium mb-0" id="phone"></p>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Management Section -->
+                        <div class="py-5">
+                            <div class="card card-h-100">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"> Manage Tanks | Dispensers | Nozzles | Products </h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Nav tabs -->
+                                    <ul class="nav nav-tabs-bordered nav-justified" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <a class="nav-link" data-bs-toggle="tab" href="#products-tab" role="tab">
+                                                <span><i class="bi bi-box-seam"></i></span>
+                                                <span>Products</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <a class="nav-link active" data-bs-toggle="tab" href="#tanks-tab" role="tab"
+                                                aria-selected="true">
+                                                <span><i class="bi bi-fuel-pump"></i></span>
+                                                <span>Tanks</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <a class="nav-link" data-bs-toggle="tab" href="#dispensers-tab" role="tab"
+                                                aria-selected="false">
+                                                <span><i class="bi bi-fuel-pump"></i></span>
+                                                <span>Dispensers</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <a class="nav-link" data-bs-toggle="tab" href="#nozzles-tab" role="tab"
+                                                aria-selected="false">
+                                                <span><i class="bi bi-droplet"></i></span>
+                                                <span>Nozzles</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <a class="nav-link" data-bs-toggle="tab" href="#shift-tab" role="tab"
+                                                aria-selected="false">
+                                                <span><i class="bi bi-droplet"></i></span>
+                                                <span>Shift Reading</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+
+
+
+                                    <!-- Tab panes -->
+                                    <div class="tab-content pt-3">
+                                        <div class="tab-pane fade" id="shift-tab" role="tabpanel">
+                                            <div class="accordion accordion-primary accordion-border-box mb-4"
+                                                id="shiftAccordion">
+                                                <!-- Shift Nozzle Reading -->
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header">
+                                                        <button class="accordion-button collapsed" type="button"
+                                                            data-bs-toggle="collapse" data-bs-target="#shiftReadingCollapse"
+                                                            aria-expanded="false">
+                                                            <i class="bi bi-fuel-pump me-2"></i> Add Shift Nozzle Reading
+                                                        </button>
+                                                    </h2>
+
+                                                    <div id="shiftReadingCollapse" class="accordion-collapse collapse"
+                                                        data-bs-parent="#shiftAccordion">
+                                                        <div class="accordion-body">
+                                                            <form id="addReadingForm">
+                                                                @csrf
+
+                                                                <!-- Shift -->
+                                                                <div class="row">
+                                                                    <div class="mb-3 col-3">
+                                                                        <label class="form-label">Select Shift</label>
+                                                                        <select name="shift_id" class="form-control"
+                                                                            id="shiftSelect" required>
+                                                                            <option value="">-- Select Shift --</option>
+
+                                                                        </select>
+                                                                    </div>
+
+                                                                    <!-- Nozzle -->
+                                                                    <div class="mb-3 col-3">
+                                                                        <label class="form-label">Select Nozzle</label>
+                                                                        <select name="nozzle_id" class="form-control"
+                                                                            id="nozzleSelect" required>
+                                                                            <option value="">-- Select Nozzle --</option>
+                                                                        </select>
+                                                                    </div>
+
+                                                                    <div class="mb-3 col-3">
+                                                                        <label class="form-label">Select Employee</label>
+                                                                        <select name="collected_from" class="form-control"
+                                                                            id="employeeSelect" required>
+                                                                            <option value="">-- Select Employee --</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <!-- Opening Reading -->
+
+                                                                    <div class="mb-3 col-3">
+                                                                        <label class="form-label">Opening Reading</label>
+                                                                        <input type="number" name="opening_reading"
+                                                                            class="form-control" required step="0.01">
+                                                                    </div>
+
+                                                                    <!-- Closing Reading -->
+                                                                    <div class="mb-3 col-3">
+                                                                        <label class="form-label">Closing Reading</label>
+                                                                        <input type="number" name="closing_reading"
+                                                                            class="form-control" step="0.01">
+                                                                    </div>
+                                                                    <div class="col-3"
+                                                                        style="display:flex;align-items:center;">
+                                                                        <button type="submit" class="btn btn-primary"
+                                                                            style="margin-top:1.1em;">Save
+                                                                            Reading</button>
+                                                                    </div>
+                                                                    <!-- Rate -->
+
+                                                                </div>
+
+                                                                <!-- Submit -->
+
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <!-- Top Buttons -->
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <h6 class="mt-1">Daily Nozzle Reading</h6>
+                                                <div>
+                                                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                                        data-bs-target="#changeNozzleResetModal">
+                                                        <i class="bi bi-plus-circle"></i> Change Nozzle Reset
+                                                    </button>
+                                                    <button class="btn btn-sm btn-info" onclick="loadNozzleResetLogs()">
+                                                        <i class="bi bi-clock-history"></i> Change Nozzle Reset Log
+                                                    </button>
+                                                </div>
+                                            </div>
+
+
+
+
+                                            <table id="shift_nozzle_table" class="table table-bordered table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Sr No</th>
+                                                        <th>Nozzle Name</th>
+                                                        <th>Opening Qty</th>
+                                                        <th>Closing Qty</th>
+                                                        <th>Sale Qty</th>
+                                                        <th>Item Name</th>
+                                                        <th>Sale Rate</th>
+                                                        <th>Sale Amount</th>
+                                                        <th>Tank Name</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Data will be populated via JavaScript -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <!-- Products Tab -->
+                                        <div class="tab-pane fade" id="products-tab" role="tabpanel">
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <h6 class="mt-1">Products List</h6>
+                                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                                    data-bs-target="#addProductModal">
+                                                    <i class="bi bi-plus-circle"></i> Add Product
+                                                </button>
+                                            </div>
+
+                                            <table id="productsTable" class="table table-bordered table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Sr No</th>
+                                                        <th>Category</th>
+                                                        <th>Product Name</th>
+                                                        <th>Stock</th>
+                                                        <th>Price</th>
+                                                        <th>Effective From</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Data will be populated via JavaScript -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- Tank tab -->
+                                        <div class="tab-pane fade active show" id="tanks-tab" role="tabpanel">
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <h6 class="mt-1">Tanks List</h6>
+                                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                                    data-bs-target="#addTankModal">
+                                                    <i class="bi bi-plus-circle"></i> Add Tank
+                                                </button>
+                                            </div>
+
+                                            <table id="tanksTable" class="table table-bordered table-striped text-center">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Sr No</th>
+                                                        <th>Tank Name</th>
+                                                        <th>Capacity</th>
+                                                        <th>Current Level</th>
+                                                        <th>Status</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Data will be populated via JavaScript -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- Dispensers Tab -->
+                                        <div class="tab-pane fade" id="dispensers-tab" role="tabpanel">
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <h6 class="mt-1">Dispensers List</h6>
+                                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                                    data-bs-target="#addDispenserModal">
+                                                    <i class="bi bi-plus-circle"></i> Add Dispenser
+                                                </button>
+                                            </div>
+
+                                            <table id="dispensersTable"
+                                                class="table table-bordered table-striped text-center">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Sr No</th>
+                                                        <th>Dispenser Name</th>
+                                                        <th>Tank Name</th>
+                                                        <th>Status</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Data will be populated via JavaScript -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- Nozzles Tab -->
+                                        <div class="tab-pane fade" id="nozzles-tab" role="tabpanel">
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <h6 class="mt-1">Nozzles List</h6>
+                                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                                    data-bs-target="#addNozzleModal">
+                                                    <i class="bi bi-plus-circle"></i> Add Nozzle
+                                                </button>
+                                            </div>
+
+                                            <table id="nozzlesTable" class="table table-bordered table-striped text-center">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Sr No</th>
+                                                        <th>Nozzle Name</th>
+                                                        <th>Dispenser Name</th>
+                                                        <th>Current Reading</th>
+                                                        <th>Status</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Data will be populated via JavaScript -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right sidebar -->
+            <div class="col-xl-3">
+                <div class="card position-sticky" style="top: 100px;">
+                    <div class="card-header">
+                        <h6 class="card-title">Tracking List</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="pb-5 d-flex align-items-center gap-3">
+                            <div class="position-relative w-100">
+                                <div class="form-icon right">
+                                    <input type="text" class="form-control rounded-3 border form-control-icon"
+                                        placeholder="Search...">
+                                    <i class="ri-search-2-line search-icon"></i>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-light text-muted icon-btn flex-shrink-0 rounded-pill"><i
+                                    class="bi bi-filter"></i></button>
+                        </div>
+                        <div class="mx-n5 px-5" data-simplebar style="height: 645px;">
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-dashed py-4">
+                                <div>
+                                    <h6 class="mb-1"><span class="fw-normal me-2">ID</span>#INV1001</h6>
+                                    <p class="mb-0 fs-12 text-muted">179230150</p>
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary-subtle text-secondary">In Transit</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-dashed py-4">
+                                <div>
+                                    <h6 class="mb-1"><span class="fw-normal me-2">ID</span>#INV1002</h6>
+                                    <p class="mb-0 fs-12 text-muted">179230151</p>
+                                </div>
+                                <div>
+                                    <span class="badge bg-success-subtle text-success">Delivered</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-dashed py-4">
+                                <div>
+                                    <h6 class="mb-1"><span class="fw-normal me-2">ID</span>#INV1003</h6>
+                                    <p class="mb-0 fs-12 text-muted">179230152</p>
+                                </div>
+                                <div>
+                                    <span class="badge bg-warning-subtle text-warning">Pending</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-dashed py-4">
+                                <div>
+                                    <h6 class="mb-1"><span class="fw-normal me-2">ID</span>#INV1004</h6>
+                                    <p class="mb-0 fs-12 text-muted">179230153</p>
+                                </div>
+                                <div>
+                                    <span class="badge bg-primary-subtle text-primary">Delayed</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-dashed py-4">
+                                <div>
+                                    <h6 class="mb-1"><span class="fw-normal me-2">ID</span>#INV1006</h6>
+                                    <p class="mb-0 fs-12 text-muted">179230155</p>
+                                </div>
+                                <div>
+                                    <span class="badge bg-danger-subtle text-danger">Canceled</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-dashed py-4">
+                                <div>
+                                    <h6 class="mb-1"><span class="fw-normal me-2">ID</span>#INV1007</h6>
+                                    <p class="mb-0 fs-12 text-muted">179230156</p>
+                                </div>
+                                <div>
+                                    <span class="badge bg-primary-subtle text-primary">In Transit</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-dashed py-4">
+                                <div>
+                                    <h6 class="mb-1"><span class="fw-normal me-2">ID</span>#INV1008</h6>
+                                    <p class="mb-0 fs-12 text-muted">179230155</p>
+                                </div>
+                                <div>
+                                    <span class="badge bg-success-subtle text-success">Delivered</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-dashed py-4">
+                                <div>
+                                    <h6 class="mb-1"><span class="fw-normal me-2">ID</span>#INV1009</h6>
+                                    <p class="mb-0 fs-12 text-muted">179230156</p>
+                                </div>
+                                <div>
+                                    <span class="badge bg-warning-subtle text-warning">Pending</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-bottom border-dashed py-4">
+                                <div>
+                                    <h6 class="mb-1"><span class="fw-normal me-2">ID</span>#INV1009</h6>
+                                    <p class="mb-0 fs-12 text-muted">179230157</p>
+                                </div>
+                                <div>
+                                    <span class="badge bg-primary-subtle text-primary">Delayed</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center pt-4">
+                                <div>
+                                    <h6 class="mb-1"><span class="fw-normal me-2">ID</span>#INV1010</h6>
+                                    <p class="mb-0 fs-12 text-muted">179230158</p>
+                                </div>
+                                <div>
+                                    <span class="badge bg-danger-subtle text-danger">Canceled</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Add Product Modal -->
+    <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="addProductForm">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addProductLabel">Assign Product to Station</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+
+                        <div class="mb-3">
+                            <label class="form-label">Select Station</label>
+                            <select name="station_id" class="form-control" id="stationSelect" required>
+
+                            </select>
+                        </div>
+
+                        <!-- Product dropdown -->
+                        <div class="mb-3">
+                            <label class="form-label">Select Product</label>
+                            <select name="product_id" class="form-control" id="productSelect" required>
+                                <option value="">-- Select Product --</option>
+                            </select>
+                        </div>
+
+                        <!-- Stock -->
+                        <div class="mb-3">
+                            <label class="form-label">Stock</label>
+                            <input type="number" name="stock" class="form-control" required min="0" step="0.01">
+                        </div>
+
+                        <!-- Price -->
+                        <div class="mb-3">
+                            <label class="form-label">Price</label>
+                            <input type="number" name="price" class="form-control" required min="0" step="0.01">
+                        </div>
+
+                        <!-- Effective From -->
+                        <div class="mb-3">
+                            <label class="form-label">Effective From</label>
+                            <input type="datetime-local" name="effective_from" class="form-control" required>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Tank Modal -->
+    <div class="modal fade" id="addTankModal" tabindex="-1" aria-labelledby="addTankLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="addTankForm">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addTankLabel">Add Tank</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Station</label>
+                            <select name="station_id" class="form-select" required>
+                                <option value="">Select Station</option>
+                                <!-- Options will be populated via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Product</label>
+                            <select name="product_id" id="tankproduct" class="form-select" required>
+                                <option value="">Select Product</option>
+
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tank Name</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Capacity</label>
+                            <input type="number" name="capacity" class="form-control" required min="0" step="0.01">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Current Level</label>
+                            <input type="number" name="current_level" class="form-control" required min="0" step="0.01">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select" required>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Tank</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Dispenser Modal -->
+    <div class="modal fade" id="addDispenserModal" tabindex="-1" aria-labelledby="addDispenserModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addDispenserModalLabel">Add Dispenser</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addDispenserForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Station</label>
+                            <select name="station_id" class="form-select" required>
+                                <option value="">Select Station</option>
+                                <!-- Options will be populated via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tank</label>
+                            <select name="tank_id" class="form-select" required>
+                                <option value="">Select Tank</option>
+                                <!-- Options will be populated via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Dispenser Name</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Number of Nozzles</label>
+                            <input type="number" class="form-control" name="nozzle_count" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select" required>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="addDispenserForm" class="btn btn-primary">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Nozzle Modal -->
+    <div class="modal fade" id="addNozzleModal" tabindex="-1" aria-labelledby="addNozzleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addNozzleModalLabel">Add Nozzle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addNozzleForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Dispenser</label>
+                            <select name="dispenser_id" class="form-select" required>
+                                <option value="">Select Dispenser</option>
+                                <!-- Options will be populated via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nozzle Name</label>
+                            <input type="text" class="form-control" name="nozzlename" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Product</label>
+                            <select name="nozzleproduct" id="nozzleproduct" class="form-select" required>
+                                <option value="">Select Product</option>
+                                <!-- Options will be populated via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tank</label>
+                            <select name="nozzletank" id="nozzletank" class="form-select" required>
+                                <option value="">Select Product</option>
+                                <!-- Options will be populated via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Current Reading</label>
+                            <input type="number" class="form-control" name="current_reading" min="0" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" id="nozzlestatus" class="form-select" required>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="addNozzleForm" class="btn btn-primary">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Nozzle Reset Modal -->
+    <div class="modal fade" id="changeNozzleResetModal" tabindex="-1" aria-labelledby="changeNozzleResetLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changeNozzleResetLabel">Change Nozzle Reset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="nozzleResetForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Nozzle</label>
+                            <select name="nozzle_id" id="resetNozzleSelect" class="form-select" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Old Reading</label>
+                            <input type="number" class="form-control" name="old_reading" min="0" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Reading</label>
+                            <input type="number" class="form-control" name="new_reading" min="0" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reason</label>
+                            <textarea class="form-control" name="reason" rows="3" required></textarea>
+                        </div>
+                        <input type="hidden" name="created_by" value="{{ Auth::user()->id }}">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="nozzleResetForm" class="btn btn-primary">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nozzle Reset Log Modal -->
+    <div class="modal fade" id="nozzleResetLogModal" tabindex="-1" aria-labelledby="nozzleResetLogLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="nozzleResetLogLabel">Nozzle Reset Log</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table no-wrap" id="nozzleResetTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Site</th>
+                                <th>Dispenser</th>
+
+                                <th>Nozzle</th>
+                                <th>Old Reading</th>
+                                <th>New Reading</th>
+                                <th>Reason</th>
+                                <th>Date</th>
+                                <th>Changed By</th>
+
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    </main>
+
+@endsection
+
+@section('js')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{{ asset('assets/libs/choices.js/public/assets/scripts/choices.min.js') }}"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script src="assets/js/table/datatable.init.js"></script>
+    <script type="module" src="assets/js/app.js"></script>
+
+    <script>
+        let tanks = [],
+            dispensers = [],
+            nozzles = [],
+            products = [],
+            stations = [];
+        let sntable;
+        var stationsproducts;
+        // ================== INITIALIZATION ==================
+        $(function () {
+            console.log("🚀 Initializing application...");
+
+            sntable = new DataTable('#shift_nozzle_table', {
+                dom: 'frtip',
+            });
+
+            // ✅ Load data in proper sequence with better error handling
+            loadStations().then(() => {
+                console.log("✅ Stations loaded, now loading products...");
+
+                return loadAllProducts();
+            }).then(() => {
+                console.log("✅ All products loaded, now loading other data...");
+
+                // ✅ Parallel loading for better performance
+                Promise.all([
+                    loadTanks(),
+                    loadDispensers(),
+                    loadProducts(),
+                    loadNozzles()
+                ]).then(() => {
+                    console.log("✅ All main data loaded");
+                });
+
+                // ✅ Load remaining data
+                loadShiftNozzleReadings();
+                station_employee();
+                shifts();
+                loadResetModalNozzles();
+                stationproducts()
+
+            }).catch((error) => {
+                console.error("❌ Initialization error:", error);
+                showToast('Error initializing application', 'error');
+            });
+        });
+
+        function stationproducts() {
+            $.get(`/api/st_products/{{ request()->segment(2) }}`, function (res) {
+                stationsproducts = res;
+                console.log("Station31231 Products loaded:", stationsproducts);
+            })
+        }
+        // ================== STATIONS ==================
+        function loadStations() {
+            return new Promise((resolve) => {
+                let stationId = `{{ request()->segment(2) }}`;
+                $.get(`{{ route('stations.show', ['id' => request()->segment(2)]) }}`, function (res) {
+                    stations = res;
+                    console.log("Stations loaded:", stations);
+
+                    // Populate all station dropdowns
+                    populateDropdown('#addTankForm select[name="station_id"]', stations, 'id', 'name');
+                    populateDropdown('#addDispenserForm select[name="station_id"]', stations, 'id', 'name');
+                    populateDropdown('#stationSelect', stations, 'id', 'name');
+                    populateDropdown('#addProductModal select[name="station_id"]', stations, 'id', 'name');
+                    populateDropdown('#addTankModal select[name="station_id"]', stations, 'id', 'name');
+                    populateDropdown('#addDispenserModal select[name="station_id"]', stations, 'id', 'name');
+
+                    // ✅ Auto select station id in ALL modals
+                    autoSelectStation(stationId);
+                    resolve();
+                }).fail(() => {
+                    showToast('Error loading stations', 'error');
+                    resolve();
+                });
+            });
+        }
+
+        // ✅ Auto select station in all modals - IMPROVED
+        function autoSelectStation(stationId) {
+            console.log("🔄 Auto-selecting station:", stationId);
+
+            $('select[name="station_id"]').each(function () {
+                let element = this;
+                let station = stations.find(s => s.id == stationId);
+
+                if (!station) {
+                    console.warn("Station not found:", stationId);
+                    return;
+                }
+
+                if (element.choicesInstance) {
+                    // Use setTimeout to ensure Choices.js is ready
+                    setTimeout(() => {
+                        try {
+                            element.choicesInstance.setChoiceByValue(stationId.toString());
+                            console.log("✅ Station auto-selected in:", element);
+                        } catch (error) {
+                            console.error("Error auto-selecting station:", error);
+                        }
+                    }, 200);
+                } else {
+                    $(element).val(stationId);
+                    console.log("✅ Station set via jQuery in:", element);
+                }
+            });
+        }
+
+        // ================== COUNTS ==================
+        function updateCounts() {
+            $('#tanks-count').text(tanks.length);
+            $('#dispensers-count').text(dispensers.length);
+            $('#nozzles-count').text(nozzles.length);
+            $('#products-count').text(products.length);
+        }
+
+        // ================== PRODUCTS ==================
+        // ✅ Load All Products (All modals ke liye) - COMPLETELY REWRITTEN
+        function loadAllProducts() {
+            return new Promise((resolve) => {
+                $.get(`{{ route('products.index') }}`, function (res) {
+                    console.log("🔄 All Products API Response:", res);
+
+                    if (!res || res.length === 0) {
+                        console.warn("⚠️ No products received from API");
+                        showToast('No products available', 'warning');
+                        resolve();
+                        return;
+                    }
+
+                    // ✅ Debug: Check first product structure
+                    console.log("📦 First Product Sample:", {
+                        id: res[0].id,
+                        name: res[0].name,
+                        value: res[0].id,
+                        label: res[0].name
+                    });
+
+                    // ✅ All modals ke liye products populate karo with proper error handling
+                    try {
+                        populateDropdown('#addNozzleModal select[name="nozzleproduct"]', res, 'id', 'name');
+                        populateDropdown('#addProductModal select[name="product_id"]', res, 'id', 'name');
+                        populateDropdown('#addTankModal select[name="product_id"]', res, 'id', 'name');
+
+                        console.log("✅ All product dropdowns populated successfully");
+                    } catch (error) {
+                        console.error("❌ Error populating product dropdowns:", error);
+                    }
+
+                    resolve();
+                }).fail((xhr) => {
+                    console.error("❌ Failed to load products:", xhr.responseText);
+                    showToast('Error loading products', 'error');
+                    resolve();
+                });
+            });
+        }
+
+        function loadProducts() {
+            $.get(`{{ route('stations.products-with-prices', ['stationId' => request()->segment(2)]) }}`, function (res) {
+                console.log("Station Products loaded:", res);
+                products = res;
+
+                // ✅ Tank modal ke liye products
+                populateDropdown('#tankproduct', products, 'product_id', 'product');
+
+                // ✅ Products table populate karo
+                populateProductsTable(products);
+                updateCounts();
+            }).fail(() => showToast('Error loading station products', 'error'));
+        }
+
+        function populateProductsTable(products) {
+            const tbody = $('#productsTable tbody').empty();
+            products.forEach((p, i) => {
+                tbody.append(`
+                                    <tr>
+                                        <td>${i + 1}</td>
+                                        <td>${p.category || '-'}</td>
+                                        <td>${p.product || '-'}</td>
+                                        <td>${p.stock || '-'}</td>
+                                        <td>${p.price || '-'}</td>
+                                        <td>${p.effective_from || '-'}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${p.station_product_id})">Edit</button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${p.id})">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
+            });
+        }
+
+        // ✅ Assign Product Modal Events
+        $('#addProductModal').on('show.bs.modal', function () {
+            console.log("🔄 Assign Product Modal Opening...");
+
+            let currentStationId = `{{ request()->segment(2) }}`;
+            console.log("Current Station ID for product modal:", currentStationId);
+
+            // ✅ Load all products
+            loadAllProducts();
+
+            // ✅ Station auto-select with delay to ensure Choices.js is ready
+            setTimeout(() => {
+                let stationSelect = document.querySelector('#addProductModal select[name="station_id"]');
+                if (stationSelect && stationSelect.choicesInstance) {
+                    stationSelect.choicesInstance.setChoiceByValue(currentStationId.toString());
+                }
+            }, 200);
+        });
+
+        $('#addProductModal').on('hidden.bs.modal', function () {
+            console.log("🔄 Resetting product modal...");
+
+            // Reset form
+            $(this).find('form')[0].reset();
+
+            // Clear saved edit id
+            $(this).removeData('edit-id');
+        });
+
+        function editProduct(id) {
+
+
+            sp = stationsproducts.find(s => s.spid == id)
+            console.log("Editing product:", sp, id,stationsproducts);
+
+            // ✅ Station dropdown - Auto select current station
+            let stationSelect = document.querySelector('#addProductModal select[name="station_id"]');
+            if (stationSelect && stationSelect.choicesInstance) {
+                setTimeout(() => {
+                    stationSelect.choicesInstance.setChoiceByValue(sp.station_id.toString());
+                }, 300);
+            }
+
+
+            let productSelect = document.querySelector('#addProductModal select[name="product_id"]');
+            if (productSelect && productSelect.choicesInstance) {
+                productSelect.choicesInstance.setChoiceByValue(sp.product_id.toString());
+            }
+
+
+            // ✅ Other fields
+            $('#addProductModal input[name="stock"]').val(sp.stock);
+            $('#addProductModal input[name="price"]').val(sp.price);
+
+            if (sp.effective_from) {
+                let dt = new Date(sp.effective_from);
+                let formatted = dt.toISOString().slice(0, 16);
+                $('#addProductModal input[name="effective_from"]').val(formatted);
+            }
+
+            // ✅ Save edit ID
+            $('#addProductModal').data('edit-id', sp.station_product_id).modal('show');
+
+        }
+
+        $('#addProductForm').off('submit').on('submit', function (e) {
+            e.preventDefault();
+
+            let id = $('#addProductModal').data('edit-id');
+
+            // ✅ CORRECTED: Convert to proper data types
+            let data = $(this).serializeArray().reduce((a, c) => {
+                if (c.name === 'station_id' || c.name === 'product_id') {
+                    a[c.name] = parseInt(c.value);
+                } else if (c.name === 'stock' || c.name === 'price') {
+                    a[c.name] = parseFloat(c.value);
+                } else {
+                    a[c.name] = c.value;
+                }
+                return a;
+            }, {});
+
+            console.log("Product Data being sent:", data); // Debug ke liye
+
+            let url = id ? `/api/station-product/${id}` : `/api/stations/assign-product-with-price`;
+            let method = id ? 'PUT' : 'POST';
+
+            $.ajax({
+                url: url,
+                type: method,
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function () {
+                    showToast(id ? 'Product updated' : 'Product added', 'success');
+                    $('#addProductModal').modal('hide');
+                    loadProducts();
+                },
+                error: (xhr) => {
+                    console.error("Product Save Error:", xhr.responseText);
+                    showToast('Error saving product', 'error');
+                }
+            });
+        });
+
+        function deleteProduct(id) {
+            if (!confirm("Delete this product?")) return;
+            $.ajax({
+                url: `{{ route('products.destroy', ['id' => ':id']) }}`.replace(':id', id),
+                method: 'DELETE',
+                success: () => {
+                    showToast('Product deleted', 'success');
+                    loadProducts();
+                },
+                error: () => showToast('Error deleting product', 'error')
+            });
+        }
+
+        // ================== TANKS ==================
+        function loadTanks() {
+            $.get(`{{ route('tanks.stationwise', ['id' => request()->segment(2)]) }}`, function (res) {
+                tanks = res;
+                console.log("Tanks loaded:", tanks);
+
+                populateDropdown('#addDispenserForm select[name="tank_id"]', tanks, 'id', 'name');
+                populateDropdown('#addNozzleModal select[name="nozzletank"]', tanks, 'id', 'name');
+                populateTanksTable(tanks);
+                updateCounts();
+            }).fail(() => showToast('Error loading tanks', 'error'));
+        }
+
+        function populateTanksTable(tanks) {
+            const tbody = $('#tanksTable tbody').empty();
+            tanks.forEach((t, i) => {
+                tbody.append(`
+                                    <tr>
+                                        <td>${i + 1}</td>
+                                        <td>${t.name}</td>
+                                        <td>${t.capacity}</td>
+                                        <td>${t.current_level}</td>
+                                        <td><span class="badge bg-${getStatusBadgeClass(t.status)}">${t.status}</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editTank(${t.id})">Edit</button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTank(${t.id})">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
+            });
+        }
+
+        // ✅ Tank Modal Events - COMPLETELY REWRITTEN
+        $('#addTankModal').on('show.bs.modal', function (e) {
+            console.log("🔄 Tank Modal Opening...");
+
+            let currentStationId = `{{ request()->segment(2) }}`;
+            console.log("Current Station ID for tank modal:", currentStationId);
+
+            // ✅ Reset form first
+            $(this).find('form')[0].reset();
+
+            // ✅ Ensure products are loaded BEFORE opening modal
+            loadAllProducts().then(() => {
+                console.log("✅ Products loaded, now setting station...");
+
+                // ✅ Station auto-select with proper timing
+                setTimeout(() => {
+                    let stationSelect = document.querySelector('#addTankModal select[name="station_id"]');
+                    if (stationSelect && stationSelect.choicesInstance) {
+                        try {
+                            stationSelect.choicesInstance.setChoiceByValue(currentStationId.toString());
+                            console.log("✅ Tank Modal - Station auto-selected");
+                        } catch (error) {
+                            console.error("Tank Modal - Error auto-selecting station:", error);
+                        }
+                    }
+                }, 300);
+
+                // ✅ Product dropdown check karo
+                setTimeout(() => {
+                    let productSelect = document.querySelector('#addTankModal select[name="product_id"]');
+                    if (productSelect) {
+                        let optionsCount = productSelect.options.length;
+                        console.log("Tank Modal - Product dropdown options:", optionsCount);
+
+                        if (optionsCount <= 1) { // Only "Select" option
+                            console.warn("⚠️ Product dropdown empty, forcing reload...");
+                            populateDropdown('#addTankModal select[name="product_id"]', [], 'id', 'name');
+                            loadAllProducts();
+                        }
+                    }
+                }, 500);
+            });
+        });
+
+        $('#addTankModal').on('hidden.bs.modal', function () {
+            console.log("🔄 Closing Tank Modal...");
+            $(this).find('form')[0].reset();
+            $(this).removeData('edit-id');
+        });
+        $('#addTankModal').on('hidden.bs.modal', function () {
+            $(this).find('form')[0].reset();
+            $(this).removeData('edit-id');
+        });
+
+        function editTank(id) {
+            console.log("🔄 Editing tank ID:", id);
+
+            // ✅ Pehle products ensure load ho
+            loadAllProducts().then(() => {
+                $.get(`/api/tanks/${id}`, function (res) {
+                    if (!res) {
+                        showToast('Error fetching tank details', 'error');
+                        return;
+                    }
+
+                    console.log("📝 Tank data received:", res);
+
+                    // ✅ Basic fields
+                    $('#addTankModal input[name="name"]').val(res.name);
+                    $('#addTankModal input[name="capacity"]').val(res.capacity);
+                    $('#addTankModal input[name="current_level"]').val(res.current_level);
+                    $('#addTankModal select[name="status"]').val(res.status);
+
+                    // ✅ Station dropdown - Auto select with proper delay
+                    setTimeout(() => {
+                        let stationSelect = document.querySelector('#addTankModal select[name="station_id"]');
+                        if (stationSelect && stationSelect.choicesInstance) {
+                            try {
+                                stationSelect.choicesInstance.setChoiceByValue(res.station_id.toString());
+                                console.log("✅ Station set to:", res.station_id);
+                            } catch (error) {
+                                console.error("Error setting station:", error);
+                            }
+                        }
+                    }, 400);
+
+                    // ✅ Product dropdown - Auto select with longer delay to ensure products are loaded
+                    setTimeout(() => {
+                        let productSelect = document.querySelector('#addTankModal select[name="product_id"]');
+                        if (productSelect && productSelect.choicesInstance) {
+                            try {
+                                productSelect.choicesInstance.setChoiceByValue(res.product_id.toString());
+                                console.log("✅ Product set to:", res.product_id);
+                            } catch (error) {
+                                console.error("Error setting product:", error);
+                                // ✅ Retry after another delay
+                                setTimeout(() => {
+                                    if (productSelect.choicesInstance) {
+                                        productSelect.choicesInstance.setChoiceByValue(res.product_id.toString());
+                                        console.log("✅ Product set on retry:", res.product_id);
+                                    }
+                                }, 500);
+                            }
+                        }
+                    }, 600);
+
+                    // ✅ Save edit ID and show modal
+                    $('#addTankModal').data('edit-id', res.id);
+
+                    // ✅ Final delay before showing modal to ensure everything is set
+                    setTimeout(() => {
+                        $('#addTankModal').modal('show');
+                        console.log("✅ Tank edit modal shown");
+                    }, 800);
+
+                }).fail((xhr) => {
+                    console.error("❌ Error fetching tank details:", xhr.responseText);
+                    showToast('Error fetching tank details', 'error');
+                });
+            });
+        }
+
+        $('#addTankForm').off('submit').on('submit', function (e) {
+            e.preventDefault();
+            let id = $('#addTankModal').data('edit-id');
+
+            // ✅ Get values with better validation
+            let stationId = $('[name="station_id"]').val();
+            let productId = $('[name="product_id"]').val();
+            let name = $('[name="name"]').val();
+
+            console.log("📋 Form Values - Station ID:", stationId, "Product ID:", productId, "Name:", name);
+
+            // ✅ Better validation with specific messages
+            if (!stationId) {
+                showToast('Please select a Station', 'error');
+                return;
+            }
+
+            if (!productId) {
+                showToast('Please select a Product', 'error');
+                return;
+            }
+
+            if (!name || name.trim() === '') {
+                showToast('Please enter Tank Name', 'error');
+                return;
+            }
+
+            // ✅ CORRECTED: Convert string values to proper types
+            let data = {
+                station_id: parseInt(stationId),
+                product_id: parseInt(productId),
+                name: name.trim(),
+                capacity: parseFloat($('[name="capacity"]').val()) || 0,
+                current_level: parseFloat($('[name="current_level"]').val()) || 0,
+                status: $('[name="status"]').val()
+            };
+
+            console.log("🚀 Tank Data being sent:", data);
+
+            let url = id ? `{{ route('tanks.update', ':id') }}`.replace(':id', id) : `{{ route('tanks.store') }}`;
+            let method = id ? 'PUT' : 'POST';
+
+            $.ajax({
+                url,
+                method,
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    console.log("✅ Tank saved successfully:", response);
+                    showToast(id ? 'Tank updated successfully' : 'Tank added successfully', 'success');
+                    $('#addTankModal').modal('hide');
+                    loadTanks();
+                },
+                error: (xhr) => {
+                    console.error("❌ Tank Save Error:", xhr.responseText);
+                    let errorMsg = "Error saving tank";
+                    try {
+                        let errors = JSON.parse(xhr.responseText);
+                        errorMsg = errors.message || errorMsg;
+                        // ✅ Show specific field errors if available
+                        if (errors.errors) {
+                            let fieldErrors = Object.values(errors.errors).flat().join(', ');
+                            errorMsg = fieldErrors || errorMsg;
+                        }
+                    } catch (e) {
+                        console.error("Error parsing error response:", e);
+                    }
+                    showToast(errorMsg, 'error');
+                }
+            });
+        });
+
+        function deleteTank(id) {
+            if (!confirm("Delete this tank?")) return;
+            $.ajax({
+                url: `{{ route('tanks.destroy', ['tank' => ':id']) }}`.replace(':id', id),
+                method: 'DELETE',
+                success: () => {
+                    showToast('Tank deleted', 'success');
+                    loadTanks();
+                },
+                error: () => showToast('Error deleting tank', 'error')
+            });
+        }
+
+        // ================== DISPENSERS ==================
+        function loadDispensers() {
+            $.get(`{{ route('station.dispensers', ['id' => request()->segment(2)]) }}`, function (res) {
+                dispensers = res;
+                console.log("Dispensers loaded:", dispensers);
+
+                let filteredDispensers = dispensers.filter(d => d.tank_id !== null);
+                populateDropdown('#addNozzleForm select[name="dispenser_id"]', filteredDispensers, 'id', 'name');
+                populateDispensersTable(dispensers);
+                updateCounts();
+            }).fail(() => showToast('Error loading dispensers', 'error'));
+        }
+
+        function populateDispensersTable(dispensers) {
+            const tbody = $('#dispensersTable tbody').empty();
+            dispensers.forEach((d, i) => {
+                tbody.append(`
+                                    <tr>
+                                        <td>${i + 1}</td>
+                                        <td>${d.name}</td>
+                                        <td>${d.tank_name}</td>
+                                        <td><span class="badge bg-${getStatusBadgeClass(d.status)}">${d.status}</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editDispenser(${d.id})">Edit</button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteDispenser(${d.id})">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
+            });
+        }
+
+        // ✅ Dispenser Modal Events - FIXED Station Auto-selection
+        $('#addDispenserModal').on('show.bs.modal', function () {
+            console.log("🔄 Dispenser Modal Opening...");
+
+            let currentStationId = `{{ request()->segment(2) }}`;
+
+            // ✅ Station auto-select with delay
+            setTimeout(() => {
+                let stationSelect = document.querySelector('#addDispenserModal select[name="station_id"]');
+                if (stationSelect && stationSelect.choicesInstance) {
+                    stationSelect.choicesInstance.setChoiceByValue(currentStationId.toString());
+                }
+            }, 200);
+        });
+
+        $('#addDispenserModal').on('hidden.bs.modal', function () {
+            $(this).find('form')[0].reset();
+            $(this).removeData('edit-id');
+        });
+
+        function editDispenser(id) {
+            $.get(`/api/dispensers/${id}`, function (res) {
+                if (!res) return;
+
+                console.log("Editing dispenser:", res);
+
+                $('#addDispenserModal input[name="name"]').val(res.name);
+                $('#addDispenserModal input[name="nozzle_count"]').val(res.nozzle_count || 1);
+                $('#addDispenserModal select[name="status"]').val(res.status);
+
+                // ✅ Station dropdown - Auto select with delay
+                setTimeout(() => {
+                    let stationSelect = document.querySelector('#addDispenserModal select[name="station_id"]');
+                    if (stationSelect && stationSelect.choicesInstance) {
+                        stationSelect.choicesInstance.setChoiceByValue(res.station_id.toString());
+                    }
+                }, 300);
+
+                // ✅ Tank dropdown - Auto select with delay
+                setTimeout(() => {
+                    let tankSelect = document.querySelector('#addDispenserModal select[name="tank_id"]');
+                    if (tankSelect && tankSelect.choicesInstance && res.tank_id) {
+                        tankSelect.choicesInstance.setChoiceByValue(res.tank_id.toString());
+                    }
+                }, 400);
+
+                $('#addDispenserModal').data('edit-id', res.id).modal('show');
+            }).fail(() => showToast('Error fetching dispenser details', 'error'));
+        }
+
+        $('#addDispenserForm').off('submit').on('submit', function (e) {
+            e.preventDefault();
+            let id = $('#addDispenserModal').data('edit-id');
+
+            // ✅ CORRECTED: Convert to proper data types
+            let data = $(this).serializeArray().reduce((a, c) => {
+                if (c.name === 'station_id' || c.name === 'tank_id' || c.name === 'nozzle_count') {
+                    a[c.name] = parseInt(c.value); // Convert to integer
+                } else {
+                    a[c.name] = c.value;
+                }
+                return a;
+            }, {});
+
+            console.log("Dispenser Data being sent:", data); // Debug ke liye
+
+            let url = id ? `{{ route('dispensers.update', ['dispenser' => ':id']) }}`.replace(':id', id) : `{{ route('dispensers.store') }}`;
+            let method = id ? 'PUT' : 'POST';
+
+            $.ajax({
+                url,
+                method,
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function () {
+                    showToast(id ? 'Dispenser updated' : 'Dispenser added', 'success');
+                    $('#addDispenserModal').modal('hide');
+                    loadDispensers();
+                },
+                error: (xhr) => {
+                    console.error("Dispenser Save Error:", xhr.responseText);
+                    showToast('Error saving dispenser', 'error');
+                }
+            });
+        });
+
+        function deleteDispenser(id) {
+            if (!confirm("Delete this dispenser?")) return;
+            $.ajax({
+                url: `{{ route('dispensers.destroy', ['dispenser' => ':id']) }}`.replace(':id', id),
+                method: 'DELETE',
+                success: () => {
+                    showToast('Dispenser deleted', 'success');
+                    loadDispensers();
+                },
+                error: () => showToast('Error deleting dispenser', 'error')
+            });
+        }
+
+        // ================== NOZZLES ==================
+        function loadNozzles() {
+            $.get(`{{ route('station.nozzles', ['id' => request()->segment(2)]) }}`, function (res) {
+                console.log("Nozzles loaded:", res);
+                nozzles = res;
+                populateNozzlesTable(nozzles);
+                populateDropdown('#nozzleSelect', nozzles, 'id', 'name');
+                updateCounts();
+            }).fail(() => showToast('Error loading nozzles', 'error'));
+        }
+
+        function populateNozzlesTable(nozzles) {
+            const tbody = $('#nozzlesTable tbody').empty();
+            nozzles.forEach((n, i) => {
+                const isActive = parseInt(n.status) === 1;
+                const statusClass = isActive ? 'success' : 'danger';
+                const statusText = isActive ? 'Active' : 'Inactive';
+                tbody.append(`
+                                    <tr>
+                                        <td>${i + 1}</td>
+                                        <td>${n.name}</td>
+                                        <td>${n.dispenser_name}</td>
+                                        <td>${n.tank_reading || 0}</td>
+                                        <td><span class="badge bg-${statusClass}">${statusText}</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editNozzle(${n.id})">Edit</button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteNozzle(${n.id})">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
+            });
+        }
+
+        // Nozzle Modal Events
+        $('#addNozzleModal').on('show.bs.modal', function () {
+            console.log("🔄 Nozzle Modal Opening...");
+
+            let currentStationId = `{{ request()->segment(2) }}`;
+
+            loadAllProducts();
+
+            let stationDispensers = dispensers.filter(d => d.station_id == currentStationId);
+            let stationTanks = tanks.filter(t => t.station_id == currentStationId);
+
+            clearNozzleModalDropdowns();
+
+            setTimeout(() => {
+                populateDropdown('#addNozzleModal select[name="dispenser_id"]', stationDispensers, 'id', 'name');
+                populateDropdown('#addNozzleModal select[name="nozzletank"]', stationTanks, 'id', 'name');
+
+                setTimeout(() => {
+                    setupNozzleModalEvents();
+                }, 500);
+            }, 100);
+        });
+
+        $('#addNozzleModal').on('hidden.bs.modal', function () {
+            console.log("🔄 Resetting nozzle modal...");
+            $(this).find('form')[0].reset();
+            clearNozzleModalDropdowns();
+            $(this).removeData('edit-id');
+        });
+
+        function clearNozzleModalDropdowns() {
+            const dropdowns = [
+                '#addNozzleModal select[name="dispenser_id"]',
+                '#addNozzleModal select[name="nozzletank"]',
+                '#addNozzleModal select[name="nozzleproduct"]'
+            ];
+
+            dropdowns.forEach(selector => {
+                const element = document.querySelector(selector);
+                if (element && element.choicesInstance) {
+                    element.choicesInstance.destroy();
+                }
+                if (element) {
+                    element.innerHTML = '<option value="">-- Select --</option>';
+                }
+            });
+        }
+
+        function setupNozzleModalEvents() {
+            let currentStationId = `{{ request()->segment(2) }}`;
+
+            $('#addNozzleModal select[name="dispenser_id"]').off('change').on('change', function () {
+                let dispenserId = $(this).val();
+                if (dispenserId) {
+                    autoFillFromDispenser(dispenserId, currentStationId);
+                } else {
+                    clearDependentFields('tank', 'product');
+                }
+            });
+
+            $('#addNozzleModal select[name="nozzletank"]').off('change').on('change', function () {
+                let tankId = $(this).val();
+                if (tankId) {
+                    autoFillFromTank(tankId, currentStationId);
+                } else {
+                    clearDependentFields('product', 'dispenser');
+                }
+            });
+
+            $('#addNozzleModal select[name="nozzleproduct"]').off('change').on('change', function () {
+                let productId = $(this).val();
+                if (productId) {
+                    autoFillFromProduct(productId, currentStationId);
+                } else {
+                    clearDependentFields('tank', 'dispenser');
+                }
+            });
+        }
+
+        function clearDependentFields(...fields) {
+            fields.forEach(field => {
+                let selector = `#addNozzleModal select[name="${field === 'tank' ? 'nozzletank' : field === 'product' ? 'nozzleproduct' : 'dispenser_id'}"]`;
+                let select = document.querySelector(selector);
+                if (select && select.choicesInstance) {
+                    select.choicesInstance.setChoiceByValue('');
+                }
+            });
+        }
+
+        function autoFillFromDispenser(dispenserId, stationId) {
+            let dispenser = dispensers.find(d => d.id == dispenserId && d.station_id == stationId);
+            if (dispenser && dispenser.tank_id) {
+                setTimeout(() => {
+                    let tankSelect = document.querySelector('#addNozzleModal select[name="nozzletank"]');
+                    if (tankSelect && tankSelect.choicesInstance) {
+                        tankSelect.choicesInstance.setChoiceByValue(dispenser.tank_id.toString());
+                        setTimeout(() => {
+                            autoFillFromTank(dispenser.tank_id, stationId);
+                        }, 300);
+                    }
+                }, 200);
+            } else {
+                clearDependentFields('tank', 'product');
+            }
+        }
+
+        function autoFillFromTank(tankId, stationId) {
+            let tank = tanks.find(t => t.id == tankId && t.station_id == stationId);
+            if (tank && tank.product_id) {
+                setTimeout(() => {
+                    let productSelect = document.querySelector('#addNozzleModal select[name="nozzleproduct"]');
+                    if (productSelect && productSelect.choicesInstance) {
+                        productSelect.choicesInstance.setChoiceByValue(tank.product_id.toString());
+                    }
+                }, 200);
+
+                let tankDispensers = dispensers.filter(d => d.tank_id == tankId && d.station_id == stationId);
+                if (tankDispensers.length > 0) {
+                    setTimeout(() => {
+                        let dispenserSelect = document.querySelector('#addNozzleModal select[name="dispenser_id"]');
+                        if (dispenserSelect && dispenserSelect.choicesInstance) {
+                            dispenserSelect.choicesInstance.setChoiceByValue(tankDispensers[0].id.toString());
+                        }
+                    }, 200);
+                }
+            }
+        }
+
+        function autoFillFromProduct(productId, stationId) {
+            let productTanks = tanks.filter(t => t.product_id == productId && t.station_id == stationId);
+            if (productTanks.length > 0) {
+                setTimeout(() => {
+                    let tankSelect = document.querySelector('#addNozzleModal select[name="nozzletank"]');
+                    if (tankSelect && tankSelect.choicesInstance) {
+                        tankSelect.choicesInstance.setChoiceByValue(productTanks[0].id.toString());
+                        setTimeout(() => {
+                            autoFillFromTank(productTanks[0].id, stationId);
+                        }, 300);
+                    }
+                }, 200);
+            }
+        }
+
+        function editNozzle(id) {
+            $.get(`/api/nozzles/${id}`, function (res) {
+                if (!res) return;
+
+                console.log("Editing nozzle:", res);
+
+                $('#addNozzleModal input[name="nozzlename"]').val(res.nozzle_name);
+                $('#addNozzleModal input[name="current_reading"]').val(res.current_reading || 0);
+                $('#nozzlestatus').val(res.nozzle_status);
+
+                setTimeout(() => {
+                    let dispenserSelect = document.querySelector('#addNozzleModal select[name="dispenser_id"]');
+                    if (dispenserSelect && dispenserSelect.choicesInstance) {
+                        dispenserSelect.choicesInstance.setChoiceByValue(res.dispenser_id.toString());
+                    }
+                }, 300);
+
+                setTimeout(() => {
+                    let tankSelect = document.querySelector('#addNozzleModal select[name="nozzletank"]');
+                    if (tankSelect && tankSelect.choicesInstance) {
+                        tankSelect.choicesInstance.setChoiceByValue(res.tank_id.toString());
+                    }
+                }, 400);
+
+                setTimeout(() => {
+                    let tank = tanks.find(t => t.id == res.tank_id);
+                    if (tank && tank.product_id) {
+                        let productSelect = document.querySelector('#addNozzleModal select[name="nozzleproduct"]');
+                        if (productSelect && productSelect.choicesInstance) {
+                            productSelect.choicesInstance.setChoiceByValue(tank.product_id.toString());
+                        }
+                    }
+                }, 500);
+
+                $('#addNozzleModal').data('edit-id', res.nozzle_id).modal('show');
+            }).fail(() => showToast('Error fetching nozzle details', 'error'));
+        }
+
+        $('#addNozzleForm').off('submit').on('submit', function (e) {
+            e.preventDefault();
+            let id = $('#addNozzleModal').data('edit-id');
+
+            // ✅ CORRECTED: Convert to proper data types
+            let data = {
+                dispenser_id: parseInt($('[name="dispenser_id"]').val()),
+                name: $('[name="nozzlename"]').val(),
+                product_id: parseInt($('[name="nozzleproduct"]').val()),
+                current_reading: parseFloat($('[name="current_reading"]').val()),
+                status: parseInt($('#nozzlestatus').val()), // Convert to integer
+                tank_id: parseInt($('[name="nozzletank"]').val())
+            };
+
+            console.log("Nozzle Data being sent:", data); // Debug ke liye
+
+            let url = id ? `{{ route('nozzles.update', ['nozzle' => ':id']) }}`.replace(':id', id) : `{{ route('nozzles.store') }}`;
+            let method = id ? 'PUT' : 'POST';
+
+            $.ajax({
+                url,
+                method,
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function () {
+                    showToast(id ? 'Nozzle updated' : 'Nozzle added', 'success');
+                    $('#addNozzleModal').modal('hide');
+                    loadNozzles();
+                },
+                error: (xhr) => {
+                    console.error("Nozzle Save Error:", xhr.responseText);
+                    showToast('Error saving nozzle', 'error');
+                }
+            });
+        });
+
+        function deleteNozzle(id) {
+            if (!confirm("Delete this nozzle?")) return;
+            $.ajax({
+                url: `{{ route('nozzles.destroy', ['nozzle' => ':id']) }}`.replace(':id', id),
+                method: 'DELETE',
+                success: () => {
+                    showToast('Nozzle deleted', 'success');
+                    loadNozzles();
+                },
+                error: () => showToast('Error deleting nozzle', 'error')
+            });
+        }
+
+        // ================== SHIFT READING ==================
+        function loadShiftNozzleReadings() {
+            let stationId = `{{ request()->segment(2) }}`;
+            let url = `{{ route('shift-nozzle-readings.station', ['stationId' => ':id']) }}`.replace(':id', stationId);
+
+            $.get(url, function (res) {
+                sntable.clear();
+                $.each(res, function (index, row) {
+                    sntable.row.add([
+                        index + 1,
+                        row.nozzle_name,
+                        parseFloat(row.opening_reading).toFixed(2),
+                        parseFloat(row.closing_reading).toFixed(2),
+                        parseFloat(row.total_dispensed).toFixed(2),
+                        row.tank_name,
+                        parseFloat(row.rate).toFixed(2),
+                        parseFloat(row.total_amount).toFixed(2),
+                        row.station_name
+                    ]);
+                });
+                sntable.draw();
+            }).fail(() => alert("❌ Failed to fetch Shift Nozzle Readings"));
+        }
+
+        $('#addReadingForm').on('submit', function (e) {
+            e.preventDefault();
+            let formData = $(this).serialize();
+
+            $.ajax({
+                url: `{{ route('shift-nozzle-readings_store.store') }}`,
+                method: 'POST',
+                data: formData,
+                success: function (res) {
+                    showToast('Success', 'success');
+                    $('#addReadingForm')[0].reset();
+                    loadShiftNozzleReadings();
+                },
+                error: function (xhr) {
+                    let errors = xhr.responseJSON?.errors;
+                    let msg = errors ? Object.values(errors).flat().join("\n") : "Something went wrong!";
+                    showToast('Error', 'error');
+                }
+            });
+        });
+
+        // ================== NOZZLE RESET ==================
+        $('#nozzleResetForm').on('submit', function (e) {
+            e.preventDefault();
+            let data = $(this).serialize();
+            $.ajax({
+                url: `/api/nozzle-totalizer-resets`,
+                method: 'POST',
+                data: data,
+                success: function (res) {
+                    showToast('Nozzle reset saved', 'success');
+                    $('#nozzleResetForm')[0].reset();
+                    $('#changeNozzleResetModal').modal('hide');
+                    loadNozzleResetLogs();
+                },
+                error: function (xhr) {
+                    showToast('Error saving reset', 'error');
+                }
+            });
+        });
+
+        function loadNozzleResetLogs() {
+            let stationId = `{{ request()->segment(2) }}`;
+            $.get(`/api/nozzle-totalizer-resets/station/${stationId}`, function (res) {
+                let tbody = $('#nozzleResetTable tbody').empty();
+                $.each(res, function (i, row) {
+                    tbody.append(`
+                                        <tr>
+                                            <td>${i + 1}</td>
+                                            <td>${row.station_name || '-'}</td>
+                                            <td>${row.dispenser_name || '-'}</td>
+                                            <td>${row.nozzle_name || '-'}</td>
+                                            <td>${row.old_reading}</td>
+                                            <td>${row.new_reading}</td>
+                                            <td>${row.reason || '-'}</td>
+                                            <td>${row.reset_date}</td>
+                                            <td>${row.username || '-'}</td>
+                                        </tr>
+                                    `);
+                });
+                $('#nozzleResetLogModal').modal('show');
+            }).fail(() => showToast('❌ Failed to fetch logs', 'error'));
+        }
+
+        function loadResetModalNozzles() {
+            $.get(`{{ route('station.nozzles', ['id' => request()->segment(2)]) }}`, function (res) {
+                populateDropdown('#resetNozzleSelect', res, 'id', 'name');
+            }).fail(() => showToast('Error loading nozzles for reset modal', 'error'));
+        }
+
+        $('#changeNozzleResetModal').on('shown.bs.modal', function () {
+            loadResetModalNozzles();
+        });
+
+        // ================== OTHER FUNCTIONS ==================
+        function station_employee() {
+            let url = `{{ route('employee.station', ['id' => request()->segment(2)]) }}`;
+            $.get(url, function (res) {
+                populateDropdown('#employeeSelect', res, 'id', 'full_name');
+            }).fail(() => showToast('❌ Error loading employees', 'error'));
+        }
+
+        function shifts() {
+            let url = `{{ route('shift_show.show', ['id' => request()->segment(2)]) }}`;
+            $.get(url, function (res) {
+                populateDropdown('#shiftSelect', res, 'id', 'shift_type');
+            }).fail(() => showToast('❌ Error loading shifts', 'error'));
+        }
+
+        // ================== HELPER FUNCTIONS ==================
+        function populateDropdown(selector, items, valueField, textField) {
+            const element = document.querySelector(selector);
+            if (!element) {
+                console.error("❌ Element not found:", selector);
+                return false;
+            }
+
+            console.log(`🔄 Populating ${selector} with ${items ? items.length : 0} items`);
+
+            // ✅ Pehle existing choices destroy karo
+            if (element.choicesInstance) {
+                try {
+                    element.choicesInstance.destroy();
+                } catch (error) {
+                    console.warn("Could not destroy existing choices instance:", error);
+                }
+            }
+
+            // ✅ Clear existing options
+            element.innerHTML = '<option value="">-- Select --</option>';
+
+            // ✅ Check if items are available
+            if (!items || items.length === 0) {
+                console.warn("⚠️ No items to populate in", selector);
+                return false;
+            }
+
+            // ✅ New options add karo
+            items.forEach((item, index) => {
+                // ✅ Validate required fields
+                if (!item[valueField] || !item[textField]) {
+                    console.warn("⚠️ Invalid item at index", index, item);
+                    return;
+                }
+
+                const option = document.createElement('option');
+                option.value = item[valueField];
+                option.textContent = item[textField];
+                element.appendChild(option);
+
+                // ✅ Debug first 2 items only
+                if (index < 2) {
+                    console.log(`   Added option - Value: ${item[valueField]}, Text: ${item[textField]}`);
+                }
+            });
+
+            // ✅ Ab Choices.js initialize karo with error handling
+            try {
+                const choices = new Choices(element, {
+                    searchEnabled: true,
+                    removeItemButton: true,
+                    placeholderValue: 'Select...',
+                    shouldSort: false,
+                    itemSelectText: '',
+                    allowHTML: false,
+                    shouldSortItems: false
+                });
+
+                element.choicesInstance = choices;
+                console.log(`✅ Successfully populated ${selector} with ${items.length} items`);
+                return true;
+            } catch (error) {
+                console.error("❌ Error initializing Choices.js for", selector, error);
+                return false;
+            }
+        }
+
+        function getStatusText(status) {
+            if (status === 1 || status === 'active') return 'Active';
+            if (status === 0 || status === 'inactive') return 'Inactive';
+            return 'Unknown';
+        }
+
+        function getStatusBadgeClass(status) {
+            if (status === 1 || status === 'active') return 'success';
+            if (status === 0 || status === 'inactive') return 'secondary';
+            return 'dark';
+        }
+
+        function showToast(message, type = 'success') {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": "3000"
+            };
+
+            if (type === 'success') toastr.success(message);
+            else if (type === 'error') toastr.error(message);
+            else if (type === 'warning') toastr.warning(message);
+            else toastr.info(message);
+        }
+    </script>
+
+@endsection
