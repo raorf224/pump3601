@@ -2087,7 +2087,7 @@
 						if (response.success) {
 							showToast("Shift updated successfully!", "success");
 							setTimeout(() => {
-								// window.location.href = "/shifts";
+								 window.location.href = "/shifts";
 							}, 2000);
 						} else {
 							showToast(response.message || "Error updating shift!", "error");
