@@ -71,83 +71,83 @@ SELECT t.*, products.name as product_name , s.id as station_id, s.name as statio
 
     // Create a new tank
     public function store(Request $request)
-{
-    $validatedData = $request->validate([
-        'station_id' => 'required|integer',
-        'product_id' => 'required|integer',
-        'name' => 'required|string|max:50',
-        'capacity' => 'required|numeric|min:0',
-        'current_level' => 'required|numeric|min:0',
-        'current_level_mm' => 'required|numeric|min:0',
-        'dry_limit' => 'required|numeric|min:0',
-        'intial_date' => 'required|date',
-        'status' => 'required|in:active,inactive',
+    {
+        $validatedData = $request->validate([
+            'station_id' => 'required|integer',
+            'product_id' => 'required|integer',
+            'name' => 'required|string|max:50',
+            'capacity' => 'required|numeric|min:0',
+            'current_level' => 'required|numeric|min:0',
+            'current_level_mm' => 'required|numeric|min:0',
+            'dry_limit' => 'required|numeric|min:0',
+            'intial_date' => 'required|date',
+            'status' => 'required|in:active,inactive',
 
-        // ✅ NEW
-        'initial' => 'nullable|boolean',
-        'buying_price' => 'nullable|numeric|min:0'
-    ]);
-
-    // ✅ EXTRA VALIDATION
-    if ($request->initial && !$request->buying_price) {
-        return response()->json([
-            'message' => 'Buying price is required for initial setup'
-        ], 422);
-    }
-
-    if ($request->current_level > $request->capacity) {
-        return response()->json([
-            'message' => 'Current level cannot exceed capacity'
-        ], 422);
-    }
-
-    DB::beginTransaction();
-
-    try {
-
-        // ✅ INSERT TANK
-        $tankId = DB::table('tanks')->insertGetId([
-            'station_id' => $validatedData['station_id'],
-            'product_id' => $validatedData['product_id'],
-            'name' => $validatedData['name'],
-            'capacity' => $validatedData['capacity'],
-            'current_level' => $validatedData['current_level'],
-            'current_level_mm' => $validatedData['current_level_mm'],
-            'dry_limit' => $validatedData['dry_limit'],
-            'intial_date' => $validatedData['intial_date'],
-            'status' => $validatedData['status'],
-            'created_at' => now(),
-            'updated_at' => now()
+            // ✅ NEW
+            'initial' => 'nullable|boolean',
+            'buying_price' => 'nullable|numeric|min:0'
         ]);
 
-        // ✅ INSERT INITIAL INVENTORY LAYER
-        if (!empty($validatedData['initial']) && $validatedData['initial'] == 1) {
-
-            DB::table('fuel_inventory_layers')->insert([
-                'tank_id' => $tankId,
-                'product_id' => $validatedData['product_id'],
-                'remaining_qty' => $validatedData['current_level'],
-                'rate' => $validatedData['buying_price'],
-                'created_at' => now()
-            ]);
+        // ✅ EXTRA VALIDATION
+        if ($request->initial && !$request->buying_price) {
+            return response()->json([
+                'message' => 'Buying price is required for initial setup'
+            ], 422);
         }
 
-        DB::commit();
+        if ($request->current_level > $request->capacity) {
+            return response()->json([
+                'message' => 'Current level cannot exceed capacity'
+            ], 422);
+        }
 
-        return response()->json([
-            'message' => 'Tank created successfully'
-        ], 201);
+        DB::beginTransaction();
 
-    } catch (\Exception $e) {
+        try {
 
-        DB::rollBack();
+            // ✅ INSERT TANK
+            $tankId = DB::table('tanks')->insertGetId([
+                'station_id' => $validatedData['station_id'],
+                'product_id' => $validatedData['product_id'],
+                'name' => $validatedData['name'],
+                'capacity' => $validatedData['capacity'],
+                'current_level' => $validatedData['current_level'],
+                'current_level_mm' => $validatedData['current_level_mm'],
+                'dry_limit' => $validatedData['dry_limit'],
+                'intial_date' => $validatedData['intial_date'],
+                'status' => $validatedData['status'],
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
 
-        return response()->json([
-            'message' => 'Error creating tank',
-            'error' => $e->getMessage()
-        ], 500);
+            // ✅ INSERT INITIAL INVENTORY LAYER
+            if (!empty($validatedData['initial']) && $validatedData['initial'] == 1) {
+
+                DB::table('fuel_inventory_layers')->insert([
+                    'tank_id' => $tankId,
+                    'product_id' => $validatedData['product_id'],
+                    'remaining_qty' => $validatedData['current_level'],
+                    'rate' => $validatedData['buying_price'],
+                    'created_at' => now()
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Tank created successfully'
+            ], 201);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Error creating tank',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     // Update tank
     public function update(Request $request, $id)
@@ -216,19 +216,47 @@ SELECT t.*, products.name as product_name , s.id as station_id, s.name as statio
         return response()->json($tanks);
     }
 
-public function getStationProductTanks($stationId, $productId)
-{
-    $tanks = DB::select(
-        'SELECT t.*, p.name as product_name, s.name as station_name
+    public function getByStationWithShift($stationId, $shiftId)
+    {
+        $tanks = DB::table('tanks as t')
+            ->leftJoin('products as p', 't.product_id', '=', 'p.id')
+            ->leftJoin('tanks_dip as td', function ($join) use ($shiftId) {
+                $join->on('t.id', '=', 'td.tank_id')
+                    ->where('td.shift_id', '=', $shiftId);
+            })
+            ->where('t.station_id', $stationId)
+            ->where('t.status', 'active')
+            ->select(
+                't.id',
+                't.name',
+                't.capacity',
+                't.current_level',
+                't.current_level_mm',
+                'p.name as product_name',
+                'td.dip_mm as shift_dip_mm',
+                'td.dip_in_liters as shift_dip_liters',
+                'td.old_dip_mm',
+                'td.old_dip_liters'
+            )
+            ->get();
+
+        return response()->json($tanks);
+    }
+
+
+    public function getStationProductTanks($stationId, $productId)
+    {
+        $tanks = DB::select(
+            'SELECT t.*, p.name as product_name, s.name as station_name
          FROM tanks t
          JOIN products p ON t.product_id = p.id
          JOIN stations s ON t.station_id = s.id
          WHERE t.station_id = ? AND t.product_id = ? 
          AND t.status = "active"
          ORDER BY t.name',
-        [$stationId, $productId]
-    );
+            [$stationId, $productId]
+        );
 
-    return response()->json($tanks);
-}
+        return response()->json($tanks);
+    }
 }

@@ -286,4 +286,69 @@ class NozzlesController extends Controller
 
         return response()->json($nozzles);
     }
+
+    public function getByStationWithShift($stationId, $shiftId)
+{
+    $stationrec = DB::select("select * from stations where id =?", [$stationId]);
+    
+    if ($stationrec[0]->local == "1") {
+        $nozzles = DB::table('nozzles as n')
+            ->join('dispensers as d', 'n.dispenser_id', '=', 'd.stationrow_id')
+            ->leftJoin('tanks as t', 'n.tank_id', '=', 't.stationrow_id')
+            ->leftJoin('products as p', 'n.product_id', '=', 'p.id')
+            ->leftJoin('shift_nozzle_readings as snr', function($join) use ($shiftId) {
+                $join->on('n.id', '=', 'snr.nozzle_id')
+                     ->where('snr.shift_id', '=', $shiftId);
+            })
+            ->where('d.station_id', $stationId)
+            ->where('n.status', 1)
+            ->select(
+                'n.id',
+                'n.name',
+                'n.product_id',
+                'n.tank_id',
+                'n.intial_meter_reading',
+                't.name as tank_name',
+                'p.name as product_name',
+                'd.name as dispenser_name',
+                'snr.closing_reading',
+                'snr.opening_reading',
+                'snr.testing_reading',
+                'snr.rate',
+                'snr.created_at as shift_created_at',
+                'snr.updated_at as shift_updated_at'
+            )
+            ->get();
+    } else {
+        $nozzles = DB::table('nozzles as n')
+            ->join('dispensers as d', 'n.dispenser_id', '=', 'd.id')
+            ->leftJoin('tanks as t', 'n.tank_id', '=', 't.id')
+            ->leftJoin('products as p', 'n.product_id', '=', 'p.id')
+            ->leftJoin('shift_nozzle_readings as snr', function($join) use ($shiftId) {
+                $join->on('n.id', '=', 'snr.nozzle_id')
+                     ->where('snr.shift_id', '=', $shiftId);
+            })
+            ->where('d.station_id', $stationId)
+            ->where('n.status', 1)
+            ->select(
+                'n.id',
+                'n.name',
+                'n.product_id',
+                'n.tank_id',
+                'n.intial_meter_reading',
+                't.name as tank_name',
+                'p.name as product_name',
+                'd.name as dispenser_name',
+                'snr.closing_reading',
+                'snr.opening_reading',
+                'snr.testing_reading',
+                'snr.rate',
+                'snr.created_at as shift_created_at',
+                'snr.updated_at as shift_updated_at'
+            )
+            ->get();
+    }
+
+    return response()->json($nozzles);
+}
 }

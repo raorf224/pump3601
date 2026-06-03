@@ -31,12 +31,12 @@ class ShiftNozzleReadingsController extends Controller
     // Get shift nozzle readings for a specific station
     public function getByStation($stationId)
     {
-        $stationrec=DB::select("select * from stations where id=?",[$stationId]);
-        if($stationrec[0]->local =="1"){
+        $stationrec = DB::select("select * from stations where id=?", [$stationId]);
+        if ($stationrec[0]->local == "1") {
 
-       
-        $readings = DB::select(
-            'SELECT snr.id, snr.opening_reading, snr.closing_reading, snr.total_dispensed, snr.rate, snr.total_amount, 
+
+            $readings = DB::select(
+                'SELECT snr.id, snr.opening_reading, snr.closing_reading, snr.total_dispensed, snr.rate, snr.total_amount, 
                     snr.created_at, snr.updated_at,
                     s.id AS shift_id, s.shift_no AS shift_name, 
                     n.id AS nozzle_id, n.name AS nozzle_name,
@@ -52,12 +52,12 @@ class ShiftNozzleReadingsController extends Controller
              left join products p on n.product_id = p.id
              WHERE st.id = ?
              ORDER BY snr.created_at DESC',
-            [$stationId]
-        );
-         }else{
-            
-        $readings = DB::select(
-            'SELECT snr.id, snr.opening_reading, snr.closing_reading, snr.total_dispensed, snr.rate, snr.total_amount, 
+                [$stationId]
+            );
+        } else {
+
+            $readings = DB::select(
+                'SELECT snr.id, snr.opening_reading, snr.closing_reading, snr.total_dispensed, snr.rate, snr.total_amount, 
                     snr.created_at, snr.updated_at,
                     s.id AS shift_id, s.shift_no AS shift_name, 
                     n.id AS nozzle_id, n.name AS nozzle_name,
@@ -73,9 +73,9 @@ class ShiftNozzleReadingsController extends Controller
              left join products p on n.product_id = p.id
              WHERE st.id = ?
              ORDER BY snr.created_at DESC',
-            [$stationId]
-        );
-         }
+                [$stationId]
+            );
+        }
 
         return response()->json($readings);
     }
@@ -137,7 +137,7 @@ class ShiftNozzleReadingsController extends Controller
         }
 
         $rate = $productPrice[0]->price; // ✅ RATE VARIABLE DEFINED
-        
+
 
         // ✅ INSERT WITH RATE (but without total_dispensed and total_amount)
         DB::insert(
@@ -166,142 +166,143 @@ class ShiftNozzleReadingsController extends Controller
         return response()->json(['message' => 'Shift nozzle reading created successfully'], 201);
     }
 
-public function store(Request $request)
-{
-    DB::beginTransaction();
+    public function store(Request $request)
+    {
+        DB::beginTransaction();
 
-    try {
+        try {
 
-        $validatedData = $request->validate([
-            'shift_id' => 'required|integer',
-            'nozzle_id' => 'required|integer',
-            'opening_reading' => 'required|numeric',
-            'closing_reading' => 'nullable|numeric',
-            'collected_from' => 'required|integer',
-			'testing' => 'integer',
-        ]);
+            $validatedData = $request->validate([
+                'shift_id' => 'required|integer',
+                'nozzle_id' => 'required|integer',
+                'opening_reading' => 'required|numeric',
+                'closing_reading' => 'nullable|numeric',
+                'collected_from' => 'required|integer',
+                'testing' => 'integer',
+            ]);
 
-        // ==============================
-        // GET SHIFT
-        // ==============================
-        $shift = DB::table('shifts')->where('id', $validatedData['shift_id'])->first();
-        if (!$shift) {
-            return response()->json(['message' => 'Shift not found'], 404);
-        }
-
-        $shiftDate = $shift->start_time;
-        $stationId = $shift->station_id;
-
-        // ==============================
-        // GET NOZZLE
-        // ==============================
-       $nozzle = DB::table('nozzles')
-    ->join('products', 'nozzles.product_id', '=', 'products.id')
-    ->where('nozzles.id', $validatedData['nozzle_id'])
-    ->select(
-        'nozzles.*',
-        'products.name as product_name',
-        'products.id as product_id'
-    )
-    ->first();        if (!$nozzle) {
-            return response()->json(['message' => 'Nozzle not found'], 404);
-        }
-
-        $tankId = $nozzle->tank_id;
-
-        // ==============================
-        // GET TANK
-        // ==============================
-        $tank = DB::table('tanks')->where('id', $tankId)->first();
-        if (!$tank) {
-            return response()->json(['message' => 'Tank not found'], 404);
-        }
-
-        $productId = $tank->product_id;
-
-        // ==============================
-        // GET PRODUCT PRICE
-        // ==============================
-        $stationProduct = DB::table('station_products')
-            ->where('station_id', $stationId)
-            ->where('product_id', $productId)
-            ->first();
-
-        if (!$stationProduct) {
-            return response()->json(['message' => 'Station product not found'], 404);
-        }
-
-        $productPrice = DB::table('product_prices')
-            ->where('station_product_id', $stationProduct->id)
-            ->where('effective_from', '<=', $shiftDate)
-            ->orderByDesc('effective_from')
-            ->first();
-
-        if (!$productPrice) {
-            return response()->json(['message' => 'Product price not found'], 404);
-        }
-
-        $saleRate = $productPrice->price;
-
-        // ==============================
-        // CALCULATE QTY
-        // ==============================
-        $qty = 0;
-
-        if (!empty($validatedData['closing_reading'])) {
-            $qty = $validatedData['closing_reading'] - $validatedData['opening_reading'];
-
-            if ($qty < 0) {
-                return response()->json(['message' => 'Closing reading must be greater than opening'], 400);
+            // ==============================
+            // GET SHIFT
+            // ==============================
+            $shift = DB::table('shifts')->where('id', $validatedData['shift_id'])->first();
+            if (!$shift) {
+                return response()->json(['message' => 'Shift not found'], 404);
             }
-        }
 
-        // ==============================
-        // FIFO CALCULATION
-        // ==============================
-        $remainingQty = $qty;
-        $totalCost = 0;
-	  
-        $layers = DB::table('fuel_inventory_layers')
-            ->where('tank_id', $tankId)
-            ->where('product_id', $productId)
-            ->where('remaining_qty', '>', 0)
-            ->orderBy('created_at', 'asc')
-            ->lockForUpdate()
-            ->get();
+            $shiftDate = $shift->start_time;
+            $stationId = $shift->station_id;
 
-        if ($layers->isEmpty()) {
-            DB::rollBack();
-            return response()->json(['message' => 'No stock available in FIFO layers']);
-        }
+            // ==============================
+            // GET NOZZLE
+            // ==============================
+            $nozzle = DB::table('nozzles')
+                ->join('products', 'nozzles.product_id', '=', 'products.id')
+                ->where('nozzles.id', $validatedData['nozzle_id'])
+                ->select(
+                    'nozzles.*',
+                    'products.name as product_name',
+                    'products.id as product_id'
+                )
+                ->first();
+            if (!$nozzle) {
+                return response()->json(['message' => 'Nozzle not found'], 404);
+            }
 
-        // ==============================
-        // INSERT SALE FIRST (to get ID)
-        // ==============================
-        $saleId = DB::table('shift_nozzle_readings')->insertGetId([
-            'shift_id' => $validatedData['shift_id'],
-            'nozzle_id' => $validatedData['nozzle_id'],
-            'opening_reading' => $validatedData['opening_reading'],
-            'closing_reading' => $validatedData['closing_reading'],
-            'rate' => $saleRate,
-            'cost_amount' => 0,
-            'profit' => 0,
-            'collected_from' => $validatedData['collected_from'],
-            'testing_reading' => $validatedData['testing'],
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-$testingamount = floatval($saleRate) * floatval($validatedData['testing']);
-if($validatedData['testing']>0){
-$stationsid = DB::select(
-    "SELECT s.id 
+            $tankId = $nozzle->tank_id;
+
+            // ==============================
+            // GET TANK
+            // ==============================
+            $tank = DB::table('tanks')->where('id', $tankId)->first();
+            if (!$tank) {
+                return response()->json(['message' => 'Tank not found'], 404);
+            }
+
+            $productId = $tank->product_id;
+
+            // ==============================
+            // GET PRODUCT PRICE
+            // ==============================
+            $stationProduct = DB::table('station_products')
+                ->where('station_id', $stationId)
+                ->where('product_id', $productId)
+                ->first();
+
+            if (!$stationProduct) {
+                return response()->json(['message' => 'Station product not found'], 404);
+            }
+
+            $productPrice = DB::table('product_prices')
+                ->where('station_product_id', $stationProduct->id)
+                ->where('effective_from', '<=', $shiftDate)
+                ->orderByDesc('effective_from')
+                ->first();
+
+            if (!$productPrice) {
+                return response()->json(['message' => 'Product price not found'], 404);
+            }
+
+            $saleRate = $productPrice->price;
+
+            // ==============================
+            // CALCULATE QTY
+            // ==============================
+            $qty = 0;
+
+            if (!empty($validatedData['closing_reading'])) {
+                $qty = $validatedData['closing_reading'] - $validatedData['opening_reading'];
+
+                if ($qty < 0) {
+                    return response()->json(['message' => 'Closing reading must be greater than opening'], 400);
+                }
+            }
+
+            // ==============================
+            // FIFO CALCULATION
+            // ==============================
+            $remainingQty = $qty;
+            $totalCost = 0;
+
+            $layers = DB::table('fuel_inventory_layers')
+                ->where('tank_id', $tankId)
+                ->where('product_id', $productId)
+                ->where('remaining_qty', '>', 0)
+                ->orderBy('created_at', 'asc')
+                ->lockForUpdate()
+                ->get();
+
+            if ($layers->isEmpty()) {
+                DB::rollBack();
+                return response()->json(['message' => 'No stock available in FIFO layers']);
+            }
+
+            // ==============================
+            // INSERT SALE FIRST (to get ID)
+            // ==============================
+            $saleId = DB::table('shift_nozzle_readings')->insertGetId([
+                'shift_id' => $validatedData['shift_id'],
+                'nozzle_id' => $validatedData['nozzle_id'],
+                'opening_reading' => $validatedData['opening_reading'],
+                'closing_reading' => $validatedData['closing_reading'],
+                'rate' => $saleRate,
+                'cost_amount' => 0,
+                'profit' => 0,
+                'collected_from' => $validatedData['collected_from'],
+                'testing_reading' => $validatedData['testing'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $testingamount = floatval($saleRate) * floatval($validatedData['testing']);
+            if ($validatedData['testing'] > 0) {
+                $stationsid = DB::select(
+                    "SELECT s.id 
      FROM shifts sf
      JOIN stations s ON sf.station_id = s.id
      WHERE sf.id = ?",
-    [$validatedData['shift_id']]
-);
+                    [$validatedData['shift_id']]
+                );
 
-DB::insert(
+                DB::insert(
                     "INSERT INTO transactions
     (station_id, account_id, shift_id, type, debit, note,is_testing)
     VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -315,106 +316,107 @@ DB::insert(
                         1
                     ]
 
-);
-}
+                );
+            }
 
-        // ==============================
-        // PROCESS FIFO LAYERS
-        // ==============================
-        foreach ($layers as $layer) {
+            // ==============================
+            // PROCESS FIFO LAYERS
+            // ==============================
+            foreach ($layers as $layer) {
 
-            if ($remainingQty <= 0) break;
+                if ($remainingQty <= 0)
+                    break;
 
-            $used = min($layer->remaining_qty, $remainingQty);
+                $used = min($layer->remaining_qty, $remainingQty);
 
-            $cost = $used * $layer->rate;
-            $sale = $used * $saleRate;
-            $profit = $sale - $cost;
+                $cost = $used * $layer->rate;
+                $sale = $used * $saleRate;
+                $profit = $sale - $cost;
 
-            $totalCost += $cost;
+                $totalCost += $cost;
 
-            // 🔥 STORE LAYER-WISE PROFIT
-            DB::table('fuel_layer_consumptions')->insert([
-                'layer_id' => $layer->id,
-                'sale_id' => $saleId,
-                'qty' => $used,
-                'cost_rate' => $layer->rate,
-                'sale_rate' => $saleRate,
-                'cost_amount' => $cost,
-                'sale_amount' => $sale,
-                'profit' => $profit,
-                'created_at' => now()
-            ]);
-
-            // UPDATE LAYER
-            DB::table('fuel_inventory_layers')
-                ->where('id', $layer->id)
-                ->update([
-                    'remaining_qty' => $layer->remaining_qty - $used
+                // 🔥 STORE LAYER-WISE PROFIT
+                DB::table('fuel_layer_consumptions')->insert([
+                    'layer_id' => $layer->id,
+                    'sale_id' => $saleId,
+                    'qty' => $used,
+                    'cost_rate' => $layer->rate,
+                    'sale_rate' => $saleRate,
+                    'cost_amount' => $cost,
+                    'sale_amount' => $sale,
+                    'profit' => $profit,
+                    'created_at' => now()
                 ]);
 
-            $remainingQty -= $used;
-        }
+                // UPDATE LAYER
+                DB::table('fuel_inventory_layers')
+                    ->where('id', $layer->id)
+                    ->update([
+                        'remaining_qty' => $layer->remaining_qty - $used
+                    ]);
 
-        if ($remainingQty > 0) {
+                $remainingQty -= $used;
+            }
+
+            if ($remainingQty > 0) {
+                DB::rollBack();
+                return response()->json(['message' => 'Not enough stock in FIFO layers'], 400);
+            }
+
+            // ==============================
+            // UPDATE SALE WITH FINAL COST & PROFIT
+            // ==============================
+            $revenue = $qty * $saleRate;
+            $finalProfit = $revenue - $totalCost;
+
+            DB::table('shift_nozzle_readings')
+                ->where('id', $saleId)
+                ->update([
+                    'cost_amount' => $totalCost,
+                    'profit' => $finalProfit
+                ]);
+
+            // ==============================
+            // UPDATE NOZZLE
+            // ==============================
+            if (!empty($validatedData['closing_reading'])) {
+                DB::table('nozzles')
+                    ->where('id', $validatedData['nozzle_id'])
+                    ->update([
+                        'intial_meter_reading' => $validatedData['closing_reading'],
+                        'updated_at' => now()
+                    ]);
+            }
+
+            // ==============================
+            // UPDATE TANK LEVEL
+            // ==============================
+            //  DB::table('tanks')
+            //    ->where('id', $tankId)
+            //  ->decrement('current_level', $qty);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Sale recorded with FIFO & layer-wise profit',
+                'data' => [
+                    'qty' => $qty,
+                    'revenue' => $revenue,
+                    'cost' => $totalCost,
+                    'profit' => $finalProfit
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+
             DB::rollBack();
-            return response()->json(['message' => 'Not enough stock in FIFO layers'], 400);
+
+            return response()->json([
+                'message' => 'Error occurred',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // ==============================
-        // UPDATE SALE WITH FINAL COST & PROFIT
-        // ==============================
-        $revenue = $qty * $saleRate;
-        $finalProfit = $revenue - $totalCost;
-
-        DB::table('shift_nozzle_readings')
-            ->where('id', $saleId)
-            ->update([
-                'cost_amount' => $totalCost,
-                'profit' => $finalProfit
-            ]);
-
-        // ==============================
-        // UPDATE NOZZLE
-        // ==============================
-        if (!empty($validatedData['closing_reading'])) {
-            DB::table('nozzles')
-                ->where('id', $validatedData['nozzle_id'])
-                ->update([
-                    'intial_meter_reading' => $validatedData['closing_reading'],
-                    'updated_at' => now()
-                ]);
-        }
-
-        // ==============================
-        // UPDATE TANK LEVEL
-        // ==============================
-      //  DB::table('tanks')
-        //    ->where('id', $tankId)
-          //  ->decrement('current_level', $qty);
-
-        DB::commit();
-
-        return response()->json([
-            'message' => 'Sale recorded with FIFO & layer-wise profit',
-            'data' => [
-                'qty' => $qty,
-                'revenue' => $revenue,
-                'cost' => $totalCost,
-                'profit' => $finalProfit
-            ]
-        ], 201);
-
-    } catch (\Exception $e) {
-
-        DB::rollBack();
-
-        return response()->json([
-            'message' => 'Error occurred',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
     // Update an existing shift nozzle reading
     public function update(Request $request, $id)
     {
@@ -488,9 +490,40 @@ DB::insert(
     //     }
     // }
 
-
-
     public function getLastReading($nozzleId)
+    {
+        try {
+            // ✅ CORRECT: Last reading = nozzles.intial_meter_reading
+            $nozzle = DB::table('nozzles')->where('id', $nozzleId)->first();
+
+            if ($nozzle) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'last_reading' => $nozzle->intial_meter_reading,  // ✅ Actual meter reading
+                        'source' => 'nozzle_meter',
+                        'updated_at' => $nozzle->updated_at,
+                        'created_at' => $nozzle->created_at
+                    ]
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => null,
+                'message' => 'Nozzle not found'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch last reading',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getLastReading1($nozzleId)
     {
         try {
             // Combine all three sources using UNION and get the latest record
@@ -536,9 +569,9 @@ DB::insert(
             ], 500);
         }
     }
-	public function getByShiftAndNozzle($shiftId, $nozzleId)
-{
-    $readings = DB::select("SELECT * FROM shift_nozzle_readings WHERE shift_id = ? AND nozzle_id = ?", [$shiftId, $nozzleId]);
-    return response()->json($readings);
-}
+    public function getByShiftAndNozzle($shiftId, $nozzleId)
+    {
+        $readings = DB::select("SELECT * FROM shift_nozzle_readings WHERE shift_id = ? AND nozzle_id = ?", [$shiftId, $nozzleId]);
+        return response()->json($readings);
+    }
 }

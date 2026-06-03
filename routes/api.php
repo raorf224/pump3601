@@ -246,11 +246,13 @@ Route::put('/shifts/{id}/update-closed', [ShiftController::class, 'updateClosedS
 
 // Tank routes
 Route::get('tanks/station/{stationId}', [TanksController::class, 'getByStation']);
+Route::get('tanks/station/{stationId}/shift/{shiftId}', [TanksController::class, 'getByStationWithShift']);
 Route::get('tank-dips/last/{tankId}', [TanksDipController::class, 'getLastDip']);
 Route::post('tank-dips', [TanksDipController::class, 'storeTankDipReadings']);
 
 // Nozzle routes  
 Route::get('nozzles/station/{stationId}', [NozzlesController::class, 'getByStation']);
+Route::get('nozzles/station/{stationId}/shift/{shiftId}', [NozzlesController::class, 'getByStationWithShift']);
 Route::get('shift-nozzle-readings/last-reading/{nozzleId}', [ShiftNozzleReadingsController::class, 'getLastReading']);
 Route::get('/last-shift-end-time/{stationId}', [ShiftController::class, 'getLastShiftEndTime']);
 Route::get('/product-price/{stationId}/{productId}/{date}', [NozzleTotalizerResetController::class, 'getPriceByDate']);

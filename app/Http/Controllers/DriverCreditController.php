@@ -116,6 +116,26 @@ class DriverCreditController extends Controller
 
         return response()->json($credits);
     }
+
+        public function getByShiftId($shiftId)
+    {
+        $credits = DB::table('credit_driver as cd')
+            ->join('stations as s', 'cd.station_id', '=', 's.id')
+            ->join('accounts as a', 'cd.account_id', '=', 'a.id')
+            ->join('users as u', 'cd.created_by', '=', 'u.id')
+            ->where('cd.shift_id', $shiftId)
+            ->select(
+                'cd.*',
+                's.name as station_name',
+                'a.name as customer_name',
+                'a.phone as customer_phone',
+                'u.full_name as created_by_name'
+            )
+            ->orderBy('cd.created_at', 'desc')
+            ->get();
+
+        return response()->json($credits);
+    }
 	
 	
 public function getByShift1($shiftId)
