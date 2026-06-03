@@ -41,7 +41,7 @@ ORDER BY e.created_at DESC;
     }
 
 
-        public function index1($user_id)
+    public function index1($user_id)
     {
         $employees = DB::select(
             'SELECT e.id AS employee_id, e.role AS employee_role, e.address, e.city, e.region, e.country, e.cnic, e.phone, 
@@ -55,7 +55,9 @@ ORDER BY e.created_at DESC;
              LEFT JOIN stations s ON e.station_id = s.id
                 WHERE s.user_id = ?
              ORDER BY e.created_at DESC  
-            ', [$user_id]);
+            ',
+            [$user_id]
+        );
 
         return response()->json($employees);
     }
@@ -83,11 +85,11 @@ ORDER BY e.created_at DESC;
 
         return response()->json($employee[0]);
     }
-	
-		public function show_station_id($station_id)
-{
-    $employees = DB::select(
-        'SELECT 
+
+    public function show_station_id($station_id)
+    {
+        $employees = DB::select(
+            'SELECT 
             e.id AS employee_id,
             e.station_id,
             e.role AS employee_role,
@@ -113,11 +115,11 @@ ORDER BY e.created_at DESC;
         LEFT JOIN stations s ON e.station_id = s.id
         WHERE e.station_id = ?
         ORDER BY e.created_at DESC',
-        [$station_id]
-    );
-			 // ✅ Return all employees for this station (not just the first)
-    return response()->json($employees);
-		}
+            [$station_id]
+        );
+        // ✅ Return all employees for this station (not just the first)
+        return response()->json($employees);
+    }
 
 
     // Create a new employee (with user entry in users table)
@@ -194,8 +196,90 @@ ORDER BY e.created_at DESC;
         }
     }
 
+
     // Update an existing employee
     public function update(Request $request, $id)
+    {
+        $validatedData = $request->validate([
+            'role' => 'required|in:manager,cashier,pump_operator,other',
+            'station_id' => 'required|integer',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:45',
+            'region' => 'nullable|string|max:45',
+            'country' => 'nullable|string|max:45',
+            'cnic' => 'nullable|string|max:45',
+            'phone' => 'nullable|string|max:45',
+            'salary' => 'required|numeric',
+            'status' => 'required|in:active,inactive',
+            'username' => 'required|string|max:50',
+            'email' => 'required|email|max:100',
+            'full_name' => 'required|string|max:100',
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        // Get employee to find user_id
+        $employee = DB::select("SELECT user_id FROM employees WHERE id = ?", [$id]);
+        if (empty($employee)) {
+            return response()->json(['message' => 'Employee not found'], 404);
+        }
+        $userId = $employee[0]->user_id;
+
+        // Update employees table
+        DB::update("
+        UPDATE employees 
+        SET role = ?, station_id = ?, address = ?, city = ?, region = ?, 
+            country = ?, cnic = ?, phone = ?, salary = ?, status = ?, updated_at = NOW()
+        WHERE id = ?
+    ", [
+            $validatedData['role'],
+            $validatedData['station_id'],
+            $validatedData['address'],
+            $validatedData['city'],
+            $validatedData['region'],
+            $validatedData['country'],
+            $validatedData['cnic'],
+            $validatedData['phone'],
+            $validatedData['salary'],
+            $validatedData['status'],
+            $id
+        ]);
+
+        // Update users table
+        if (!empty($validatedData['password'])) {
+            DB::update("
+            UPDATE users 
+            SET username = ?, email = ?, full_name = ?, phone = ?, 
+                password = ?, status = ?, updated_at = NOW()
+            WHERE id = ?
+        ", [
+                $validatedData['username'],
+                $validatedData['email'],
+                $validatedData['full_name'],
+                $validatedData['phone'],
+                bcrypt($validatedData['password']),
+                ($validatedData['status'] === 'active') ? 1 : 0,
+                $userId
+            ]);
+        } else {
+            DB::update("
+            UPDATE users 
+            SET username = ?, email = ?, full_name = ?, phone = ?, 
+                status = ?, updated_at = NOW()
+            WHERE id = ?
+        ", [
+                $validatedData['username'],
+                $validatedData['email'],
+                $validatedData['full_name'],
+                $validatedData['phone'],
+                ($validatedData['status'] === 'active') ? 1 : 0,
+                $userId
+            ]);
+        }
+
+        return response()->json(['message' => 'Employee updated successfully']);
+    }
+
+    public function update1(Request $request, $id)
     {
         $validatedData = $request->validate([
             'role' => 'nullable|required|in:manager,cashier,pump_operator,other',
@@ -231,7 +315,7 @@ ORDER BY e.created_at DESC;
     // Delete an employee
     public function destroy($id)
     {
-		//dd('Samad');
+        //dd('Samad');
         $deleted = DB::delete('DELETE FROM employees WHERE id = ?', [$id]);
 
         if ($deleted) {
