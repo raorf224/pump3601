@@ -208,12 +208,12 @@
                                         <div class="col-md-3">
                                             <label class="form-label required-label">In Hand (Cash)</label>
                                             <input type="number" class="form-control" id="in_hand" name="in_hand" min="0"
-                                                required>
+                                               readonly required>
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label required-label">In Bank</label>
                                             <input type="number" class="form-control" id="in_bank" name="in_bank" min="0"
-                                                value="0">
+                                                value="0" readonly style="background-color: #f8f9fa;">
                                         </div>
 
                                     </div>
