@@ -174,7 +174,7 @@ $oilPurchases = DB::table('oil_recived_tanks as ort')
     ->join('oil_purchase as op', 'op.id', '=', 'ort.oil_purchase_id')
     ->where('op.tank_id', $tankId)
     ->where('ort.shift_id', $shiftId)  // ✅ RECEIVE SHIFT ID MATCH
-    ->where('op.payment_status', 'paid')
+   
     ->sum('ort.recived_qty');
 
 \Log::info("Tank {$tank->name} - Shift {$shiftId} - Oil Purchased (Received): {$oilPurchases}");
