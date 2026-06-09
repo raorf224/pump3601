@@ -208,7 +208,7 @@
                                         <div class="col-md-3">
                                             <label class="form-label required-label">In Hand (Cash)</label>
                                             <input type="number" class="form-control" id="in_hand" name="in_hand" min="0"
-                                               readonly required>
+                                               readonly required  style="background-color: #f8f9fa;">
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label required-label">In Bank</label>
