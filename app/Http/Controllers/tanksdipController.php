@@ -487,86 +487,63 @@ class tanksdipController extends Controller
         }
     }
 
-    public function getLastDip($tankId)
-    {
-        try {
-            // ✅ 1. Tanks table se current level aur timestamps lein
-            $tank = DB::table('tanks')
-                ->where('id', $tankId)
-                ->select(
-                    'current_level',
-                    'current_level_mm',
-                    'created_at as tank_created_at',
-                    'updated_at as tank_updated_at'
-                )
-                ->first();
+public function getLastDip($tankId)
+{
+    try {
+        // ✅ 1. Tanks_dip table se last dip aur timestamp lein (priority 1)
+        $lastDip = DB::table('tanks_dip')
+            ->where('tank_id', $tankId)
+            ->orderBy('created_at', 'desc')
+            ->select(
+                'dip_mm',
+                'dip_in_liters',
+                'created_at as dip_created_at'
+            )
+            ->first();
 
-            if (!$tank) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tank not found'
-                ], 404);
-            }
+        // ✅ 2. Agar tanks_dip mein koi record hai toh wahi return karo
+        if ($lastDip) {
+            return response()->json([
+                'dip_mm' => $lastDip->dip_mm,
+                'dip_in_liters' => $lastDip->dip_in_liters,
+                'source' => 'tanks_dip_table',
+                'dip_time' => $lastDip->dip_created_at
+            ]);
+        }
 
-            // ✅ 2. Tanks_dip table se last dip aur timestamp lein
-            $lastDip = DB::table('tanks_dip')
-                ->where('tank_id', $tankId)
-                ->orderBy('created_at', 'desc')
-                ->select(
-                    'dip_mm',
-                    'dip_in_liters',
-                    'created_at as dip_created_at'
-                )
-                ->first();
+        // ✅ 3. Agar tanks_dip mein koi record nahi hai, toh tanks table se current level lein
+        $tank = DB::table('tanks')
+            ->where('id', $tankId)
+            ->select(
+                'current_level',
+                'current_level_mm',
+                'updated_at as tank_updated_at'
+            )
+            ->first();
 
-            // ✅ 3. Agar tanks_dip mein koi record nahi hai
-            if (!$lastDip) {
-                return response()->json([
-                    'dip_mm' => $tank->current_level_mm,
-                    'dip_in_liters' => $tank->current_level,
-                    'source' => 'tanks_table_only',
-                    'tank_updated_at' => $tank->tank_updated_at
-                ]);
-            }
-
-            // ✅ 4. Compare karo timestamps - jo recent ho woh use karo
-            $tankLatestTime = max(
-                Carbon::parse($tank->tank_created_at),
-                Carbon::parse($tank->tank_updated_at)
-            );
-
-            $dipTime = Carbon::parse($lastDip->dip_created_at);
-
-            if ($tankLatestTime->greaterThan($dipTime)) {
-                // Tank table zyada recent hai
-                return response()->json([
-                    'dip_mm' => $tank->current_level_mm,
-                    'dip_in_liters' => $tank->current_level,
-                    'source' => 'tanks_table',
-                    'tank_latest_time' => $tankLatestTime,
-                    'dip_time' => $dipTime,
-                    'comparison' => 'tank_more_recent'
-                ]);
-            } else {
-                // Tanks_dip zyada recent hai
-                return response()->json([
-                    'dip_mm' => $lastDip->dip_mm,
-                    'dip_in_liters' => $lastDip->dip_in_liters,
-                    'source' => 'tanks_dip_table',
-                    'dip_time' => $dipTime,
-                    'tank_latest_time' => $tankLatestTime,
-                    'comparison' => 'dip_more_recent'
-                ]);
-            }
-
-        } catch (\Exception $e) {
+        if (!$tank) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch last dip reading',
-                'error' => $e->getMessage()
-            ], 500);
+                'message' => 'Tank not found'
+            ], 404);
         }
+
+        // ✅ 4. Tanks table se current level return karo (fallback)
+        return response()->json([
+            'dip_mm' => $tank->current_level_mm,
+            'dip_in_liters' => $tank->current_level,
+            'source' => 'tanks_table_only',
+            'tank_updated_at' => $tank->tank_updated_at
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch last dip reading',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}    
 	public function getByShiftAndTank($shiftId, $tankId)
 {
     $dips = DB::select("SELECT * FROM tanks_dip WHERE shift_id = ? AND tank_id = ?", [$shiftId, $tankId]);
