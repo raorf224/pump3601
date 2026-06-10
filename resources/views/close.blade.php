@@ -138,26 +138,27 @@
                                 </div>
                             </div>
                         </div>
-<!-- ✅ EXPENSES SECTION -->
-<div class="row mt-3">
-    <div class="col-md-12">
-        <div class="card border-danger">
-            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">💸 Shift Expenses</h6>
-                <button type="button" class="btn btn-light btn-sm" id="add_expense_row">
-                    <i class="bi bi-plus-circle me-1"></i> Add Expense
-                </button>
-            </div>
-            <div class="card-body p-2" id="expenses_container">
-                <!-- Expense rows will be added here -->
-                <p class="text-muted small mb-0" id="no_expense_msg">No expenses added yet.</p>
-            </div>
-            <div class="card-footer text-end">
-                <strong>Total Expenses: <span id="total_expenses_display">0.00</span></strong>
-            </div>
-        </div>
-    </div>
-</div>
+                        <!-- ✅ EXPENSES SECTION -->
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card border-danger">
+                                    <div
+                                        class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">💸 Shift Expenses</h6>
+                                        <button type="button" class="btn btn-light btn-sm" id="add_expense_row">
+                                            <i class="bi bi-plus-circle me-1"></i> Add Expense
+                                        </button>
+                                    </div>
+                                    <div class="card-body p-2" id="expenses_container">
+                                        <!-- Expense rows will be added here -->
+                                        <p class="text-muted small mb-0" id="no_expense_msg">No expenses added yet.</p>
+                                    </div>
+                                    <div class="card-footer text-end">
+                                        <strong>Total Expenses: <span id="total_expenses_display">0.00</span></strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- ✅ CASH FLOW SUMMARY SECTION -->
                         <div class="card mb-4">
@@ -208,7 +209,7 @@
                                         <div class="col-md-3">
                                             <label class="form-label required-label">In Hand (Cash)</label>
                                             <input type="number" class="form-control" id="in_hand" name="in_hand" min="0"
-                                               readonly required  style="background-color: #f8f9fa;">
+                                                readonly required style="background-color: #f8f9fa;">
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label required-label">In Bank</label>
@@ -483,237 +484,237 @@
             // Load shift details and data
             loadShiftDetails(shiftId);
 
-// ✅ EXPENSE SECTION LOGIC
+            // ✅ EXPENSE SECTION LOGIC
 
-// Load bank accounts for expense section
-function loadBankAccountsForExpense(selectElement, stationId) {
-    $.ajax({
-        url: `/api/accounts?station_id=${stationId}&type=bank`,
-        method: 'GET',
-        success: function(resp) {
-            const accounts = Array.isArray(resp) ? resp : (resp?.data || []);
-            const banks = accounts.filter(a => a.type === 'bank');
-            selectElement.empty().append('<option value="">Select Bank Account...</option>');
-            banks.forEach(b => {
-                selectElement.append(`<option value="${b.id}">${b.name} - ${b.account_number || 'N/A'}</option>`);
+            // Load bank accounts for expense section
+            function loadBankAccountsForExpense(selectElement, stationId) {
+                $.ajax({
+                    url: `/api/accounts?station_id=${stationId}&type=bank`,
+                    method: 'GET',
+                    success: function (resp) {
+                        const accounts = Array.isArray(resp) ? resp : (resp?.data || []);
+                        const banks = accounts.filter(a => a.type === 'bank');
+                        selectElement.empty().append('<option value="">Select Bank Account...</option>');
+                        banks.forEach(b => {
+                            selectElement.append(`<option value="${b.id}">${b.name} - ${b.account_number || 'N/A'}</option>`);
+                        });
+                    },
+                    error: function () {
+                        selectElement.html('<option value="">Error loading banks</option>');
+                    }
+                });
+            }
+
+            // Add expense row
+            let expenseRowCounter = 0;
+
+            function addExpenseRow() {
+                expenseRowCounter++;
+                const rowId = `expense_row_${expenseRowCounter}`;
+
+                const shiftId = $("#close_shift_id").val();
+
+                const rowHtml = `
+            <div class="row mb-2 align-items-end expense-row  rounded p-2 mx-0" id="${rowId}">
+                <div class="col-md-3" style="display:none;">
+                    <label class="form-label form-label-sm required-label">Payment Type</label>
+                    <select class="form-control form-control-sm expense-payment-type" required>
+                        <option value="">Select...</option>
+                        <option value="cash" selected>Cash</option>
+                        <option value="bank">Bank</option>
+                    </select>
+                </div>
+                <div class="col-md-3 expense-bank-col" style="display:none;">
+                    <label class="form-label form-label-sm required-label">Bank Account</label>
+                    <select class="form-control form-control-sm expense-bank-select">
+                        <option value="">Select Bank...</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label form-label-sm required-label">Amount</label>
+                    <input type="number" class="form-control form-control-sm expense-amount" 
+                           step="0.01" min="0" placeholder="0.00" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label form-label-sm required-label">Notes</label>
+                    <input type="text" class="form-control form-control-sm expense-notes" 
+                           placeholder="e.g. Electricity bill" required>
+                </div>
+                <div class="col-md-1 text-end">
+                    <label class="form-label form-label-sm">&nbsp;</label>
+                    <button type="button" class="btn btn-danger btn-sm d-block remove-expense-row" data-row-id="${rowId}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+                $("#no_expense_msg").hide();
+                $("#expenses_container").append(rowHtml);
+
+                // Load bank accounts for this row
+                const newRow = $(`#${rowId}`);
+                $.ajax({
+                    url: getApiUrl(`shifts/${shiftId}`),
+                    method: 'GET',
+                    success: function (shift) {
+                        loadBankAccountsForExpense(newRow.find('.expense-bank-select'), shift.station_id);
+                    }
+                });
+
+                // Toggle bank account select on payment type change
+                newRow.find('.expense-payment-type').on('change', function () {
+                    if ($(this).val() === 'bank') {
+                        newRow.find('.expense-bank-col').slideDown();
+                        newRow.find('.expense-bank-select').prop('required', true);
+                    } else {
+                        newRow.find('.expense-bank-col').slideUp();
+                        newRow.find('.expense-bank-select').prop('required', false).val('');
+                    }
+                    recalculateExpenseTotal();
+                });
+
+                newRow.find('.expense-amount').on('input', function () {
+                    recalculateExpenseTotal();
+                    // Recalculate cash flow to update grand total
+                    setTimeout(() => calculateCashFlowSummary(), 300);
+                });
+            }
+
+            // Remove expense row
+            $(document).on('click', '.remove-expense-row', function () {
+                const rowId = $(this).data('row-id');
+                $(`#${rowId}`).remove();
+                if ($('.expense-row').length === 0) {
+                    $("#no_expense_msg").show();
+                }
+                recalculateExpenseTotal();
+                setTimeout(() => calculateCashFlowSummary(), 300);
             });
-        },
-        error: function() {
-            selectElement.html('<option value="">Error loading banks</option>');
-        }
-    });
-}
 
-// Add expense row
-let expenseRowCounter = 0;
-
-function addExpenseRow() {
-    expenseRowCounter++;
-    const rowId = `expense_row_${expenseRowCounter}`;
-
-    const shiftId = $("#close_shift_id").val();
-
-    const rowHtml = `
-        <div class="row mb-2 align-items-end expense-row  rounded p-2 mx-0" id="${rowId}">
-            <div class="col-md-3" style="display:none;">
-                <label class="form-label form-label-sm required-label">Payment Type</label>
-                <select class="form-control form-control-sm expense-payment-type" required>
-                    <option value="">Select...</option>
-                    <option value="cash" selected>Cash</option>
-                    <option value="bank">Bank</option>
-                </select>
-            </div>
-            <div class="col-md-3 expense-bank-col" style="display:none;">
-                <label class="form-label form-label-sm required-label">Bank Account</label>
-                <select class="form-control form-control-sm expense-bank-select">
-                    <option value="">Select Bank...</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label form-label-sm required-label">Amount</label>
-                <input type="number" class="form-control form-control-sm expense-amount" 
-                       step="0.01" min="0" placeholder="0.00" required>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label form-label-sm required-label">Notes</label>
-                <input type="text" class="form-control form-control-sm expense-notes" 
-                       placeholder="e.g. Electricity bill" required>
-            </div>
-            <div class="col-md-1 text-end">
-                <label class="form-label form-label-sm">&nbsp;</label>
-                <button type="button" class="btn btn-danger btn-sm d-block remove-expense-row" data-row-id="${rowId}">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-        </div>
-    `;
-
-    $("#no_expense_msg").hide();
-    $("#expenses_container").append(rowHtml);
-
-    // Load bank accounts for this row
-    const newRow = $(`#${rowId}`);
-    $.ajax({
-        url: getApiUrl(`shifts/${shiftId}`),
-        method: 'GET',
-        success: function(shift) {
-            loadBankAccountsForExpense(newRow.find('.expense-bank-select'), shift.station_id);
-        }
-    });
-
-    // Toggle bank account select on payment type change
-    newRow.find('.expense-payment-type').on('change', function() {
-        if ($(this).val() === 'bank') {
-            newRow.find('.expense-bank-col').slideDown();
-            newRow.find('.expense-bank-select').prop('required', true);
-        } else {
-            newRow.find('.expense-bank-col').slideUp();
-            newRow.find('.expense-bank-select').prop('required', false).val('');
-        }
-        recalculateExpenseTotal();
-    });
-
-    newRow.find('.expense-amount').on('input', function() {
-        recalculateExpenseTotal();
-        // Recalculate cash flow to update grand total
-        setTimeout(() => calculateCashFlowSummary(), 300);
-    });
-}
-
-// Remove expense row
-$(document).on('click', '.remove-expense-row', function() {
-    const rowId = $(this).data('row-id');
-    $(`#${rowId}`).remove();
-    if ($('.expense-row').length === 0) {
-        $("#no_expense_msg").show();
-    }
-    recalculateExpenseTotal();
-    setTimeout(() => calculateCashFlowSummary(), 300);
-});
-
-// Add expense button
-$('#add_expense_row').on('click', function() {
-    addExpenseRow();
-});
-
-// ✅ SIMPLE FIX: Update cashDebits when expense amount changes
-function updateExpenseCashDebits() {
-    let totalCashExpenses = 0;
-    $('.expense-row').each(function() {
-        const method = $(this).find('.expense-payment-type').val();
-        const amount = parseFloat($(this).find('.expense-amount').val()) || 0;
-        if (method === 'cash') {
-            totalCashExpenses += amount;
-        }
-    });
-    
-    // Store total cash expenses in a global variable or data attribute
-    window.totalCashExpenses = totalCashExpenses;
-    
-    // Recalculate cash flow
-    setTimeout(() => calculateCashFlowSummary(), 100);
-}
-
-// ✅ On expense amount input - add to cashDebits
-$(document).on('input', '.expense-amount', function() {
-    updateExpenseCashDebits();
-});
-
-// ✅ On expense payment type change - recalculate
-$(document).on('change', '.expense-payment-type', function() {
-    updateExpenseCashDebits();
-});
-
-// ✅ On expense row remove - recalculate
-$(document).on('click', '.remove-expense-row', function() {
-    const rowId = $(this).data('row-id');
-    $(`#${rowId}`).remove();
-    if ($('.expense-row').length === 0) {
-        $("#no_expense_msg").show();
-    }
-    updateExpenseCashDebits();
-});
-// Calculate total expenses from all rows (CASH only — for grand total)
-function getExpensesTotal() {
-    let total = 0;
-    $('.expense-row').each(function() {
-        const method = $(this).find('.expense-payment-type').val();
-        const amount = parseFloat($(this).find('.expense-amount').val()) || 0;
-        // Sirf cash expenses grand total se minus honge (bank expenses already bank se gaye)
-        if (method === 'cash') {
-            total += amount;
-        }
-    });
-    return total;
-}
-
-function getAllExpensesTotal() {
-    let total = 0;
-    $('.expense-row').each(function() {
-        const amount = parseFloat($(this).find('.expense-amount').val()) || 0;
-        total += amount;
-    });
-    return total;
-}
-
-function recalculateExpenseTotal() {
-    const total = getAllExpensesTotal();
-    $("#total_expenses_display").text(total.toFixed(2));
-}
-
-// ✅ Collect all expense data for saving
-function collectExpenseData(shiftId, stationId) {
-    const expenses = [];
-    $('.expense-row').each(function() {
-        const method = $(this).find('.expense-payment-type').val();
-        const amount = parseFloat($(this).find('.expense-amount').val()) || 0;
-        const notes = $(this).find('.expense-notes').val() || '';
-        const bankAccountId = $(this).find('.expense-bank-select').val() || null;
-
-        if (method && amount > 0 && notes.trim()) {
-            expenses.push({
-                station_id: parseInt(stationId),
-                shift_id: parseInt(shiftId),
-                type: 'expense',
-                method: method,
-                amount: amount,
-                credit: 0,
-                account_id: bankAccountId ? parseInt(bankAccountId) : 0,
-                note: notes.trim(),
-                created_by: parseInt(AUTH_USER_ID)
+            // Add expense button
+            $('#add_expense_row').on('click', function () {
+                addExpenseRow();
             });
-        }
-    });
-    return expenses;
-}
 
-// ✅ Validate expense rows
-function validateExpenseRows() {
-    let isValid = true;
-    $('.expense-row').each(function() {
-        const method = $(this).find('.expense-payment-type').val();
-        const amount = parseFloat($(this).find('.expense-amount').val()) || 0;
-        const notes = $(this).find('.expense-notes').val() || '';
+            // ✅ SIMPLE FIX: Update cashDebits when expense amount changes
+            function updateExpenseCashDebits() {
+                let totalCashExpenses = 0;
+                $('.expense-row').each(function () {
+                    const method = $(this).find('.expense-payment-type').val();
+                    const amount = parseFloat($(this).find('.expense-amount').val()) || 0;
+                    if (method === 'cash') {
+                        totalCashExpenses += amount;
+                    }
+                });
 
-        if (!method) {
-            showToast("Expense: Please select payment type for all expense rows", "error");
-            isValid = false; return false;
-        }
-        if (amount <= 0) {
-            showToast("Expense: Please enter a valid amount for all expense rows", "error");
-            isValid = false; return false;
-        }
-        if (!notes.trim()) {
-            showToast("Expense: Please enter notes for all expense rows", "error");
-            isValid = false; return false;
-        }
-        if (method === 'bank' && !$(this).find('.expense-bank-select').val()) {
-            showToast("Expense: Please select a bank account for bank expense rows", "error");
-            isValid = false; return false;
-        }
-    });
-    return isValid;
-}
+                // Store total cash expenses in a global variable or data attribute
+                window.totalCashExpenses = totalCashExpenses;
+
+                // Recalculate cash flow
+                setTimeout(() => calculateCashFlowSummary(), 100);
+            }
+
+            // ✅ On expense amount input - add to cashDebits
+            $(document).on('input', '.expense-amount', function () {
+                updateExpenseCashDebits();
+            });
+
+            // ✅ On expense payment type change - recalculate
+            $(document).on('change', '.expense-payment-type', function () {
+                updateExpenseCashDebits();
+            });
+
+            // ✅ On expense row remove - recalculate
+            $(document).on('click', '.remove-expense-row', function () {
+                const rowId = $(this).data('row-id');
+                $(`#${rowId}`).remove();
+                if ($('.expense-row').length === 0) {
+                    $("#no_expense_msg").show();
+                }
+                updateExpenseCashDebits();
+            });
+            // Calculate total expenses from all rows (CASH only — for grand total)
+            function getExpensesTotal() {
+                let total = 0;
+                $('.expense-row').each(function () {
+                    const method = $(this).find('.expense-payment-type').val();
+                    const amount = parseFloat($(this).find('.expense-amount').val()) || 0;
+                    // Sirf cash expenses grand total se minus honge (bank expenses already bank se gaye)
+                    if (method === 'cash') {
+                        total += amount;
+                    }
+                });
+                return total;
+            }
+
+            function getAllExpensesTotal() {
+                let total = 0;
+                $('.expense-row').each(function () {
+                    const amount = parseFloat($(this).find('.expense-amount').val()) || 0;
+                    total += amount;
+                });
+                return total;
+            }
+
+            function recalculateExpenseTotal() {
+                const total = getAllExpensesTotal();
+                $("#total_expenses_display").text(total.toFixed(2));
+            }
+
+            // ✅ Collect all expense data for saving
+            function collectExpenseData(shiftId, stationId) {
+                const expenses = [];
+                $('.expense-row').each(function () {
+                    const method = $(this).find('.expense-payment-type').val();
+                    const amount = parseFloat($(this).find('.expense-amount').val()) || 0;
+                    const notes = $(this).find('.expense-notes').val() || '';
+                    const bankAccountId = $(this).find('.expense-bank-select').val() || null;
+
+                    if (method && amount > 0 && notes.trim()) {
+                        expenses.push({
+                            station_id: parseInt(stationId),
+                            shift_id: parseInt(shiftId),
+                            type: 'expense',
+                            method: method,
+                            amount: amount,
+                            credit: 0,
+                            account_id: bankAccountId ? parseInt(bankAccountId) : 0,
+                            note: notes.trim(),
+                            created_by: parseInt(AUTH_USER_ID)
+                        });
+                    }
+                });
+                return expenses;
+            }
+
+            // ✅ Validate expense rows
+            function validateExpenseRows() {
+                let isValid = true;
+                $('.expense-row').each(function () {
+                    const method = $(this).find('.expense-payment-type').val();
+                    const amount = parseFloat($(this).find('.expense-amount').val()) || 0;
+                    const notes = $(this).find('.expense-notes').val() || '';
+
+                    if (!method) {
+                        showToast("Expense: Please select payment type for all expense rows", "error");
+                        isValid = false; return false;
+                    }
+                    if (amount <= 0) {
+                        showToast("Expense: Please enter a valid amount for all expense rows", "error");
+                        isValid = false; return false;
+                    }
+                    if (!notes.trim()) {
+                        showToast("Expense: Please enter notes for all expense rows", "error");
+                        isValid = false; return false;
+                    }
+                    if (method === 'bank' && !$(this).find('.expense-bank-select').val()) {
+                        showToast("Expense: Please select a bank account for bank expense rows", "error");
+                        isValid = false; return false;
+                    }
+                });
+                return isValid;
+            }
             // ✅ Load tanks and nozzles with promise
             loadTanksAndNozzlesForShift(shiftId)
                 .then(() => {
@@ -730,13 +731,13 @@ function validateExpenseRows() {
                 const bgClass = type === "success" ? "bg-success text-white" : "bg-danger text-white";
 
                 const toastHtml = `
-                                                                                                                                                                                    <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
-                                                                                                                                                                                        <div class="d-flex">
-                                                                                                                                                                                            <div class="toast-body">${message}</div>
-                                                                                                                                                                                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                                                                                                                                                        <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                                                                                                                                                                                            <div class="d-flex">
+                                                                                                                                                                                                <div class="toast-body">${message}</div>
+                                                                                                                                                                                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                                                                                                                                                            </div>
                                                                                                                                                                                         </div>
-                                                                                                                                                                                    </div>
-                                                                                                                                                                                `;
+                                                                                                                                                                                    `;
 
                 $("#toastContainer").append(toastHtml);
                 const toastElement = document.getElementById(toastId);
@@ -792,18 +793,18 @@ function validateExpenseRows() {
 
                         // Display shift information
                         $("#shift_info_container").html(`
-                                                        <div class="row">
-                                                            <div class="col-md-6">
-                                                                <strong>Station:</strong> ${shift.station_name || 'N/A'}<br>
-                                                                <strong>Shift:</strong> ${shift.shift_no === 1 ? 'Day' : 'Night'}<br>
-                                                                <strong>Start Time:</strong> ${shift.start_time}
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <strong>Station:</strong> ${shift.station_name || 'N/A'}<br>
+                                                                    <strong>Shift:</strong> ${shift.shift_no === 1 ? 'Day' : 'Night'}<br>
+                                                                    <strong>Start Time:</strong> ${shift.start_time}
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <strong>Shift Incharge:</strong> ${shift.shift_incharger_name || 'N/A'}<br>
+                                                                    <strong>Station ID:</strong> ${shift.station_id || 'N/A'}
+                                                                </div>
                                                             </div>
-                                                            <div class="col-md-6">
-                                                                <strong>Shift Incharge:</strong> ${shift.shift_incharger_name || 'N/A'}<br>
-                                                                <strong>Station ID:</strong> ${shift.station_id || 'N/A'}
-                                                            </div>
-                                                        </div>
-                                                    `);
+                                                        `);
                     },
                     error: function (xhr) {
                         console.error("Error fetching shift details:", xhr.responseText);
@@ -1010,48 +1011,48 @@ function validateExpenseRows() {
                     const capacity = tank.capacity || 'N/A';
 
                     container.append(`
-                                                                                                <div class="row mb-3 tank-dip-row" data-tank-id="${tank.id}">
-                                                                                                    <div class="col-md-2">
-                                                                                                        <label class="form-label">Tank Name</label>
-                                                                                                        <input type="text" class="form-control" value="${tank.name}" readonly>
-                                                                                                        <small class="text-muted">Current Level: ${currentLevel} L</small>
-                                                                                                        <br>
-                                                                                                        <small class="text-muted">Capacity: ${capacity} L</small>
+                                                                                                    <div class="row mb-3 tank-dip-row" data-tank-id="${tank.id}">
+                                                                                                        <div class="col-md-2">
+                                                                                                            <label class="form-label">Tank Name</label>
+                                                                                                            <input type="text" class="form-control" value="${tank.name}" readonly>
+                                                                                                            <small class="text-muted">Current Level: ${currentLevel} L</small>
+                                                                                                            <br>
+                                                                                                            <small class="text-muted">Capacity: ${capacity} L</small>
+                                                                                                        </div>
+                                                                                                        <div class="col-md-2">
+                                                                                                            <label class="form-label">Product</label>
+                                                                                                            <input type="text" class="form-control" value="${tank.product_name || 'N/A'}" readonly>
+                                                                                                        </div>
+                                                                                                        <div class="col-md-2">
+                                                                                                            <label class="form-label">Last Dip (mm)</label>
+                                                                                                            <input type="number" class="form-control" value="${tank.last_dip_mm}" readonly>
+                                                                                                            <small class="text-muted">Previous reading</small>
+                                                                                                        </div>
+                                                                                                        <div class="col-md-2">
+                                                                                                            <label class="form-label">Last Dip (Liters)</label>
+                                                                                                            <input type="number" class="form-control" value="${tank.last_dip_liters || currentLevel}" readonly>
+                                                                                                            <small class="text-muted">Previous reading</small>
+                                                                                                        </div>
+                                                                                                        <div class="col-md-2">
+                                                                                                            <label class="form-label required-label">New Dip (mm)</label>
+                                                                                                            <input type="number" class="form-control tank-dip-mm" name="tank_dip_mm[${tank.id}]" 
+                                                                                                                   step="0.01" min="0" placeholder="Enter new dip in mm" required>
+                                                                                                            <div class="invalid-feedback">Dip in mm is required</div>
+                                                                                                        </div>
+                                                                                                        <div class="col-md-2">
+                                                                                                            <label class="form-label required-label">New Dip (Liters)</label>
+                                                                                                            <input type="number" class="form-control tank-dip-liters" name="tank_dip_liters[${tank.id}]" 
+                                                                                                                   step="0.01" min="0" max="${capacity}" 
+                                                                                                                   placeholder="Enter new dip in liters" 
+                                                                                                                   data-current-level="${currentLevel}"
+                                                                                                                   required>
+                                                                                                            <small class="text-muted">Max: ${capacity} L</small>
+                                                                                                            <br>
+                                                                                                            <small class="text-warning" id="tank-warning-${tank.id}"></small>
+                                                                                                            <div class="invalid-feedback">Dip in liters is required</div>
+                                                                                                        </div>
                                                                                                     </div>
-                                                                                                    <div class="col-md-2">
-                                                                                                        <label class="form-label">Product</label>
-                                                                                                        <input type="text" class="form-control" value="${tank.product_name || 'N/A'}" readonly>
-                                                                                                    </div>
-                                                                                                    <div class="col-md-2">
-                                                                                                        <label class="form-label">Last Dip (mm)</label>
-                                                                                                        <input type="number" class="form-control" value="${tank.last_dip_mm}" readonly>
-                                                                                                        <small class="text-muted">Previous reading</small>
-                                                                                                    </div>
-                                                                                                    <div class="col-md-2">
-                                                                                                        <label class="form-label">Last Dip (Liters)</label>
-                                                                                                        <input type="number" class="form-control" value="${tank.last_dip_liters || currentLevel}" readonly>
-                                                                                                        <small class="text-muted">Previous reading</small>
-                                                                                                    </div>
-                                                                                                    <div class="col-md-2">
-                                                                                                        <label class="form-label required-label">New Dip (mm)</label>
-                                                                                                        <input type="number" class="form-control tank-dip-mm" name="tank_dip_mm[${tank.id}]" 
-                                                                                                               step="0.01" min="0" placeholder="Enter new dip in mm" required>
-                                                                                                        <div class="invalid-feedback">Dip in mm is required</div>
-                                                                                                    </div>
-                                                                                                    <div class="col-md-2">
-                                                                                                        <label class="form-label required-label">New Dip (Liters)</label>
-                                                                                                        <input type="number" class="form-control tank-dip-liters" name="tank_dip_liters[${tank.id}]" 
-                                                                                                               step="0.01" min="0" max="${capacity}" 
-                                                                                                               placeholder="Enter new dip in liters" 
-                                                                                                               data-current-level="${currentLevel}"
-                                                                                                               required>
-                                                                                                        <small class="text-muted">Max: ${capacity} L</small>
-                                                                                                        <br>
-                                                                                                        <small class="text-warning" id="tank-warning-${tank.id}"></small>
-                                                                                                        <div class="invalid-feedback">Dip in liters is required</div>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                            `);
+                                                                                                `);
                 });
             }
 
@@ -1085,119 +1086,119 @@ function validateExpenseRows() {
 
                 nozzles.forEach(nozzle => {
                     container.append(`
-                                                                                                                                                                                        <div class="row mb-3 nozzle-reading-row" data-nozzle-id="${nozzle.id}">
-                                                                                                                                                                                            <div style="width:14.2%">
-                                                                                                                                                                                                <label class="form-label">Nozzle Name</label>
-                                                                                                                                                                                                <input type="text" class="form-control" value="${nozzle.name}" readonly>
-                                                                                                                                                                                                <small class="text-muted">Dispenser: ${nozzle.dispenser_name || 'N/A'}</small>
-                                                                                                                                                                                            </div>
-                                                                                                                                                                                            <div style="width:14.2%">
-                                                                                                                                                                                                <label class="form-label">Product</label>
-                                                                                                                                                                                                <input type="text" class="form-control" value="${nozzle.product_name || 'N/A'}" readonly>
-                                                                                                                                                                                                <small class="text-muted">Tank: ${nozzle.tank_name || 'N/A'}</small>
-                                                                                                                                                                                            </div>
-                                                <div style="width:14.2%">
-                                                                                                                                                                                                <label class="form-label">Testing(LTR)</label>
-                                                                                                                                                                                                <input type="number"
-                                                       class="form-control nozzle-testing"
-                                                       name="nozzle_testing[${nozzle.id}]"
-                                                       step="0.01"
-                                                       min="0"
-                                                       value="0">
-
-                                                                                                                                                                                            </div>
-                                                                                                                                                                                            <div style="width:14.2%">
-                                                                                                                                                                                                <label class="form-label">Opening Reading</label>
-                                                                                                                                                                                                <input type="number" class="form-control nozzle-opening" name="nozzle_opening[${nozzle.id}]" 
-                                                                                                                                                                                                    value="${nozzle.last_reading}" step="0.01" min="0" readonly>
-                                                                                                                                                                                            </div>
-                                                                                                                                                                                            <div style="width:14.2%">
-                                                                                                                                                                                                <label class="form-label required-label">Closing Reading</label>
-                                                                                                                                                                                                <input type="number" class="form-control nozzle-closing" name="nozzle_closing[${nozzle.id}]" 
-                                                                                                                                                                                                    step="0.01" min="0" placeholder="Enter closing reading"
-                                                                                                                                                                                                    data-opening="${nozzle.last_reading}" required>
-                                                                                                                                                                                                <div class="invalid-feedback">Closing reading is required</div>
-                                                                                                                                                                                                <small class="text-muted validation-message" id="validation-${nozzle.id}" style="display:none; color: red;"></small>
-                                                                                                                                                                                            </div>
-                                                                                                                                                                                            <div style="width:14.2%">
-                                                                                                                                                                                                <label class="form-label">Total Dispensed</label>
-                                                                                                                                                                                                <input type="number" class="form-control nozzle-total" readonly>
-                                                                                                                                                                                                <small class="text-muted">Auto calculated</small>
-                                                                                                                                                                                            </div>
-
-                                                                                                                                                                                            <div style="width:14.2%">
-                                                                                                                                                                                                <label class="form-label">Actions</label>
-                                                                                                                                                                                                <div>
-                                                                                                                                                                                                    <button class="btn btn-sm reset-nozzle-btn" 
-                                                                                                                                                                                                            style="background-color: #20c997; color: white; border: none;"
-                                                                                                                                                                                                            data-nozzle-id="${nozzle.id}" 
-                                                                                                                                                                                                            data-nozzle-name="${nozzle.name}" 
-                                                                                                                                                                                                            data-opening-reading="${nozzle.last_reading}"
-                                                                                                                                                                                                            data-product-name="${nozzle.product_name || 'N/A'}"
-                                                                                                                                                                                                            data-product-id="${nozzle.product_id || ''}">
-                                                                                                                                                                                                            Reset Nozzle
-                                                                                                                                                                                                    </button>
+                                                                                                                                                                                            <div class="row mb-3 nozzle-reading-row" data-nozzle-id="${nozzle.id}">
+                                                                                                                                                                                                <div style="width:14.2%">
+                                                                                                                                                                                                    <label class="form-label">Nozzle Name</label>
+                                                                                                                                                                                                    <input type="text" class="form-control" value="${nozzle.name}" readonly>
+                                                                                                                                                                                                    <small class="text-muted">Dispenser: ${nozzle.dispenser_name || 'N/A'}</small>
                                                                                                                                                                                                 </div>
-                                                                                                                                                                                            </div>
+                                                                                                                                                                                                <div style="width:14.2%">
+                                                                                                                                                                                                    <label class="form-label">Product</label>
+                                                                                                                                                                                                    <input type="text" class="form-control" value="${nozzle.product_name || 'N/A'}" readonly>
+                                                                                                                                                                                                    <small class="text-muted">Tank: ${nozzle.tank_name || 'N/A'}</small>
+                                                                                                                                                                                                </div>
+                                                    <div style="width:14.2%">
+                                                                                                                                                                                                    <label class="form-label">Testing(LTR)</label>
+                                                                                                                                                                                                    <input type="number"
+                                                           class="form-control nozzle-testing"
+                                                           name="nozzle_testing[${nozzle.id}]"
+                                                           step="0.01"
+                                                           min="0"
+                                                           value="0">
 
-                                                                                                                                                                                            <!-- ✅ HIDDEN RESET FIELDS -->
-                                                                                                                                                                                            <div class="col-12 mt-3 reset-fields-container" id="reset-fields-${nozzle.id}" style="display: none;">
-                                                                                                                                                                                                <div class="row">
-                                                                                                                                                                                                    <div class="col-md-12">
-                                                                                                                                                                                                        <h6 class="text-primary">Nozzle Reset Details</h6>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    <div class="col-md-3 mb-3">
-                                                                                                                                                                                                        <label class="form-label required-label">Reset Date & Time</label>
-                                                                                                                                                                                                        <input type="datetime-local" class="form-control reset-date" 
-                                                                                                                                                                                                            data-nozzle-id="${nozzle.id}" required>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    <div class="col-md-3 mb-3">
-                                                                                                                                                                                                        <label class="form-label required-label">Old Reading</label>
-                                                                                                                                                                                                        <input type="number" class="form-control reset-old-reading" 
-                                                                                                                                                                                                            data-nozzle-id="${nozzle.id}" 
-                                                                                                                                                                                                            value="${nozzle.last_reading}" 
-                                                                                                                                                                                                            step="0.01" min="0" required>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    <div class="col-md-3 mb-3">
-                                                                                                                                                                                                        <label class="form-label required-label">New Reading</label>
-                                                                                                                                                                                                        <input type="number" class="form-control reset-new-reading" 
-                                                                                                                                                                                                            data-nozzle-id="${nozzle.id}" 
-                                                                                                                                                                                                            step="0.01" min="0" placeholder="Enter new reading" required>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    <div class="col-md-3 mb-3">
-                                                                                                                                                                                                        <label class="form-label required-label">Rate (per liter)</label>
-                                                                                                                                                                                                        <input type="number" class="form-control reset-rate" 
-                                                                                                                                                                                                            data-nozzle-id="${nozzle.id}" 
-                                                                                                                                                                                                            step="0.01" min="0" required readonly>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    <div class="col-md-3 mb-3">
-                                                                                                                                                                                                        <label class="form-label">Reset Total Dispensed</label>
-                                                                                                                                                                                                        <input type="number" class="form-control reset-total-dispensed" 
-                                                                                                                                                                                                            data-nozzle-id="${nozzle.id}" readonly>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    <div class="col-md-3 mb-3">
-                                                                                                                                                                                                        <label class="form-label">Reset Total Amount</label>
-                                                                                                                                                                                                        <input type="number" class="form-control reset-total-amount" 
-                                                                                                                                                                                                            data-nozzle-id="${nozzle.id}" readonly>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    <div class="col-md-6 mb-3">
-                                                                                                                                                                                                        <label class="form-label required-label">Reason</label>
-                                                                                                                                                                                                        <textarea class="form-control reset-reason" 
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                                <div style="width:14.2%">
+                                                                                                                                                                                                    <label class="form-label">Opening Reading</label>
+                                                                                                                                                                                                    <input type="number" class="form-control nozzle-opening" name="nozzle_opening[${nozzle.id}]" 
+                                                                                                                                                                                                        value="${nozzle.last_reading}" step="0.01" min="0" readonly>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                                <div style="width:14.2%">
+                                                                                                                                                                                                    <label class="form-label required-label">Closing Reading</label>
+                                                                                                                                                                                                    <input type="number" class="form-control nozzle-closing" name="nozzle_closing[${nozzle.id}]" 
+                                                                                                                                                                                                        step="0.01" min="0" placeholder="Enter closing reading"
+                                                                                                                                                                                                        data-opening="${nozzle.last_reading}" required>
+                                                                                                                                                                                                    <div class="invalid-feedback">Closing reading is required</div>
+                                                                                                                                                                                                    <small class="text-muted validation-message" id="validation-${nozzle.id}" style="display:none; color: red;"></small>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                                <div style="width:14.2%">
+                                                                                                                                                                                                    <label class="form-label">Total Dispensed</label>
+                                                                                                                                                                                                    <input type="number" class="form-control nozzle-total" readonly>
+                                                                                                                                                                                                    <small class="text-muted">Auto calculated</small>
+                                                                                                                                                                                                </div>
+
+                                                                                                                                                                                                <div style="width:14.2%">
+                                                                                                                                                                                                    <label class="form-label">Actions</label>
+                                                                                                                                                                                                    <div>
+                                                                                                                                                                                                        <button class="btn btn-sm reset-nozzle-btn" 
+                                                                                                                                                                                                                style="background-color: #20c997; color: white; border: none;"
                                                                                                                                                                                                                 data-nozzle-id="${nozzle.id}" 
-                                                                                                                                                                                                                rows="2" placeholder="Enter reason for nozzle reset" required>Nozzle reset during shift closing</textarea>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                    <div class="col-md-12">
-                                                                                                                                                                                                        <button class="btn btn-success btn-sm save-reset-btn" data-nozzle-id="${nozzle.id}">
-                                                                                                                                                                                                            Save Reset
-                                                                                                                                                                                                        </button>
-                                                                                                                                                                                                        <button class="btn btn-secondary btn-sm cancel-reset-btn ms-2" data-nozzle-id="${nozzle.id}">
-                                                                                                                                                                                                            Cancel
+                                                                                                                                                                                                                data-nozzle-name="${nozzle.name}" 
+                                                                                                                                                                                                                data-opening-reading="${nozzle.last_reading}"
+                                                                                                                                                                                                                data-product-name="${nozzle.product_name || 'N/A'}"
+                                                                                                                                                                                                                data-product-id="${nozzle.product_id || ''}">
+                                                                                                                                                                                                                Reset Nozzle
                                                                                                                                                                                                         </button>
                                                                                                                                                                                                     </div>
                                                                                                                                                                                                 </div>
+
+                                                                                                                                                                                                <!-- ✅ HIDDEN RESET FIELDS -->
+                                                                                                                                                                                                <div class="col-12 mt-3 reset-fields-container" id="reset-fields-${nozzle.id}" style="display: none;">
+                                                                                                                                                                                                    <div class="row">
+                                                                                                                                                                                                        <div class="col-md-12">
+                                                                                                                                                                                                            <h6 class="text-primary">Nozzle Reset Details</h6>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                        <div class="col-md-3 mb-3">
+                                                                                                                                                                                                            <label class="form-label required-label">Reset Date & Time</label>
+                                                                                                                                                                                                            <input type="datetime-local" class="form-control reset-date" 
+                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" required>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                        <div class="col-md-3 mb-3">
+                                                                                                                                                                                                            <label class="form-label required-label">Old Reading</label>
+                                                                                                                                                                                                            <input type="number" class="form-control reset-old-reading" 
+                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" 
+                                                                                                                                                                                                                value="${nozzle.last_reading}" 
+                                                                                                                                                                                                                step="0.01" min="0" required>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                        <div class="col-md-3 mb-3">
+                                                                                                                                                                                                            <label class="form-label required-label">New Reading</label>
+                                                                                                                                                                                                            <input type="number" class="form-control reset-new-reading" 
+                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" 
+                                                                                                                                                                                                                step="0.01" min="0" placeholder="Enter new reading" required>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                        <div class="col-md-3 mb-3">
+                                                                                                                                                                                                            <label class="form-label required-label">Rate (per liter)</label>
+                                                                                                                                                                                                            <input type="number" class="form-control reset-rate" 
+                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" 
+                                                                                                                                                                                                                step="0.01" min="0" required readonly>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                        <div class="col-md-3 mb-3">
+                                                                                                                                                                                                            <label class="form-label">Reset Total Dispensed</label>
+                                                                                                                                                                                                            <input type="number" class="form-control reset-total-dispensed" 
+                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" readonly>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                        <div class="col-md-3 mb-3">
+                                                                                                                                                                                                            <label class="form-label">Reset Total Amount</label>
+                                                                                                                                                                                                            <input type="number" class="form-control reset-total-amount" 
+                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" readonly>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                        <div class="col-md-6 mb-3">
+                                                                                                                                                                                                            <label class="form-label required-label">Reason</label>
+                                                                                                                                                                                                            <textarea class="form-control reset-reason" 
+                                                                                                                                                                                                                    data-nozzle-id="${nozzle.id}" 
+                                                                                                                                                                                                                    rows="2" placeholder="Enter reason for nozzle reset" required>Nozzle reset during shift closing</textarea>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                        <div class="col-md-12">
+                                                                                                                                                                                                            <button class="btn btn-success btn-sm save-reset-btn" data-nozzle-id="${nozzle.id}">
+                                                                                                                                                                                                                Save Reset
+                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                            <button class="btn btn-secondary btn-sm cancel-reset-btn ms-2" data-nozzle-id="${nozzle.id}">
+                                                                                                                                                                                                                Cancel
+                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                </div>
                                                                                                                                                                                             </div>
-                                                                                                                                                                                        </div>
-                                                                                                                                                                                    `);
+                                                                                                                                                                                        `);
                 });
             }
 
@@ -1672,772 +1673,772 @@ function validateExpenseRows() {
 
             // ✅ Calculate Cash Flow Summary - UPDATED WITH LUBRICANTS
             // ✅ Calculate Cash Flow Summary - UPDATED WITH LUBRICANTS AND DRIVER CREDIT CASH
-function calculateCashFlowSummary() {
-    const shiftId = $("#close_shift_id").val();
-    const shiftStartTime = $("#shift_start_time").val();
+            function calculateCashFlowSummary() {
+                const shiftId = $("#close_shift_id").val();
+                const shiftStartTime = $("#shift_start_time").val();
 
-    if (!shiftId || !shiftStartTime) {
-        $("#cash_flow_loading").html('<p class="text-muted">Shift data not loaded yet</p>');
-        return;
-    }
-
-    const endTime = $("#close_end_time").val();
-    if (endTime && !validateEndTime(shiftStartTime, endTime)) {
-        $("#cash_flow_loading").html('<p class="text-danger">End time must be after start time!</p>');
-        return;
-    }
-
-    $.ajax({
-        url: getApiUrl(`shifts/${shiftId}`),
-        method: "GET",
-        success: function (shift) {
-
-            const stationId = shift.station_id;
-            const cashHandover = parseFloat(shift.cash_handover) || 0;
-
-            $.ajax({
-                url: getApiUrl(`nozzles/station/${stationId}`),
-                method: "GET",
-                success: function (nozzles) {
-
-                    if (!nozzles || nozzles.length === 0) {
-                        $("#cash_flow_loading").html('<p class="text-muted">No nozzles found</p>');
-                        return;
-                    }
-
-                    $.ajax({
-                        url: getApiUrl(`transactions/shift/${shiftId}`),
-                        method: "GET",
-                        success: function (transactions) {
-
-                            const productsMap = new Map();
-
-                            nozzles.forEach(nozzle => {
-                                if (!productsMap.has(nozzle.product_id)) {
-                                    productsMap.set(nozzle.product_id, {
-                                        product_id: nozzle.product_id,
-                                        product_name: nozzle.product_name || 'Unknown',
-                                        nozzles: []
-                                    });
-                                }
-                                productsMap.get(nozzle.product_id).nozzles.push(nozzle);
-                            });
-
-                            const productPromises = Array.from(productsMap.values()).map(product => {
-                                return new Promise(resolve => {
-
-                                    $.ajax({
-                                        url: getApiUrl(`product-price/${stationId}/${product.product_id}/${shiftStartTime}`),
-                                        method: "GET",
-                                        success: function (priceData) {
-
-                                            const rate = parseFloat(priceData?.price) || 0;
-
-                                            let totalVolume = 0;
-                                            let testingAmount = 0;
-                                            let testingLiters = 0;
-                                            let resetAmount = 0;
-
-                                            product.nozzles.forEach(nozzle => {
-
-                                                const opening = parseFloat($(`.nozzle-opening[name="nozzle_opening[${nozzle.id}]"]`).val()) || 0;
-                                                const closingInput = $(`.nozzle-closing[name="nozzle_closing[${nozzle.id}]"]`);
-                                                const closing = parseFloat(closingInput.val()) || 0;
-
-                                                const testing = parseFloat($(`.nozzle-testing[name="nozzle_testing[${nozzle.id}]"]`).val()) || 0;
-
-                                                if (!closingInput.val()) return;
-
-                                                if (closing >= opening) {
-
-                                                    const volume = closing - opening;
-
-                                                    totalVolume += volume;
-
-                                                    testingLiters += testing;
-                                                    testingAmount += testing * rate;
-                                                }
-                                            });
-
-                                            const grossAmount = totalVolume * rate;
-                                            const nozzleTotal = grossAmount - testingAmount + resetAmount;
-
-                                            resolve({
-                                                product_id: product.product_id,
-                                                product_name: product.product_name,
-                                                rate: rate,
-                                                total_volume: totalVolume,
-                                                nozzle_amount: nozzleTotal,
-                                                testing_amount: testingAmount,
-                                                testing_liters: testingLiters
-                                            });
-                                        },
-                                        error: function () {
-                                            resolve({
-                                                product_id: product.product_id,
-                                                product_name: product.product_name,
-                                                rate: 0,
-                                                total_volume: 0,
-                                                nozzle_amount: 0,
-                                                testing_amount: 0,
-                                                testing_liters: 0
-                                            });
-                                        }
-                                    });
-
-                                });
-                            });
-
-                            Promise.all(productPromises).then(productSummaries => {
-
-                              // Inside calculateCashFlowSummary, where you calculate cashDebits:
-let cashCredits = 0;
-let cashDebits = window.totalCashExpenses || 0; // Use the global variable
-
-                                if (Array.isArray(transactions)) {
-                                    transactions.forEach(t => {
-                                        if (t.method === 'cash') {
-                                            cashCredits += parseFloat(t.credit) || 0;
-                                            cashDebits += parseFloat(t.debit) || 0;
-                                        }
-                                    });
-                                }
-
-
-
-                                // ✅ ADDED: Calculate Lubricants
-                                calculateLubricantsCashTransactions(shiftId).then(lubricantsData => {
-                                    // ✅ ADDED: Calculate Oil Purchases
-                                    calculateOilPurchases(shiftId).then(oilPurchaseData => {
-                                        // ✅ ADDED: Calculate Shortages
-                                        calculateShortagesCash(shiftId).then(shortagesData => {
-                                            // ✅ ADDED: Calculate Driver Credit Cash Payments
-                                            calculateDriverCreditCashPayments(shiftId).then(driverCreditData => {
-
-                                                const totalNozzleSales = productSummaries.reduce((s, p) => s + p.nozzle_amount, 0);
-                                                const totalTestingAmount = productSummaries.reduce((s, p) => s + p.testing_amount, 0);
-                                                const totalTestingLiters = productSummaries.reduce((s, p) => s + p.testing_liters, 0);
-
-                                                const netCashTransactions = cashCredits - cashDebits;
-
-                                                // ✅ GRAND TOTAL MAI DRIVER CREDIT CASH PAYMENTS ADD KARO (POSITIVE)
-                                                const cashExpensesTotal = getExpensesTotal(); // sirf cash expenses
-const grandTotal = cashHandover + totalNozzleSales + netCashTransactions + lubricantsData.total - oilPurchaseData.total + shortagesData.total + driverCreditData.total - cashExpensesTotal;
-                                                renderCashFlowSummary(
-                                                    productSummaries,
-                                                    cashCredits,
-                                                    cashDebits,
-                                                    netCashTransactions,
-                                                    cashHandover,
-                                                    totalNozzleSales,
-                                                    lubricantsData,
-                                                    oilPurchaseData,
-                                                    shortagesData,
-                                                    driverCreditData,  // ✅ NEW PARAMETER
-                                                    grandTotal,
-                                                    totalTestingAmount,
-                                                    totalTestingLiters,
-    cashExpensesTotal  // ✅ NEW
-                                                );
-
-                                            }); // driverCreditData close
-                                        }); // shortagesData close
-                                    }); // oilPurchaseData close
-                                }); // lubricantsData close
-                            }); // Promise.all close
-                        } // transactions success close
-                    }); // transactions ajax close
-                } // nozzles success close
-            }); // nozzles ajax close
-        } // shift success close
-    }); // shift ajax close
-} // function close
-
-
-// ✅ COMPLETE CALCULATE CASH FLOW SUMMARY FUNCTION
-function calculateCashFlowSummary2() {
-    const shiftId = $("#close_shift_id").val();
-    const shiftStartTime = $("#shift_start_time").val();
-
-    if (!shiftId || !shiftStartTime) {
-        $("#cash_flow_loading").html('<p class="text-muted">Shift data not loaded yet</p>');
-        return;
-    }
-
-    const endTime = $("#close_end_time").val();
-    if (endTime && !validateEndTime(shiftStartTime, endTime)) {
-        $("#cash_flow_loading").html('<p class="text-danger">End time must be after start time!</p>');
-        return;
-    }
-
-    $.ajax({
-        url: getApiUrl(`shifts/${shiftId}`),
-        method: "GET",
-        success: function (shift) {
-            const stationId = shift.station_id;
-            const cashHandover = parseFloat(shift.cash_handover) || 0;
-
-            $.ajax({
-                url: getApiUrl(`nozzles/station/${stationId}`),
-                method: "GET",
-                success: function (nozzles) {
-                    if (!nozzles || nozzles.length === 0) {
-                        $("#cash_flow_loading").html('<p class="text-muted">No nozzles found</p>');
-                        return;
-                    }
-
-                    // ✅ FETCH TRANSACTIONS FOR THIS SHIFT
-                    $.ajax({
-                        url: getApiUrl(`transactions/shift/${shiftId}`),
-                        method: "GET",
-                        success: function (transactions) {
-                            
-                            // ✅ SEPARATE EXPENSE TRANSACTIONS AND CALCULATE CASH FLOW
-                            const expenseTransactions = [];
-                            let cashCredits = 0;
-                            let cashDebits = 0;
-                            
-                            if (Array.isArray(transactions)) {
-                                transactions.forEach(t => {
-                                    const creditAmt = parseFloat(t.credit) || 0;
-                                    const debitAmt = parseFloat(t.debit) || 0;
-                                    
-                                    // Only consider cash transactions
-                                    if (t.method === 'cash') {
-                                        cashCredits += creditAmt;
-                                        cashDebits += debitAmt;
-                                        
-                                        // Collect expense transactions (where debit > 0)
-                                        if (debitAmt > 0) {
-                                            expenseTransactions.push({
-                                                id: t.id,
-                                                debit: debitAmt,
-                                                credit: creditAmt,
-                                                note: t.note || 'Expense',
-                                                type: t.type,
-                                                method: t.method,
-                                                created_at: t.created_at,
-                                                account_id: t.account_id
-                                            });
-                                        }
-                                    }
-                                });
-                            }
-                            
-                            const netCashTransactions = cashCredits - cashDebits;
-
-                            // Process nozzles by product
-                            const productsMap = new Map();
-
-                            nozzles.forEach(nozzle => {
-                                if (!productsMap.has(nozzle.product_id)) {
-                                    productsMap.set(nozzle.product_id, {
-                                        product_id: nozzle.product_id,
-                                        product_name: nozzle.product_name || 'Unknown',
-                                        nozzles: []
-                                    });
-                                }
-                                productsMap.get(nozzle.product_id).nozzles.push(nozzle);
-                            });
-
-                            const productPromises = Array.from(productsMap.values()).map(product => {
-                                return new Promise(resolve => {
-                                    $.ajax({
-                                        url: getApiUrl(`product-price/${stationId}/${product.product_id}/${shiftStartTime}`),
-                                        method: "GET",
-                                        success: function (priceData) {
-                                            const rate = parseFloat(priceData?.price) || 0;
-                                            let totalVolume = 0;
-                                            let testingAmount = 0;
-                                            let testingLiters = 0;
-
-                                            product.nozzles.forEach(nozzle => {
-                                                const opening = parseFloat($(`.nozzle-opening[name="nozzle_opening[${nozzle.id}]"]`).val()) || 0;
-                                                const closingInput = $(`.nozzle-closing[name="nozzle_closing[${nozzle.id}]"]`);
-                                                const closing = parseFloat(closingInput.val()) || 0;
-                                                const testing = parseFloat($(`.nozzle-testing[name="nozzle_testing[${nozzle.id}]"]`).val()) || 0;
-
-                                                if (!closingInput.val()) return;
-
-                                                if (closing >= opening) {
-                                                    const volume = closing - opening;
-                                                    totalVolume += volume;
-                                                    testingLiters += testing;
-                                                    testingAmount += testing * rate;
-                                                }
-                                            });
-
-                                            const grossAmount = totalVolume * rate;
-                                            const nozzleTotal = grossAmount - testingAmount;
-
-                                            resolve({
-                                                product_id: product.product_id,
-                                                product_name: product.product_name,
-                                                rate: rate,
-                                                total_volume: totalVolume,
-                                                nozzle_amount: nozzleTotal,
-                                                testing_amount: testingAmount,
-                                                testing_liters: testingLiters
-                                            });
-                                        },
-                                        error: function () {
-                                            resolve({
-                                                product_id: product.product_id,
-                                                product_name: product.product_name,
-                                                rate: 0,
-                                                total_volume: 0,
-                                                nozzle_amount: 0,
-                                                testing_amount: 0,
-                                                testing_liters: 0
-                                            });
-                                        }
-                                    });
-                                });
-                            });
-
-                            Promise.all(productPromises).then(productSummaries => {
-                                // Calculate lubricants
-                                calculateLubricantsCashTransactions(shiftId).then(lubricantsData => {
-                                    // Calculate oil purchases
-                                    calculateOilPurchases(shiftId).then(oilPurchaseData => {
-                                        // Calculate shortages
-                                        calculateShortagesCash(shiftId).then(shortagesData => {
-                                            // Calculate driver credit cash payments
-                                            calculateDriverCreditCashPayments(shiftId).then(driverCreditData => {
-
-                                                const totalNozzleSales = productSummaries.reduce((s, p) => s + p.nozzle_amount, 0);
-                                                const totalTestingAmount = productSummaries.reduce((s, p) => s + p.testing_amount, 0);
-                                                const totalTestingLiters = productSummaries.reduce((s, p) => s + p.testing_liters, 0);
-
-                                                // ✅ GRAND TOTAL CALCULATION
-                                                const grandTotal = cashHandover + 
-                                                                   totalNozzleSales + 
-                                                                   netCashTransactions + 
-                                                                   lubricantsData.total - 
-                                                                   oilPurchaseData.total + 
-                                                                   shortagesData.total + 
-                                                                   driverCreditData.total;
-
-                                                // ✅ RENDER WITH EXPENSE TRANSACTIONS
-                                                renderCashFlowSummary(
-                                                    productSummaries,
-                                                    cashCredits,
-                                                    cashDebits,
-                                                    netCashTransactions,
-                                                    cashHandover,
-                                                    totalNozzleSales,
-                                                    lubricantsData,
-                                                    oilPurchaseData,
-                                                    shortagesData,
-                                                    driverCreditData,
-                                                    grandTotal,
-                                                    totalTestingAmount,
-                                                    totalTestingLiters,
-                                                    expenseTransactions  // ✅ PASS EXPENSE TRANSACTIONS
-                                                );
-
-                                            }); // driverCreditData close
-                                        }); // shortagesData close
-                                    }); // oilPurchaseData close
-                                }); // lubricantsData close
-                            }); // Promise.all close
-                        }, // transactions success close
-                        error: function (xhr) {
-                            console.error("Error fetching transactions:", xhr.responseText);
-                            $("#cash_flow_loading").html('<p class="text-danger">Error loading transactions</p>');
-                        }
-                    }); // transactions ajax close
-                }, // nozzles success close
-                error: function (xhr) {
-                    console.error("Error loading nozzles:", xhr.responseText);
-                    $("#cash_flow_loading").html('<p class="text-danger">Error loading nozzles</p>');
+                if (!shiftId || !shiftStartTime) {
+                    $("#cash_flow_loading").html('<p class="text-muted">Shift data not loaded yet</p>');
+                    return;
                 }
-            }); // nozzles ajax close
-        }, // shift success close
-        error: function (xhr) {
-            console.error("Error fetching shift details:", xhr.responseText);
-            $("#cash_flow_loading").html('<p class="text-danger">Error loading shift details</p>');
-        }
-    }); // shift ajax close
-}
 
-// ✅ UPDATED RENDER FUNCTION WITH EXPENSE TRANSACTIONS
-function renderCashFlowSummary2(
-    productSummaries,
-    cashCredits,
-    cashDebits,
-    netCashTransactions,
-    cashHandover,
-    totalNozzleSales,
-    lubricantsData,
-    oilPurchaseData,
-    shortagesData,
-    driverCreditData,
-    grandTotal,
-    totalTestingAmount,
-    totalTestingLiters,
-    expenseTransactions,cashExpensesTotal   // ✅ NEW PARAMETER
-) {
-    const container = $("#product_summary_body");
-    container.empty();
+                const endTime = $("#close_end_time").val();
+                if (endTime && !validateEndTime(shiftStartTime, endTime)) {
+                    $("#cash_flow_loading").html('<p class="text-danger">End time must be after start time!</p>');
+                    return;
+                }
 
-    let hasSales = false;
-    let rowNumber = 1;
+                $.ajax({
+                    url: getApiUrl(`shifts/${shiftId}`),
+                    method: "GET",
+                    success: function (shift) {
 
-    const sortedProducts = productSummaries.sort((a, b) => {
-        return a.product_name.localeCompare(b.product_name);
-    });
+                        const stationId = shift.station_id;
+                        const cashHandover = parseFloat(shift.cash_handover) || 0;
 
-    // ✅ 1. Product Rows
-    sortedProducts.forEach(product => {
-        if (product.nozzle_amount > 0) {
-            hasSales = true;
+                        $.ajax({
+                            url: getApiUrl(`nozzles/station/${stationId}`),
+                            method: "GET",
+                            success: function (nozzles) {
 
-            let displayText = `${product.product_name}`;
-            if (product.reset_amount > 0) {
-                displayText += `<br><small class="text-success">(Reset: ${product.reset_amount.toFixed(2)})</small>`;
+                                if (!nozzles || nozzles.length === 0) {
+                                    $("#cash_flow_loading").html('<p class="text-muted">No nozzles found</p>');
+                                    return;
+                                }
+
+                                $.ajax({
+                                    url: getApiUrl(`transactions/shift/${shiftId}`),
+                                    method: "GET",
+                                    success: function (transactions) {
+
+                                        const productsMap = new Map();
+
+                                        nozzles.forEach(nozzle => {
+                                            if (!productsMap.has(nozzle.product_id)) {
+                                                productsMap.set(nozzle.product_id, {
+                                                    product_id: nozzle.product_id,
+                                                    product_name: nozzle.product_name || 'Unknown',
+                                                    nozzles: []
+                                                });
+                                            }
+                                            productsMap.get(nozzle.product_id).nozzles.push(nozzle);
+                                        });
+
+                                        const productPromises = Array.from(productsMap.values()).map(product => {
+                                            return new Promise(resolve => {
+
+                                                $.ajax({
+                                                    url: getApiUrl(`product-price/${stationId}/${product.product_id}/${shiftStartTime}`),
+                                                    method: "GET",
+                                                    success: function (priceData) {
+
+                                                        const rate = parseFloat(priceData?.price) || 0;
+
+                                                        let totalVolume = 0;
+                                                        let testingAmount = 0;
+                                                        let testingLiters = 0;
+                                                        let resetAmount = 0;
+
+                                                        product.nozzles.forEach(nozzle => {
+
+                                                            const opening = parseFloat($(`.nozzle-opening[name="nozzle_opening[${nozzle.id}]"]`).val()) || 0;
+                                                            const closingInput = $(`.nozzle-closing[name="nozzle_closing[${nozzle.id}]"]`);
+                                                            const closing = parseFloat(closingInput.val()) || 0;
+
+                                                            const testing = parseFloat($(`.nozzle-testing[name="nozzle_testing[${nozzle.id}]"]`).val()) || 0;
+
+                                                            if (!closingInput.val()) return;
+
+                                                            if (closing >= opening) {
+
+                                                                const volume = closing - opening;
+
+                                                                totalVolume += volume;
+
+                                                                testingLiters += testing;
+                                                                testingAmount += testing * rate;
+                                                            }
+                                                        });
+
+                                                        const grossAmount = totalVolume * rate;
+                                                        const nozzleTotal = grossAmount - testingAmount + resetAmount;
+
+                                                        resolve({
+                                                            product_id: product.product_id,
+                                                            product_name: product.product_name,
+                                                            rate: rate,
+                                                            total_volume: totalVolume,
+                                                            nozzle_amount: nozzleTotal,
+                                                            testing_amount: testingAmount,
+                                                            testing_liters: testingLiters
+                                                        });
+                                                    },
+                                                    error: function () {
+                                                        resolve({
+                                                            product_id: product.product_id,
+                                                            product_name: product.product_name,
+                                                            rate: 0,
+                                                            total_volume: 0,
+                                                            nozzle_amount: 0,
+                                                            testing_amount: 0,
+                                                            testing_liters: 0
+                                                        });
+                                                    }
+                                                });
+
+                                            });
+                                        });
+
+                                        Promise.all(productPromises).then(productSummaries => {
+
+                                            // Inside calculateCashFlowSummary, where you calculate cashDebits:
+                                            let cashCredits = 0;
+                                            let cashDebits = window.totalCashExpenses || 0; // Use the global variable
+
+                                            if (Array.isArray(transactions)) {
+                                                transactions.forEach(t => {
+                                                    if (t.method === 'cash') {
+                                                        cashCredits += parseFloat(t.credit) || 0;
+                                                        cashDebits += parseFloat(t.debit) || 0;
+                                                    }
+                                                });
+                                            }
+
+
+
+                                            // ✅ ADDED: Calculate Lubricants
+                                            calculateLubricantsCashTransactions(shiftId).then(lubricantsData => {
+                                                // ✅ ADDED: Calculate Oil Purchases
+                                                calculateOilPurchases(shiftId).then(oilPurchaseData => {
+                                                    // ✅ ADDED: Calculate Shortages
+                                                    calculateShortagesCash(shiftId).then(shortagesData => {
+                                                        // ✅ ADDED: Calculate Driver Credit Cash Payments
+                                                        calculateDriverCreditCashPayments(shiftId).then(driverCreditData => {
+
+                                                            const totalNozzleSales = productSummaries.reduce((s, p) => s + p.nozzle_amount, 0);
+                                                            const totalTestingAmount = productSummaries.reduce((s, p) => s + p.testing_amount, 0);
+                                                            const totalTestingLiters = productSummaries.reduce((s, p) => s + p.testing_liters, 0);
+
+                                                            const netCashTransactions = cashCredits - cashDebits;
+
+                                                            // ✅ GRAND TOTAL MAI DRIVER CREDIT CASH PAYMENTS ADD KARO (POSITIVE)
+                                                            const cashExpensesTotal = getExpensesTotal(); // sirf cash expenses
+                                                            const grandTotal = cashHandover + totalNozzleSales + netCashTransactions + lubricantsData.total - oilPurchaseData.total + shortagesData.total + driverCreditData.total - cashExpensesTotal;
+                                                            renderCashFlowSummary(
+                                                                productSummaries,
+                                                                cashCredits,
+                                                                cashDebits,
+                                                                netCashTransactions,
+                                                                cashHandover,
+                                                                totalNozzleSales,
+                                                                lubricantsData,
+                                                                oilPurchaseData,
+                                                                shortagesData,
+                                                                driverCreditData,  // ✅ NEW PARAMETER
+                                                                grandTotal,
+                                                                totalTestingAmount,
+                                                                totalTestingLiters,
+                                                                cashExpensesTotal  // ✅ NEW
+                                                            );
+
+                                                        }); // driverCreditData close
+                                                    }); // shortagesData close
+                                                }); // oilPurchaseData close
+                                            }); // lubricantsData close
+                                        }); // Promise.all close
+                                    } // transactions success close
+                                }); // transactions ajax close
+                            } // nozzles success close
+                        }); // nozzles ajax close
+                    } // shift success close
+                }); // shift ajax close
+            } // function close
+
+
+            // ✅ COMPLETE CALCULATE CASH FLOW SUMMARY FUNCTION
+            function calculateCashFlowSummary2() {
+                const shiftId = $("#close_shift_id").val();
+                const shiftStartTime = $("#shift_start_time").val();
+
+                if (!shiftId || !shiftStartTime) {
+                    $("#cash_flow_loading").html('<p class="text-muted">Shift data not loaded yet</p>');
+                    return;
+                }
+
+                const endTime = $("#close_end_time").val();
+                if (endTime && !validateEndTime(shiftStartTime, endTime)) {
+                    $("#cash_flow_loading").html('<p class="text-danger">End time must be after start time!</p>');
+                    return;
+                }
+
+                $.ajax({
+                    url: getApiUrl(`shifts/${shiftId}`),
+                    method: "GET",
+                    success: function (shift) {
+                        const stationId = shift.station_id;
+                        const cashHandover = parseFloat(shift.cash_handover) || 0;
+
+                        $.ajax({
+                            url: getApiUrl(`nozzles/station/${stationId}`),
+                            method: "GET",
+                            success: function (nozzles) {
+                                if (!nozzles || nozzles.length === 0) {
+                                    $("#cash_flow_loading").html('<p class="text-muted">No nozzles found</p>');
+                                    return;
+                                }
+
+                                // ✅ FETCH TRANSACTIONS FOR THIS SHIFT
+                                $.ajax({
+                                    url: getApiUrl(`transactions/shift/${shiftId}`),
+                                    method: "GET",
+                                    success: function (transactions) {
+
+                                        // ✅ SEPARATE EXPENSE TRANSACTIONS AND CALCULATE CASH FLOW
+                                        const expenseTransactions = [];
+                                        let cashCredits = 0;
+                                        let cashDebits = 0;
+
+                                        if (Array.isArray(transactions)) {
+                                            transactions.forEach(t => {
+                                                const creditAmt = parseFloat(t.credit) || 0;
+                                                const debitAmt = parseFloat(t.debit) || 0;
+
+                                                // Only consider cash transactions
+                                                if (t.method === 'cash') {
+                                                    cashCredits += creditAmt;
+                                                    cashDebits += debitAmt;
+
+                                                    // Collect expense transactions (where debit > 0)
+                                                    if (debitAmt > 0) {
+                                                        expenseTransactions.push({
+                                                            id: t.id,
+                                                            debit: debitAmt,
+                                                            credit: creditAmt,
+                                                            note: t.note || 'Expense',
+                                                            type: t.type,
+                                                            method: t.method,
+                                                            created_at: t.created_at,
+                                                            account_id: t.account_id
+                                                        });
+                                                    }
+                                                }
+                                            });
+                                        }
+
+                                        const netCashTransactions = cashCredits - cashDebits;
+
+                                        // Process nozzles by product
+                                        const productsMap = new Map();
+
+                                        nozzles.forEach(nozzle => {
+                                            if (!productsMap.has(nozzle.product_id)) {
+                                                productsMap.set(nozzle.product_id, {
+                                                    product_id: nozzle.product_id,
+                                                    product_name: nozzle.product_name || 'Unknown',
+                                                    nozzles: []
+                                                });
+                                            }
+                                            productsMap.get(nozzle.product_id).nozzles.push(nozzle);
+                                        });
+
+                                        const productPromises = Array.from(productsMap.values()).map(product => {
+                                            return new Promise(resolve => {
+                                                $.ajax({
+                                                    url: getApiUrl(`product-price/${stationId}/${product.product_id}/${shiftStartTime}`),
+                                                    method: "GET",
+                                                    success: function (priceData) {
+                                                        const rate = parseFloat(priceData?.price) || 0;
+                                                        let totalVolume = 0;
+                                                        let testingAmount = 0;
+                                                        let testingLiters = 0;
+
+                                                        product.nozzles.forEach(nozzle => {
+                                                            const opening = parseFloat($(`.nozzle-opening[name="nozzle_opening[${nozzle.id}]"]`).val()) || 0;
+                                                            const closingInput = $(`.nozzle-closing[name="nozzle_closing[${nozzle.id}]"]`);
+                                                            const closing = parseFloat(closingInput.val()) || 0;
+                                                            const testing = parseFloat($(`.nozzle-testing[name="nozzle_testing[${nozzle.id}]"]`).val()) || 0;
+
+                                                            if (!closingInput.val()) return;
+
+                                                            if (closing >= opening) {
+                                                                const volume = closing - opening;
+                                                                totalVolume += volume;
+                                                                testingLiters += testing;
+                                                                testingAmount += testing * rate;
+                                                            }
+                                                        });
+
+                                                        const grossAmount = totalVolume * rate;
+                                                        const nozzleTotal = grossAmount - testingAmount;
+
+                                                        resolve({
+                                                            product_id: product.product_id,
+                                                            product_name: product.product_name,
+                                                            rate: rate,
+                                                            total_volume: totalVolume,
+                                                            nozzle_amount: nozzleTotal,
+                                                            testing_amount: testingAmount,
+                                                            testing_liters: testingLiters
+                                                        });
+                                                    },
+                                                    error: function () {
+                                                        resolve({
+                                                            product_id: product.product_id,
+                                                            product_name: product.product_name,
+                                                            rate: 0,
+                                                            total_volume: 0,
+                                                            nozzle_amount: 0,
+                                                            testing_amount: 0,
+                                                            testing_liters: 0
+                                                        });
+                                                    }
+                                                });
+                                            });
+                                        });
+
+                                        Promise.all(productPromises).then(productSummaries => {
+                                            // Calculate lubricants
+                                            calculateLubricantsCashTransactions(shiftId).then(lubricantsData => {
+                                                // Calculate oil purchases
+                                                calculateOilPurchases(shiftId).then(oilPurchaseData => {
+                                                    // Calculate shortages
+                                                    calculateShortagesCash(shiftId).then(shortagesData => {
+                                                        // Calculate driver credit cash payments
+                                                        calculateDriverCreditCashPayments(shiftId).then(driverCreditData => {
+
+                                                            const totalNozzleSales = productSummaries.reduce((s, p) => s + p.nozzle_amount, 0);
+                                                            const totalTestingAmount = productSummaries.reduce((s, p) => s + p.testing_amount, 0);
+                                                            const totalTestingLiters = productSummaries.reduce((s, p) => s + p.testing_liters, 0);
+
+                                                            // ✅ GRAND TOTAL CALCULATION
+                                                            const grandTotal = cashHandover +
+                                                                totalNozzleSales +
+                                                                netCashTransactions +
+                                                                lubricantsData.total -
+                                                                oilPurchaseData.total +
+                                                                shortagesData.total +
+                                                                driverCreditData.total;
+
+                                                            // ✅ RENDER WITH EXPENSE TRANSACTIONS
+                                                            renderCashFlowSummary(
+                                                                productSummaries,
+                                                                cashCredits,
+                                                                cashDebits,
+                                                                netCashTransactions,
+                                                                cashHandover,
+                                                                totalNozzleSales,
+                                                                lubricantsData,
+                                                                oilPurchaseData,
+                                                                shortagesData,
+                                                                driverCreditData,
+                                                                grandTotal,
+                                                                totalTestingAmount,
+                                                                totalTestingLiters,
+                                                                expenseTransactions  // ✅ PASS EXPENSE TRANSACTIONS
+                                                            );
+
+                                                        }); // driverCreditData close
+                                                    }); // shortagesData close
+                                                }); // oilPurchaseData close
+                                            }); // lubricantsData close
+                                        }); // Promise.all close
+                                    }, // transactions success close
+                                    error: function (xhr) {
+                                        console.error("Error fetching transactions:", xhr.responseText);
+                                        $("#cash_flow_loading").html('<p class="text-danger">Error loading transactions</p>');
+                                    }
+                                }); // transactions ajax close
+                            }, // nozzles success close
+                            error: function (xhr) {
+                                console.error("Error loading nozzles:", xhr.responseText);
+                                $("#cash_flow_loading").html('<p class="text-danger">Error loading nozzles</p>');
+                            }
+                        }); // nozzles ajax close
+                    }, // shift success close
+                    error: function (xhr) {
+                        console.error("Error fetching shift details:", xhr.responseText);
+                        $("#cash_flow_loading").html('<p class="text-danger">Error loading shift details</p>');
+                    }
+                }); // shift ajax close
             }
 
-            const volumeDisplay = product.total_volume > 0 ? `${product.total_volume.toFixed(2)} L` : `0.00 L`;
-            const testingLiters = product.testing_liters ? product.testing_liters.toFixed(2) : '0.00';
-            const testingAmount = product.testing_amount ? product.testing_amount.toFixed(2) : '0.00';
-            const amountDisplay = product.nozzle_amount ? product.nozzle_amount.toFixed(2) : '0.00';
+            // ✅ UPDATED RENDER FUNCTION WITH EXPENSE TRANSACTIONS
+            function renderCashFlowSummary2(
+                productSummaries,
+                cashCredits,
+                cashDebits,
+                netCashTransactions,
+                cashHandover,
+                totalNozzleSales,
+                lubricantsData,
+                oilPurchaseData,
+                shortagesData,
+                driverCreditData,
+                grandTotal,
+                totalTestingAmount,
+                totalTestingLiters,
+                expenseTransactions, cashExpensesTotal   // ✅ NEW PARAMETER
+            ) {
+                const container = $("#product_summary_body");
+                container.empty();
 
-            container.append(`
-                <tr>
-                    <td>${displayText}</td>
-                    <td>${product.rate.toFixed(2)}</td>
-                    <td>${volumeDisplay}</td>
-                    <td>${testingLiters}</td>
-                    <td>${testingAmount}</td>
-                    <td>${amountDisplay}</td>
-                </tr>
-            `);
-        }
-    });
+                let hasSales = false;
+                let rowNumber = 1;
 
-    // ✅ No sales fallback
-    if (!hasSales) {
-        container.append(`
-            <tr>
-                <td colspan="6" class="text-center text-muted">
-                    <i class="bi bi-info-circle me-2"></i>
-                    No nozzle sales recorded (fill nozzle closing readings)
-                </td>
-            </tr>
-        `);
-    }
+                const sortedProducts = productSummaries.sort((a, b) => {
+                    return a.product_name.localeCompare(b.product_name);
+                });
 
-    // ✅ 2. Opening Cash Handover
-    container.append(`
-        <tr class="table-primary">
-            <td colspan="5" class="text-end"><strong>${rowNumber++}. Opening Cash Handover:</strong></td>
-            <td><strong>${cashHandover.toFixed(2)}</strong></td>
-        </tr>
-    `);
+                // ✅ 1. Product Rows
+                sortedProducts.forEach(product => {
+                    if (product.nozzle_amount > 0) {
+                        hasSales = true;
 
-    // ✅ 3. Total Nozzle Sales
-    container.append(`
-        <tr class="table-secondary">
-            <td colspan="5" class="text-end"><strong>${rowNumber++}. Total Nozzle Sales:</strong></td>
-            <td><strong>${totalNozzleSales.toFixed(2)}</strong></td>
-        </tr>
-    `);
+                        let displayText = `${product.product_name}`;
+                        if (product.reset_amount > 0) {
+                            displayText += `<br><small class="text-success">(Reset: ${product.reset_amount.toFixed(2)})</small>`;
+                        }
 
-    // ✅ 4. Lubricants
-    if (lubricantsData && lubricantsData.total !== 0) {
-        const sign = lubricantsData.total >= 0 ? '+' : '';
-        container.append(`
-            <tr class="table-info">
-                <td colspan="5" class="text-end"><strong>${rowNumber++}. Lubricants Cash:</strong></td>
-                <td><strong>${sign}${lubricantsData.total.toFixed(2)}</strong></td>
-            </tr>
-        `);
-    }
+                        const volumeDisplay = product.total_volume > 0 ? `${product.total_volume.toFixed(2)} L` : `0.00 L`;
+                        const testingLiters = product.testing_liters ? product.testing_liters.toFixed(2) : '0.00';
+                        const testingAmount = product.testing_amount ? product.testing_amount.toFixed(2) : '0.00';
+                        const amountDisplay = product.nozzle_amount ? product.nozzle_amount.toFixed(2) : '0.00';
 
-    // ✅ 5. Oil Purchases
-    if (oilPurchaseData && oilPurchaseData.total !== 0) {
-        container.append(`
-            <tr class="table-danger">
-                <td colspan="5" class="text-end"><strong>${rowNumber++}. Oil Purchases:</strong></td>
-                <td><strong>-${oilPurchaseData.total.toFixed(2)}</strong></td>
-            </tr>
-        `);
-    }
-
-    // ✅ 6. Shortages
-    if (shortagesData && shortagesData.total > 0) {
-        container.append(`
-            <tr class="table-success">
-                <td colspan="5" class="text-end"><strong>${rowNumber++}. Shortages Cash Received:</strong></td>
-                <td><strong>+${shortagesData.total.toFixed(2)}</strong></td>
-            </tr>
-        `);
-    }
-
-    // ✅ 7. Driver Credit Cash Payments
-    if (driverCreditData && driverCreditData.total > 0) {
-        container.append(`
-            <tr class="table-warning">
-                <td colspan="5" class="text-end"><strong>${rowNumber++}. Driver Credit Cash Received:</strong></td>
-                <td><strong>+${driverCreditData.total.toFixed(2)}</strong></td>
-            </tr>
-        `);
-    }
-
-    // ✅ 8. EXPENSE TRANSACTIONS SECTION
-    if (expenseTransactions && expenseTransactions.length > 0) {
-        // Add expense header
-        container.append(`
-            <tr class="table-danger">
-                <td colspan="6" class="text-danger"><strong>📋 EXPENSES (Cash Payments)</strong></td>
-            </tr>
-        `);
-        
-        let totalExpenses = 0;
-        
-        // Add each expense transaction
-        expenseTransactions.forEach((expense, index) => {
-            const expenseAmount = parseFloat(expense.debit) || 0;
-            if (expenseAmount > 0) {
-                totalExpenses += expenseAmount;
-                container.append(`
-                    <tr class="table-light">
-                        <td colspan="4" class="text-end">
-                            <small>
-                                <strong>${index + 1}.</strong> ${expense.note || 'Expense'}
-                                <br>
-                                <span class="text-muted">${expense.created_at ? new Date(expense.created_at).toLocaleString() : ''}</span>
-                            </small>
-                        </td>
-                        <td class="text-end"><strong>Amount:</strong></td>
-                        <td class="text-danger"><strong>-${expenseAmount.toFixed(2)}</strong></td>
+                        container.append(`
+                    <tr>
+                        <td>${displayText}</td>
+                        <td>${product.rate.toFixed(2)}</td>
+                        <td>${volumeDisplay}</td>
+                        <td>${testingLiters}</td>
+                        <td>${testingAmount}</td>
+                        <td>${amountDisplay}</td>
                     </tr>
                 `);
-            }
-        });
-        
-        // Add total expenses row
-        container.append(`
-            <tr class="table-danger">
-                <td colspan="5" class="text-end"><strong>Total Expenses:</strong></td>
-                <td><strong class="text-danger">-${totalExpenses.toFixed(2)}</strong></td>
-            </tr>
-        `);
-    }
+                    }
+                });
 
-    // ✅ 9. Cash Income Transactions (credits)
-    if (cashCredits > 0) {
-        container.append(`
-            <tr class="table-success">
-                <td colspan="5" class="text-end"><strong>${rowNumber++}. ➕ Cash Income:</strong></td>
-                <td><strong>${cashCredits.toFixed(2)}</strong></td>
-            </tr>
-        `);
-    }
-
-    // ✅ 10. Net Cash Transactions
-    if ((cashCredits > 0 || cashDebits > 0) && netCashTransactions !== 0) {
-        container.append(`
-            <tr class="table-secondary">
-                <td colspan="5" class="text-end"><strong>${rowNumber++}. Net Cash Transactions:</strong></td>
-                <td><strong>${netCashTransactions.toFixed(2)}</strong></td>
-            </tr>
-        `);
-    }
-
-    // ✅ 11. FINAL TOTAL
-    container.append(`
-        <tr class="table-dark">
-            <td colspan="5" class="text-end"><strong>💵 TOTAL AVAILABLE CASH:</strong></td>
-            <td><strong>${grandTotal.toFixed(2)}</strong></td>
-        </tr>
-    `);
-
-    // Update footer and other fields
-    $("#grand_total_amount").text(grandTotal.toFixed(2));
-
-    $("#cash_flow_loading").hide();
-    $("#cash_flow_summary").show();
-    $('#total_cash').val(grandTotal.toFixed(2));
-    autoCalculateDistribution(grandTotal);
-
-    $('#fuel_card').val('0');
-    $('#credit_card').val('0');
-    updateCreditSales();
-}
-            // ✅ Render Cash Flow Summary with LUBRICANTS - UPDATED
-// ✅ Render Cash Flow Summary with DRIVER CREDIT CASH
-// ✅ Render Cash Flow Summary with DRIVER CREDIT CASH - WITH PROPER CONDITIONS
-function renderCashFlowSummary(
-    productSummaries,
-    cashCredits,
-    cashDebits,
-    netCashTransactions,
-    cashHandover,
-    totalNozzleSales,
-    lubricantsData,
-    oilPurchaseData,
-    shortagesData,
-    driverCreditData,
-    grandTotal
-) {
-    const container = $("#product_summary_body");
-    container.empty();
-
-    let hasSales = false;
-    let rowNumber = 1;
-
-    const sortedProducts = productSummaries.sort((a, b) => {
-        return a.product_name.localeCompare(b.product_name);
-    });
-
-    // ✅ 1. Product Rows
-    sortedProducts.forEach(product => {
-        if (product.nozzle_amount > 0) {
-            hasSales = true;
-
-            let displayText = `${product.product_name}`;
-            if (product.reset_amount > 0) {
-                displayText += `<br><small class="text-success">(Reset: ${product.reset_amount.toFixed(2)})</small>`;
-            }
-
-            const volumeDisplay = product.total_volume > 0 ? `${product.total_volume.toFixed(2)} L` : `0.00 L`;
-            const testingLiters = product.testing_liters ? product.testing_liters.toFixed(2) : '0.00';
-            const testingAmount = product.testing_amount ? product.testing_amount.toFixed(2) : '0.00';
-            const amountDisplay = product.nozzle_amount ? product.nozzle_amount.toFixed(2) : '0.00';
-
-            container.append(`
+                // ✅ No sales fallback
+                if (!hasSales) {
+                    container.append(`
                 <tr>
-                    <td>${displayText}</td>
-                    <td>${product.rate.toFixed(2)}</td>
-                    <td>${volumeDisplay}</td>
-                    <td>${testingLiters}</td>
-                    <td>${testingAmount}</td>
-                    <td>${amountDisplay}</td>
+                    <td colspan="6" class="text-center text-muted">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No nozzle sales recorded (fill nozzle closing readings)
+                    </td>
                 </tr>
             `);
-        }
-    });
+                }
 
-    // ✅ No sales fallback
-    if (!hasSales) {
-        container.append(`
-            <tr>
-                <td colspan="6" class="text-center text-muted">
-                    <i class="bi bi-info-circle me-2"></i>
-                    No nozzle sales recorded (fill nozzle closing readings)
-                </td>
+                // ✅ 2. Opening Cash Handover
+                container.append(`
+            <tr class="table-primary">
+                <td colspan="5" class="text-end"><strong>${rowNumber++}. Opening Cash Handover:</strong></td>
+                <td><strong>${cashHandover.toFixed(2)}</strong></td>
             </tr>
         `);
-    }
 
-    // ✅ 2. Opening Cash Handover (ALWAYS SHOW)
-    container.append(`
-        <tr class="table-primary">
-            <td colspan="5" class="text-end"><strong>${rowNumber++}. Opening Cash Handover:</strong></td>
-            <td><strong>${cashHandover.toFixed(2)}</strong></td>
-        </tr>
-    `);
-
-    // ✅ 3. Total Nozzle Sales (ALWAYS SHOW)
-    container.append(`
-        <tr class="table-secondary">
-            <td colspan="5" class="text-end"><strong>${rowNumber++}. Total Nozzle Sales:</strong></td>
-            <td><strong>${totalNozzleSales.toFixed(2)}</strong></td>
-        </tr>
-    `);
-
-    // ✅ 4. Lubricants - ONLY SHOW IF VALUE EXISTS AND NOT ZERO
-    if (lubricantsData && lubricantsData.total !== 0) {
-        const sign = lubricantsData.total >= 0 ? '+' : '';
-        container.append(`
-            <tr class="table-info">
-                <td colspan="5" class="text-end"><strong>${rowNumber++}. Lubricants Cash:</strong></td>
-                <td><strong>${sign}${lubricantsData.total.toFixed(2)}</strong></td>
+                // ✅ 3. Total Nozzle Sales
+                container.append(`
+            <tr class="table-secondary">
+                <td colspan="5" class="text-end"><strong>${rowNumber++}. Total Nozzle Sales:</strong></td>
+                <td><strong>${totalNozzleSales.toFixed(2)}</strong></td>
             </tr>
         `);
-    }
 
-    // ✅ 5. Oil Purchases - ONLY SHOW IF VALUE EXISTS AND NOT ZERO
-    if (oilPurchaseData && oilPurchaseData.total !== 0) {
-        container.append(`
-            <tr class="table-danger">
-                <td colspan="5" class="text-end"><strong>${rowNumber++}. Oil Purchases:</strong></td>
-                <td><strong>-${oilPurchaseData.total.toFixed(2)}</strong></td>
-            </tr>
-        `);
-    }
+                // ✅ 4. Lubricants
+                if (lubricantsData && lubricantsData.total !== 0) {
+                    const sign = lubricantsData.total >= 0 ? '+' : '';
+                    container.append(`
+                <tr class="table-info">
+                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Lubricants Cash:</strong></td>
+                    <td><strong>${sign}${lubricantsData.total.toFixed(2)}</strong></td>
+                </tr>
+            `);
+                }
 
-    // ✅ 6. Shortages - ONLY SHOW IF VALUE EXISTS AND NOT ZERO
-    if (shortagesData && shortagesData.total > 0) {
-        container.append(`
-            <tr class="table-success">
-                <td colspan="5" class="text-end"><strong>${rowNumber++}. Shortages Cash Received:</strong></td>
-                <td><strong>+${shortagesData.total.toFixed(2)}</strong></td>
-            </tr>
-        `);
-    }
+                // ✅ 5. Oil Purchases
+                if (oilPurchaseData && oilPurchaseData.total !== 0) {
+                    container.append(`
+                <tr class="table-danger">
+                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Oil Purchases:</strong></td>
+                    <td><strong>-${oilPurchaseData.total.toFixed(2)}</strong></td>
+                </tr>
+            `);
+                }
 
-    // ✅ 7. DRIVER CREDIT CASH PAYMENTS - ONLY SHOW IF VALUE EXISTS AND NOT ZERO
-    if (driverCreditData && driverCreditData.total > 0) {
-        container.append(`
-            <tr class="table-warning">
-                <td colspan="5" class="text-end"><strong>${rowNumber++}. Driver Credit Cash Received:</strong></td>
-                <td><strong>+${driverCreditData.total.toFixed(2)}</strong></td>
-            </tr>
-        `);
-    }
+                // ✅ 6. Shortages
+                if (shortagesData && shortagesData.total > 0) {
+                    container.append(`
+                <tr class="table-success">
+                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Shortages Cash Received:</strong></td>
+                    <td><strong>+${shortagesData.total.toFixed(2)}</strong></td>
+                </tr>
+            `);
+                }
 
-    // ✅ 8. Cash Transactions - ONLY SHOW IF THERE ARE TRANSACTIONS
-    if ((cashCredits > 0 || cashDebits > 0) && netCashTransactions !== 0) {
+                // ✅ 7. Driver Credit Cash Payments
+                if (driverCreditData && driverCreditData.total > 0) {
+                    container.append(`
+                <tr class="table-warning">
+                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Driver Credit Cash Received:</strong></td>
+                    <td><strong>+${driverCreditData.total.toFixed(2)}</strong></td>
+                </tr>
+            `);
+                }
 
-        if (cashCredits > 0) {
-            container.append(`
+                // ✅ 8. EXPENSE TRANSACTIONS SECTION
+                if (expenseTransactions && expenseTransactions.length > 0) {
+                    // Add expense header
+                    container.append(`
+                <tr class="table-danger">
+                    <td colspan="6" class="text-danger"><strong>📋 EXPENSES (Cash Payments)</strong></td>
+                </tr>
+            `);
+
+                    let totalExpenses = 0;
+
+                    // Add each expense transaction
+                    expenseTransactions.forEach((expense, index) => {
+                        const expenseAmount = parseFloat(expense.debit) || 0;
+                        if (expenseAmount > 0) {
+                            totalExpenses += expenseAmount;
+                            container.append(`
+                        <tr class="table-light">
+                            <td colspan="4" class="text-end">
+                                <small>
+                                    <strong>${index + 1}.</strong> ${expense.note || 'Expense'}
+                                    <br>
+                                    <span class="text-muted">${expense.created_at ? new Date(expense.created_at).toLocaleString() : ''}</span>
+                                </small>
+                            </td>
+                            <td class="text-end"><strong>Amount:</strong></td>
+                            <td class="text-danger"><strong>-${expenseAmount.toFixed(2)}</strong></td>
+                        </tr>
+                    `);
+                        }
+                    });
+
+                    // Add total expenses row
+                    container.append(`
+                <tr class="table-danger">
+                    <td colspan="5" class="text-end"><strong>Total Expenses:</strong></td>
+                    <td><strong class="text-danger">-${totalExpenses.toFixed(2)}</strong></td>
+                </tr>
+            `);
+                }
+
+                // ✅ 9. Cash Income Transactions (credits)
+                if (cashCredits > 0) {
+                    container.append(`
                 <tr class="table-success">
                     <td colspan="5" class="text-end"><strong>${rowNumber++}. ➕ Cash Income:</strong></td>
                     <td><strong>${cashCredits.toFixed(2)}</strong></td>
                 </tr>
             `);
-        }
+                }
 
-        if (cashDebits > 0) {
-            container.append(`
-                <tr class="table-danger">
-                    <td colspan="5" class="text-end"><strong>${rowNumber++}. ➖ Cash Expenses:</strong></td>
-                    <td><strong>-${cashDebits.toFixed(2)}</strong></td>
+                // ✅ 10. Net Cash Transactions
+                if ((cashCredits > 0 || cashDebits > 0) && netCashTransactions !== 0) {
+                    container.append(`
+                <tr class="table-secondary">
+                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Net Cash Transactions:</strong></td>
+                    <td><strong>${netCashTransactions.toFixed(2)}</strong></td>
                 </tr>
             `);
-        }
+                }
 
-        container.append(`
-            <tr class="table-secondary">
-                <td colspan="5" class="text-end"><strong>${rowNumber++}. Net Cash Transactions:</strong></td>
-                <td><strong>${netCashTransactions.toFixed(2)}</strong></td>
+                // ✅ 11. FINAL TOTAL
+                container.append(`
+            <tr class="table-dark">
+                <td colspan="5" class="text-end"><strong>💵 TOTAL AVAILABLE CASH:</strong></td>
+                <td><strong>${grandTotal.toFixed(2)}</strong></td>
             </tr>
         `);
-    }
 
-    // ✅ 9. FINAL TOTAL (ALWAYS SHOW)
-    container.append(`
-        <tr class="table-dark">
-            <td colspan="5" class="text-end"><strong>💵 TOTAL AVAILABLE CASH:</strong></td>
-            <td><strong>${grandTotal.toFixed(2)}</strong></td>
-        </tr>
-    `);
+                // Update footer and other fields
+                $("#grand_total_amount").text(grandTotal.toFixed(2));
 
-    // ✅ Update footer and other fields
-    $("#grand_total_amount").text(grandTotal.toFixed(2));
+                $("#cash_flow_loading").hide();
+                $("#cash_flow_summary").show();
+                $('#total_cash').val(grandTotal.toFixed(2));
+                autoCalculateDistribution(grandTotal);
 
-    $("#cash_flow_loading").hide();
-    $("#cash_flow_summary").show();
-    $('#total_cash').val(grandTotal.toFixed(2));
-    autoCalculateDistribution(grandTotal);
+                $('#fuel_card').val('0');
+                $('#credit_card').val('0');
+                updateCreditSales();
+            }
+            // ✅ Render Cash Flow Summary with LUBRICANTS - UPDATED
+            // ✅ Render Cash Flow Summary with DRIVER CREDIT CASH
+            // ✅ Render Cash Flow Summary with DRIVER CREDIT CASH - WITH PROPER CONDITIONS
+            function renderCashFlowSummary(
+                productSummaries,
+                cashCredits,
+                cashDebits,
+                netCashTransactions,
+                cashHandover,
+                totalNozzleSales,
+                lubricantsData,
+                oilPurchaseData,
+                shortagesData,
+                driverCreditData,
+                grandTotal
+            ) {
+                const container = $("#product_summary_body");
+                container.empty();
 
-    $('#fuel_card').val('0');
-    $('#credit_card').val('0');
-    updateCreditSales();
-}
+                let hasSales = false;
+                let rowNumber = 1;
+
+                const sortedProducts = productSummaries.sort((a, b) => {
+                    return a.product_name.localeCompare(b.product_name);
+                });
+
+                // ✅ 1. Product Rows
+                sortedProducts.forEach(product => {
+                    if (product.nozzle_amount > 0) {
+                        hasSales = true;
+
+                        let displayText = `${product.product_name}`;
+                        if (product.reset_amount > 0) {
+                            displayText += `<br><small class="text-success">(Reset: ${product.reset_amount.toFixed(2)})</small>`;
+                        }
+
+                        const volumeDisplay = product.total_volume > 0 ? `${product.total_volume.toFixed(2)} L` : `0.00 L`;
+                        const testingLiters = product.testing_liters ? product.testing_liters.toFixed(2) : '0.00';
+                        const testingAmount = product.testing_amount ? product.testing_amount.toFixed(2) : '0.00';
+                        const amountDisplay = product.nozzle_amount ? product.nozzle_amount.toFixed(2) : '0.00';
+
+                        container.append(`
+                    <tr>
+                        <td>${displayText}</td>
+                        <td>${product.rate.toFixed(2)}</td>
+                        <td>${volumeDisplay}</td>
+                        <td>${testingLiters}</td>
+                        <td>${testingAmount}</td>
+                        <td>${amountDisplay}</td>
+                    </tr>
+                `);
+                    }
+                });
+
+                // ✅ No sales fallback
+                if (!hasSales) {
+                    container.append(`
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No nozzle sales recorded (fill nozzle closing readings)
+                    </td>
+                </tr>
+            `);
+                }
+
+                // ✅ 2. Opening Cash Handover (ALWAYS SHOW)
+                container.append(`
+            <tr class="table-primary">
+                <td colspan="5" class="text-end"><strong>${rowNumber++}. Opening Cash Handover:</strong></td>
+                <td><strong>${cashHandover.toFixed(2)}</strong></td>
+            </tr>
+        `);
+
+                // ✅ 3. Total Nozzle Sales (ALWAYS SHOW)
+                container.append(`
+            <tr class="table-secondary">
+                <td colspan="5" class="text-end"><strong>${rowNumber++}. Total Nozzle Sales:</strong></td>
+                <td><strong>${totalNozzleSales.toFixed(2)}</strong></td>
+            </tr>
+        `);
+
+                // ✅ 4. Lubricants - ONLY SHOW IF VALUE EXISTS AND NOT ZERO
+                if (lubricantsData && lubricantsData.total !== 0) {
+                    const sign = lubricantsData.total >= 0 ? '+' : '';
+                    container.append(`
+                <tr class="table-info">
+                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Lubricants Cash:</strong></td>
+                    <td><strong>${sign}${lubricantsData.total.toFixed(2)}</strong></td>
+                </tr>
+            `);
+                }
+
+                // ✅ 5. Oil Purchases - ONLY SHOW IF VALUE EXISTS AND NOT ZERO
+                if (oilPurchaseData && oilPurchaseData.total !== 0) {
+                    container.append(`
+                <tr class="table-danger">
+                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Oil Purchases:</strong></td>
+                    <td><strong>-${oilPurchaseData.total.toFixed(2)}</strong></td>
+                </tr>
+            `);
+                }
+
+                // ✅ 6. Shortages - ONLY SHOW IF VALUE EXISTS AND NOT ZERO
+                if (shortagesData && shortagesData.total > 0) {
+                    container.append(`
+                <tr class="table-success">
+                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Shortages Cash Received:</strong></td>
+                    <td><strong>+${shortagesData.total.toFixed(2)}</strong></td>
+                </tr>
+            `);
+                }
+
+                // ✅ 7. DRIVER CREDIT CASH PAYMENTS - ONLY SHOW IF VALUE EXISTS AND NOT ZERO
+                if (driverCreditData && driverCreditData.total > 0) {
+                    container.append(`
+                <tr class="table-warning">
+                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Driver Credit Cash Received:</strong></td>
+                    <td><strong>+${driverCreditData.total.toFixed(2)}</strong></td>
+                </tr>
+            `);
+                }
+
+                // ✅ 8. Cash Transactions - ONLY SHOW IF THERE ARE TRANSACTIONS
+                if ((cashCredits > 0 || cashDebits > 0) && netCashTransactions !== 0) {
+
+                    if (cashCredits > 0) {
+                        container.append(`
+                    <tr class="table-success">
+                        <td colspan="5" class="text-end"><strong>${rowNumber++}. ➕ Cash Income:</strong></td>
+                        <td><strong>${cashCredits.toFixed(2)}</strong></td>
+                    </tr>
+                `);
+                    }
+
+                    if (cashDebits > 0) {
+                        container.append(`
+                    <tr class="table-danger">
+                        <td colspan="5" class="text-end"><strong>${rowNumber++}. ➖ Cash Expenses:</strong></td>
+                        <td><strong>-${cashDebits.toFixed(2)}</strong></td>
+                    </tr>
+                `);
+                    }
+
+                    container.append(`
+                <tr class="table-secondary">
+                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Net Cash Transactions:</strong></td>
+                    <td><strong>${netCashTransactions.toFixed(2)}</strong></td>
+                </tr>
+            `);
+                }
+
+                // ✅ 9. FINAL TOTAL (ALWAYS SHOW)
+                container.append(`
+            <tr class="table-dark">
+                <td colspan="5" class="text-end"><strong>💵 TOTAL AVAILABLE CASH:</strong></td>
+                <td><strong>${grandTotal.toFixed(2)}</strong></td>
+            </tr>
+        `);
+
+                // ✅ Update footer and other fields
+                $("#grand_total_amount").text(grandTotal.toFixed(2));
+
+                $("#cash_flow_loading").hide();
+                $("#cash_flow_summary").show();
+                $('#total_cash').val(grandTotal.toFixed(2));
+                autoCalculateDistribution(grandTotal);
+
+                $('#fuel_card').val('0');
+                $('#credit_card').val('0');
+                updateCreditSales();
+            }
 
             // ✅ Auto-calculate cash flow summary when closing reading changes
             $(document).on("input", ".nozzle-closing", function () {
@@ -2655,69 +2656,55 @@ function renderCashFlowSummary(
 
             // ✅ LOAD STATIONS FOR CREDIT DRIVER
             function loadStationsForCreditDriver() {
-    const shiftId = $("#close_shift_id").val();
-    
-    if (!shiftId) {
-        console.log("No shift ID found");
-        return;
-    }
-    
-    // First get shift to know current station
-    $.ajax({
-        url: getApiUrl(`shifts/${shiftId}`),
-        method: "GET",
-        success: function (shift) {
-            const currentStationId = shift.station_id;
-            console.log("Current station ID from shift:", currentStationId);
-            
-            // Directly get station details by ID
-            $.ajax({
-                url: `/api/stationss/${currentStationId}`,
-                method: "GET",
-                success: function (station) {
-                    console.log("Station loaded:", station);
-                    
-                    if (!station) {
-                        console.log("No station found");
-                        return;
-                    }
-                    
-                    // Create an array with this single station
-                    const stationsArray = [station];
-                    
-                    // Load stations for ALL existing forms
-                    $(".credit-station-select").each(function () {
-                        const $select = $(this);
-                        const currentValue = $select.val();
-                        
-                        $select.empty().append('<option value="">Select Station...</option>');
-                        
-                        stationsArray.forEach(st => {
-                            const selected = (st.id == currentStationId) ? 'selected' : '';
-                            $select.append(`<option value="${st.id}" ${selected}>${st.name}</option>`);
-                        });
-                        
-                        if (currentValue && currentValue !== "") {
-                            $select.val(currentValue);
-                        }
-                        
-                        // Trigger change to load customers
-                        if ($select.val()) {
-                            $select.trigger('change');
-                        }
-                    });
-                },
-                error: function (xhr) {
-                    console.error("Error loading station:", xhr.responseText);
-                    showToast("Error loading station!", "error");
+                const shiftId = $("#close_shift_id").val();
+
+                if (!shiftId) {
+                    console.log("No shift ID found");
+                    return;
                 }
-            });
-        },
-        error: function (xhr) {
-            console.error("Error loading shift:", xhr.responseText);
-        }
-    });
-}
+
+                // First get shift to know current station
+                $.ajax({
+                    url: getApiUrl(`shifts/${shiftId}`),
+                    method: "GET",
+                    success: function (shift) {
+                        const currentStationId = shift.station_id;
+                        console.log("Current station ID from shift:", currentStationId);
+
+                        // ✅ CORRECT ENDPOINT: Use stationss/{id} (double s)
+                        $.ajax({
+                            url: `/api/stationss/${currentStationId}`,
+                            method: "GET",
+                            success: function (station) {
+                                console.log("Station loaded:", station);
+
+                                if (!station || station.length === 0) {
+                                    console.log("No station found");
+                                    return;
+                                }
+
+                                // ✅ Station mil gaya - ab dropdown mein daalo
+                                $(".credit-station-select").each(function () {
+                                    const $select = $(this);
+                                    $select.empty();
+                                    $select.append(`<option value="${station.id}" selected>${station.name}</option>`);
+
+                                    // Trigger change to load customers
+                                    $select.trigger('change');
+                                });
+                            },
+                            error: function (xhr) {
+                                console.error("Error loading station:", xhr.responseText);
+                                showToast("Error loading station!", "error");
+                            }
+                        });
+                    },
+                    error: function (xhr) {
+                        console.error("Error loading shift:", xhr.responseText);
+                    }
+                });
+            }
+
 
 
 
@@ -2815,181 +2802,181 @@ function renderCashFlowSummary(
 
             // ✅ ADD DRIVER CREDIT FORM
             function addDriverCreditForm() {
-    const formNumber = $(".driver-credit-form").length + 1;
-    const uniqueRadioName = `amount_given_to_${formNumber}`;
+                const formNumber = $(".driver-credit-form").length + 1;
+                const uniqueRadioName = `amount_given_to_${formNumber}`;
 
-    const formHtml = `
-        <div class="driver-credit-form mb-4 p-3 border rounded" style="display: block !important;">
-            <div class="row">
-                <div class="col-md-12 mb-3">
-                    <h6 class="text-primary">Driver Credit Entry <span class="form-number">#${formNumber}</span>
-                        <button type="button" class="btn btn-danger btn-sm float-end remove-driver-form">
-                            <i class="bi bi-trash"></i> Remove
-                        </button>
-                    </h6>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label required-label">Station</label>
-                    <select class="form-control credit-station-select" required>
-                        <option value="">Select Station...</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label required-label">Customer</label>
-                    <select class="form-control credit-customer-select" required>
-                        <option value="">Select Customer...</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label required-label">Amount Given To</label>
-                    <div class="mt-2">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input amount-given-to" type="radio" 
-                                name="${uniqueRadioName}" value="Driver" checked>
-                            <label class="form-check-label">Driver</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input amount-given-to" type="radio" 
-                                name="${uniqueRadioName}" value="Vehicle">
-                            <label class="form-check-label">Vehicle</label>
+                const formHtml = `
+            <div class="driver-credit-form mb-4 p-3 border rounded" style="display: block !important;">
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <h6 class="text-primary">Driver Credit Entry <span class="form-number">#${formNumber}</span>
+                            <button type="button" class="btn btn-danger btn-sm float-end remove-driver-form">
+                                <i class="bi bi-trash"></i> Remove
+                            </button>
+                        </h6>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label required-label">Station</label>
+                        <select class="form-control credit-station-select" required>
+                            <option value="">Select Station...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label required-label">Customer</label>
+                        <select class="form-control credit-customer-select" required>
+                            <option value="">Select Customer...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label required-label">Amount Given To</label>
+                        <div class="mt-2">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input amount-given-to" type="radio" 
+                                    name="${uniqueRadioName}" value="Driver" checked>
+                                <label class="form-check-label">Driver</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input amount-given-to" type="radio" 
+                                    name="${uniqueRadioName}" value="Vehicle">
+                                <label class="form-check-label">Vehicle</label>
+                            </div>
                         </div>
                     </div>
+                    <div class="col-md-3">
+                        <label class="form-label required-label">Amount</label>
+                        <input type="number" class="form-control credit-amount" step="0.01" min="0" placeholder="0.00" required>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label required-label">Amount</label>
-                    <input type="number" class="form-control credit-amount" step="0.01" min="0" placeholder="0.00" required>
+                <div class="row mt-2 driver-cnic-section" style="display: block;">
+                    <div class="col-md-4">
+                        <label class="form-label required-label">Driver CNIC</label>
+                        <input type="text" class="form-control credit-cnic" placeholder="Enter 13-digit CNIC" maxlength="13">
+                        <small class="text-muted">13 digits without dashes</small>
+                    </div>
+                </div>
+                <div class="row mt-2 vehicle-number-section" style="display: none;">
+                    <div class="col-md-4">
+                        <label class="form-label required-label">Vehicle Number</label>
+                        <input type="text" class="form-control credit-vehicle-number" placeholder="Enter vehicle number">
+                    </div>
                 </div>
             </div>
-            <div class="row mt-2 driver-cnic-section" style="display: block;">
-                <div class="col-md-4">
-                    <label class="form-label required-label">Driver CNIC</label>
-                    <input type="text" class="form-control credit-cnic" placeholder="Enter 13-digit CNIC" maxlength="13">
-                    <small class="text-muted">13 digits without dashes</small>
-                </div>
-            </div>
-            <div class="row mt-2 vehicle-number-section" style="display: none;">
-                <div class="col-md-4">
-                    <label class="form-label required-label">Vehicle Number</label>
-                    <input type="text" class="form-control credit-vehicle-number" placeholder="Enter vehicle number">
-                </div>
-            </div>
-        </div>
-    `;
+        `;
 
-    $("#credit_driver_forms_container").append(formHtml);
-    const newForm = $("#credit_driver_forms_container .driver-credit-form").last();
+                $("#credit_driver_forms_container").append(formHtml);
+                const newForm = $("#credit_driver_forms_container .driver-credit-form").last();
 
-    // Handle amount given to toggle
-    newForm.find('.amount-given-to').on('change', function() {
-        const form = $(this).closest('.driver-credit-form');
-        if ($(this).val() === 'Vehicle') {
-            form.find('.vehicle-number-section').show();
-            form.find('.driver-cnic-section').hide();
-            form.find('.credit-vehicle-number').prop('required', true);
-            form.find('.credit-cnic').prop('required', false);
-        } else {
-            form.find('.driver-cnic-section').show();
-            form.find('.vehicle-number-section').hide();
-            form.find('.credit-cnic').prop('required', true);
-            form.find('.credit-vehicle-number').prop('required', false);
-        }
-    });
+                // Handle amount given to toggle
+                newForm.find('.amount-given-to').on('change', function () {
+                    const form = $(this).closest('.driver-credit-form');
+                    if ($(this).val() === 'Vehicle') {
+                        form.find('.vehicle-number-section').show();
+                        form.find('.driver-cnic-section').hide();
+                        form.find('.credit-vehicle-number').prop('required', true);
+                        form.find('.credit-cnic').prop('required', false);
+                    } else {
+                        form.find('.driver-cnic-section').show();
+                        form.find('.vehicle-number-section').hide();
+                        form.find('.credit-cnic').prop('required', true);
+                        form.find('.credit-vehicle-number').prop('required', false);
+                    }
+                });
 
-    // ✅ Load stations for new form
-    loadStationsForNewForm(newForm);
+                // ✅ Load stations using the same function
+                loadStationsForCreditDriver();
 
-    return newForm;
-}
+                return newForm;
+            }
 
 
             // ✅ LOAD STATIONS FOR NEW FORM
             function loadStationsForNewForm(formElement) {
-    const shiftId = $("#close_shift_id").val();
-    
-    if (!shiftId) {
-        console.log("No shift ID found");
-        return;
-    }
-    
-    $.ajax({
-        url: getApiUrl(`shifts/${shiftId}`),
-        method: "GET",
-        success: function (shift) {
-            const currentStationId = shift.station_id;
-            console.log("Loading stations for new form, current station:", currentStationId);
-            
-            $.ajax({
-                url: `/api/stations/${currentStationId}`,
-                method: "GET",
-                success: function (station) {
-                    console.log("Station for new form:", station);
-                    
-                    const stationsArray = [station];
-                    const $select = formElement.find('.credit-station-select');
-                    $select.empty().append('<option value="">Select Station...</option>');
-                    
-                    stationsArray.forEach(st => {
-                        const selected = (st.id == currentStationId) ? 'selected' : '';
-                        $select.append(`<option value="${st.id}" ${selected}>${st.name}</option>`);
-                    });
-                    
-                    // Load customers when station changes
-                    $select.off('change').on('change', function() {
-                        const stationId = $(this).val();
-                        const form = $(this).closest('.driver-credit-form');
-                        if (stationId) {
-                            loadCustomersForStation(stationId, form);
-                        }
-                    });
-                    
-                    // Trigger change to load customers for default station
-                    if (currentStationId) {
-                        $select.trigger('change');
-                    }
-                },
-                error: function (xhr) {
-                    console.error("Error loading station:", xhr.responseText);
+                const shiftId = $("#close_shift_id").val();
+
+                if (!shiftId) {
+                    console.log("No shift ID found");
+                    return;
                 }
-            });
-        },
-        error: function (xhr) {
-            console.error("Error loading shift:", xhr.responseText);
-        }
-    });
-}
 
+                $.ajax({
+                    url: getApiUrl(`shifts/${shiftId}`),
+                    method: "GET",
+                    success: function (shift) {
+                        const currentStationId = shift.station_id;
+                        console.log("Loading stations for new form, current station:", currentStationId);
 
-// ✅ LOAD CUSTOMERS FOR STATION (FIXED)
-function loadCustomersForStation(stationId, formElement, selectedCustomerId = null) {
-    console.log("Loading customers for station:", stationId);
-    
-    $.ajax({
-        url: `/api/accounts/category/customer`,
-        method: "GET",
-        success: function (customers) {
-            console.log("All customers:", customers);
-            
-            // Filter customers for this station
-            const stationCustomers = customers.filter(c => c.station_id == stationId);
-            console.log("Filtered customers for station", stationId, ":", stationCustomers);
-            
-            const $customerSelect = formElement.find('.credit-customer-select');
-            $customerSelect.empty().append('<option value="">Select Customer...</option>');
-            
-            stationCustomers.forEach(customer => {
-                const selected = (selectedCustomerId && customer.id == selectedCustomerId) ? 'selected' : '';
-                $customerSelect.append(`<option value="${customer.id}" ${selected}>${customer.name} - ${customer.phone || 'N/A'}</option>`);
-            });
-            
-            if (selectedCustomerId) {
-                $customerSelect.data('original', selectedCustomerId);
+                        $.ajax({
+                            url: `/api/stations/${currentStationId}`,
+                            method: "GET",
+                            success: function (station) {
+                                console.log("Station for new form:", station);
+
+                                const stationsArray = [station];
+                                const $select = formElement.find('.credit-station-select');
+                                $select.empty().append('<option value="">Select Station...</option>');
+
+                                stationsArray.forEach(st => {
+                                    const selected = (st.id == currentStationId) ? 'selected' : '';
+                                    $select.append(`<option value="${st.id}" ${selected}>${st.name}</option>`);
+                                });
+
+                                // Load customers when station changes
+                                $select.off('change').on('change', function () {
+                                    const stationId = $(this).val();
+                                    const form = $(this).closest('.driver-credit-form');
+                                    if (stationId) {
+                                        loadCustomersForStation(stationId, form);
+                                    }
+                                });
+
+                                // Trigger change to load customers for default station
+                                if (currentStationId) {
+                                    $select.trigger('change');
+                                }
+                            },
+                            error: function (xhr) {
+                                console.error("Error loading station:", xhr.responseText);
+                            }
+                        });
+                    },
+                    error: function (xhr) {
+                        console.error("Error loading shift:", xhr.responseText);
+                    }
+                });
             }
-        },
-        error: function (xhr) {
-            console.error("Error loading customers:", xhr.responseText);
-        }
-    });
-}
+
+
+            // ✅ LOAD CUSTOMERS FOR STATION (FIXED)
+            function loadCustomersForStation(stationId, formElement, selectedCustomerId = null) {
+                console.log("Loading customers for station:", stationId);
+
+                $.ajax({
+                    url: `/api/accounts/category/customer`,
+                    method: "GET",
+                    success: function (customers) {
+                        console.log("All customers:", customers);
+
+                        // Filter customers for this station
+                        const stationCustomers = customers.filter(c => c.station_id == stationId);
+                        console.log("Filtered customers for station", stationId, ":", stationCustomers);
+
+                        const $customerSelect = formElement.find('.credit-customer-select');
+                        $customerSelect.empty().append('<option value="">Select Customer...</option>');
+
+                        stationCustomers.forEach(customer => {
+                            const selected = (selectedCustomerId && customer.id == selectedCustomerId) ? 'selected' : '';
+                            $customerSelect.append(`<option value="${customer.id}" ${selected}>${customer.name} - ${customer.phone || 'N/A'}</option>`);
+                        });
+
+                        if (selectedCustomerId) {
+                            $customerSelect.data('original', selectedCustomerId);
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error("Error loading customers:", xhr.responseText);
+                    }
+                });
+            }
 
 
             // ✅ INITIALIZE FORM FUNCTION
@@ -3415,28 +3402,28 @@ function loadCustomersForStation(stationId, formElement, selectedCustomerId = nu
 
                 if (difference > 0.01) {
                     validationText.html(`
-                        ⚠️ <strong>Cash Mismatch!</strong><br>
-                        Total Sales: <strong>${totalSales.toFixed(2)}</strong><br>
-                        In Hand: <strong>${inHand.toFixed(2)}</strong><br>
-                        In Bank: <strong>${inBank.toFixed(2)}</strong><br>
-                        Fuel Card: <strong>${fuelCardAmount.toFixed(2)}</strong><br>
-                        Credit Card: <strong>${creditCardAmount.toFixed(2)}</strong><br>
-                        Driver Credit: <strong>${driverCreditAmount.toFixed(2)}</strong><br>
-                        Total Distributed: <strong>${distributed.toFixed(2)}</strong><br>
-                        Difference: <strong class="text-danger">${difference.toFixed(2)}</strong>
-                    `);
+                            ⚠️ <strong>Cash Mismatch!</strong><br>
+                            Total Sales: <strong>${totalSales.toFixed(2)}</strong><br>
+                            In Hand: <strong>${inHand.toFixed(2)}</strong><br>
+                            In Bank: <strong>${inBank.toFixed(2)}</strong><br>
+                            Fuel Card: <strong>${fuelCardAmount.toFixed(2)}</strong><br>
+                            Credit Card: <strong>${creditCardAmount.toFixed(2)}</strong><br>
+                            Driver Credit: <strong>${driverCreditAmount.toFixed(2)}</strong><br>
+                            Total Distributed: <strong>${distributed.toFixed(2)}</strong><br>
+                            Difference: <strong class="text-danger">${difference.toFixed(2)}</strong>
+                        `);
                     validationMsg.show().removeClass("alert-success").addClass("alert-warning");
                     return false;
                 } else {
                     validationText.html(`
-                        ✅ <strong>Perfect Match!</strong><br>
-                        Total Sales: <strong>${totalSales.toFixed(2)}</strong><br>
-                        In Hand: <strong>${inHand.toFixed(2)}</strong><br>
-                        In Bank: <strong>${inBank.toFixed(2)}</strong><br>
-                        Fuel Card: <strong>${fuelCardAmount.toFixed(2)}</strong><br>
-                        Credit Card: <strong>${creditCardAmount.toFixed(2)}</strong><br>
-                        Driver Credit: <strong>${driverCreditAmount.toFixed(2)}</strong>
-                    `);
+                            ✅ <strong>Perfect Match!</strong><br>
+                            Total Sales: <strong>${totalSales.toFixed(2)}</strong><br>
+                            In Hand: <strong>${inHand.toFixed(2)}</strong><br>
+                            In Bank: <strong>${inBank.toFixed(2)}</strong><br>
+                            Fuel Card: <strong>${fuelCardAmount.toFixed(2)}</strong><br>
+                            Credit Card: <strong>${creditCardAmount.toFixed(2)}</strong><br>
+                            Driver Credit: <strong>${driverCreditAmount.toFixed(2)}</strong>
+                        `);
                     validationMsg.show().removeClass("alert-warning").addClass("alert-success");
                     return true;
                 }
@@ -3733,7 +3720,7 @@ function loadCustomersForStation(stationId, formElement, selectedCustomerId = nu
                 let creditcard = parseFloat($("#creditcard_amount").val()) || 0;
                 let faccountid = parseFloat($("#fuelcard_account_select").val()) || 0;
                 let caccountid = parseFloat($("#creditcard_account_select").val()) || 0;
-				
+
 
 
                 // ✅ Collect Driver Credit Data FIRST
@@ -3808,8 +3795,8 @@ function loadCustomersForStation(stationId, formElement, selectedCustomerId = nu
 
                 if (difference > 0.01) {
                     showToast(`Cash distribution (${distributed.toFixed(2)}) must equal total sales (${totalSales.toFixed(2)})! 
-                                                                              In Hand: ${inHand.toFixed(2)} + In Bank: ${inBank.toFixed(2)} + Driver Credit: ${driverCreditAmount.toFixed(2)} = ${distributed.toFixed(2)}
-                                                                              Difference: ${difference.toFixed(2)}`, "error");
+                                                                                  In Hand: ${inHand.toFixed(2)} + In Bank: ${inBank.toFixed(2)} + Driver Credit: ${driverCreditAmount.toFixed(2)} = ${distributed.toFixed(2)}
+                                                                                  Difference: ${difference.toFixed(2)}`, "error");
                     return;
                 }
 
@@ -3984,32 +3971,32 @@ function loadCustomersForStation(stationId, formElement, selectedCustomerId = nu
                         })
                     );
                 }
-// ✅ 7. Save Expenses
-if ($('.expense-row').length > 0) {
-    if (!validateExpenseRows()) {
-        saveBtn.html(originalText).prop('disabled', false);
-        return;
-    }
+                // ✅ 7. Save Expenses
+                if ($('.expense-row').length > 0) {
+                    if (!validateExpenseRows()) {
+                        saveBtn.html(originalText).prop('disabled', false);
+                        return;
+                    }
 
-    const expenseData = collectExpenseData(shiftId, stationId);
-    if (expenseData.length > 0) {
-        expenseData.forEach(expense => {
-            promises.push(
-                $.ajax({
-                    url: getApiUrl('transactions'),
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(expense)
-                }).then(() => {
-                    savedItems.push(`expense: ${expense.note}`);
-                }).catch(error => {
-                    console.error("Error saving expense:", error);
-                    showToast(`Error saving expense: ${expense.note}`, "error");
-                })
-            );
-        });
-    }
-}
+                    const expenseData = collectExpenseData(shiftId, stationId);
+                    if (expenseData.length > 0) {
+                        expenseData.forEach(expense => {
+                            promises.push(
+                                $.ajax({
+                                    url: getApiUrl('transactions'),
+                                    method: 'POST',
+                                    contentType: 'application/json',
+                                    data: JSON.stringify(expense)
+                                }).then(() => {
+                                    savedItems.push(`expense: ${expense.note}`);
+                                }).catch(error => {
+                                    console.error("Error saving expense:", error);
+                                    showToast(`Error saving expense: ${expense.note}`, "error");
+                                })
+                            );
+                        });
+                    }
+                }
 
                 // ✅ ✅ ✅ ✅ ✅ BANK TRANSFER PROMISE ✅ ✅ ✅ ✅ ✅
                 if (isBankTransfer && accountId && transferAmount > 0) {
@@ -4055,8 +4042,8 @@ if ($('.expense-row').length > 0) {
                             fuelcard: fuelcard,
                             faccountid: faccountid,
                             caccountid: caccountid,
-							baccountid:	accountId
-							
+                            baccountid: accountId
+
                         };
 
                         const cashFlowPromise = new Promise((resolve) => {
@@ -4089,8 +4076,8 @@ if ($('.expense-row').length > 0) {
                                 showToast(`Shift closed successfully!`, "success");
 
                                 // ✅ REDIRECT BACK TO SHIFTS PAGE AFTER 2 SECONDS
-                               setTimeout(() => {
-                                 window.location.href = "/shifts";
+                                setTimeout(() => {
+                                    window.location.href = "/shifts";
                                 }, 2000);
                             })
                             .catch(error => {
@@ -4130,63 +4117,63 @@ if ($('.expense-row').length > 0) {
         });
 
 
-function calculateDriverCreditCashPayments(shiftId) {
-    return new Promise((resolve, reject) => {
-        $.ajax({
-            url: `/api/driver-credits/shifts/${shiftId}`,
-            method: "GET",
-            success: function(driverCredits) {
-                if (!driverCredits || driverCredits.length === 0) {
-                    resolve({ total: 0, count: 0, cash: 0, bank: 0, payments: [], total_cash_payments: 0 });
-                    return;
-                }
-
-                let driverCreditTotal = 0;
-                let count = 0;
-                let cashAmount = 0;
-                let totalCashPayments = 0;
-                const paymentDetails = [];
-
-                driverCredits.forEach(credit => {
-                    // Only consider cash payments that are paid
-                    if (credit.method === 'cash' && credit.is_paid == 1) {
-                        const amount = parseFloat(credit.amount) || 0;
-                        
-                        if (amount > 0) {
-                            driverCreditTotal += amount;
-                            totalCashPayments += amount;
-                            count++;
-                            cashAmount += amount;
-
-                            paymentDetails.push({
-                                id: credit.id,
-                                customer_name: credit.customer_name || 'Driver',
-                                amount: amount,
-                                given_to: credit.amount_given_to,
-                                identifier: credit.amount_given_to === 'Driver' ? credit.cnic : credit.vehicle_number,
-                                created_at: credit.created_at,
-                                method: 'cash'
-                            });
+        function calculateDriverCreditCashPayments(shiftId) {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: `/api/driver-credits/shifts/${shiftId}`,
+                    method: "GET",
+                    success: function (driverCredits) {
+                        if (!driverCredits || driverCredits.length === 0) {
+                            resolve({ total: 0, count: 0, cash: 0, bank: 0, payments: [], total_cash_payments: 0 });
+                            return;
                         }
+
+                        let driverCreditTotal = 0;
+                        let count = 0;
+                        let cashAmount = 0;
+                        let totalCashPayments = 0;
+                        const paymentDetails = [];
+
+                        driverCredits.forEach(credit => {
+                            // Only consider cash payments that are paid
+                            if (credit.method === 'cash' && credit.is_paid == 1) {
+                                const amount = parseFloat(credit.amount) || 0;
+
+                                if (amount > 0) {
+                                    driverCreditTotal += amount;
+                                    totalCashPayments += amount;
+                                    count++;
+                                    cashAmount += amount;
+
+                                    paymentDetails.push({
+                                        id: credit.id,
+                                        customer_name: credit.customer_name || 'Driver',
+                                        amount: amount,
+                                        given_to: credit.amount_given_to,
+                                        identifier: credit.amount_given_to === 'Driver' ? credit.cnic : credit.vehicle_number,
+                                        created_at: credit.created_at,
+                                        method: 'cash'
+                                    });
+                                }
+                            }
+                        });
+
+                        resolve({
+                            total: driverCreditTotal,
+                            count: count,
+                            cash: cashAmount,
+                            bank: 0,
+                            payments: paymentDetails,
+                            total_cash_payments: totalCashPayments
+                        });
+                    },
+                    error: function (xhr) {
+                        console.error('Error fetching driver credits:', xhr);
+                        resolve({ total: 0, count: 0, cash: 0, bank: 0, payments: [], total_cash_payments: 0 });
                     }
                 });
-
-                resolve({
-                    total: driverCreditTotal,
-                    count: count,
-                    cash: cashAmount,
-                    bank: 0,
-                    payments: paymentDetails,
-                    total_cash_payments: totalCashPayments
-                });
-            },
-            error: function(xhr) {
-                console.error('Error fetching driver credits:', xhr);
-                resolve({ total: 0, count: 0, cash: 0, bank: 0, payments: [], total_cash_payments: 0 });
-            }
-        });
-    });
-}
+            });
+        }
 
 
     </script>
