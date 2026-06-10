@@ -65,6 +65,23 @@
             background: #f0fdf4;
             border-left: 4px solid #22c55e;
         }
+
+        .payment-method-box {
+            background: #f3e8ff;
+            border-left: 4px solid #8b5cf6;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .required-label:after {
+            content: " *";
+            color: red;
+        }
+        
+        option:disabled {
+            background-color: #f5f5f5;
+            color: #999;
+        }
     </style>
 @endsection
 
@@ -76,7 +93,7 @@
                     <h4 class="fw-bold">
                         <i class="fas fa-credit-card me-2 text-primary"></i>Received Amount
                     </h4>
-                    <p class="text-muted mb-0">Manage fuel card and credit card payments</p>
+                    <p class="text-muted mb-0">Manage fuel card, credit card and driver credit payments</p>
                 </div>
             </div>
 
@@ -95,20 +112,27 @@
                                 <i class="fas fa-credit-card me-2"></i>Credit Card Payments
                             </button>
                         </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="credit-driver-tab" data-bs-toggle="tab" data-bs-target="#credit-driver"
+                                type="button" role="tab">
+                                <i class="fas fa-truck me-2"></i>Driver Credit Payments
+                            </button>
+                        </li>
                     </ul>
 
                     <div class="tab-content">
+                        <!-- Fuel Card Tab -->
                         <div class="tab-pane fade show active" id="fuel" role="tabpanel">
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle w-100" id="fuelTable">
                                     <thead class="table-light">
                                         <tr>
-                                            <th width="5%">#</th>
-                                            <th width="20%">Account Name</th>
-                                            <th width="10%">Shift #</th>
-                                            <th width="15%">Amount</th>
-                                            <th width="15%">Status</th>
-                                            <th width="15%">Action</th>
+                                            <th>#</th>
+                                            <th>Account Name</th>
+                                            <th>Shift #</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -116,17 +140,38 @@
                             </div>
                         </div>
 
+                        <!-- Credit Card Tab -->
                         <div class="tab-pane fade" id="credit" role="tabpanel">
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle w-100" id="creditTable">
                                     <thead class="table-light">
                                         <tr>
-                                            <th width="5%">#</th>
-                                            <th width="20%">Account Name</th>
-                                            <th width="10%">Shift #</th>
-                                            <th width="15%">Amount</th>
-                                            <th width="15%">Status</th>
-                                            <th width="15%">Action</th>
+                                            <th>#</th>
+                                            <th>Account Name</th>
+                                            <th>Shift #</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Driver Credit Tab -->
+                        <div class="tab-pane fade" id="credit-driver" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle w-100" id="creditDriverTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Amount Given To</th>
+                                            <th>Vehicle Number/CNIC</th>
+                                            <th>Shift #</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -139,7 +184,7 @@
         </div>
     </div>
 
-    <!-- Receive Modal with Shift Dropdown -->
+    <!-- Receive Modal for Fuel Card & Credit Card -->
     <div class="modal fade" id="receiveModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -157,32 +202,23 @@
                         <input type="hidden" id="station_id_for_shifts">
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-building me-1"></i>Account Name
-                            </label>
+                            <label class="form-label fw-semibold">Account Name</label>
                             <input type="text" class="form-control bg-light" id="account_name" readonly>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-money-bill-wave me-1"></i>Amount to Receive
-                            </label>
+                            <label class="form-label fw-semibold">Amount to Receive</label>
                             <input type="text" class="form-control bg-light" id="receive_amount" readonly>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-percent me-1"></i>MDR Percentage
-                            </label>
+                            <label class="form-label fw-semibold">MDR Percentage</label>
                             <input type="text" class="form-control bg-light" id="mdr_percentage" readonly>
                             <small class="text-muted">MDR = Merchant Discount Rate</small>
                         </div>
 
-                        <!-- ✅ Shift Selection Dropdown - API se open shifts aayenge -->
                         <div class="mb-3">
-                            <label class="form-label fw-semibold required-label">
-                                <i class="fas fa-exchange-alt me-1"></i>Select Shift
-                            </label>
+                            <label class="form-label fw-semibold required-label">Select Shift</label>
                             <select id="shift_id" class="form-select" required>
                                 <option value="">Loading shifts...</option>
                             </select>
@@ -190,29 +226,86 @@
                         </div>
 
                         <div class="mb-3 expense-box p-3 rounded">
-                            <label class="form-label fw-semibold text-danger">
-                                <i class="fas fa-arrow-down me-1"></i>MDR Amount (Expense)
-                            </label>
+                            <label class="form-label fw-semibold text-danger">MDR Amount (Expense)</label>
                             <input type="text" class="form-control bg-white" id="mdr_amount" readonly style="border-color: #ef4444;">
                             <small class="text-danger">This will be recorded as EXPENSE</small>
                         </div>
 
                         <div class="mb-3 income-box p-3 rounded">
-                            <label class="form-label fw-semibold text-success">
-                                <i class="fas fa-arrow-up me-1"></i>Net Amount (Income)
-                            </label>
+                            <label class="form-label fw-semibold text-success">Net Amount (Income)</label>
                             <input type="text" class="form-control bg-white" id="net_amount" readonly style="border-color: #22c55e;">
                             <small class="text-success">This will be recorded as INCOME</small>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i> Cancel
-                    </button>
-                    <button type="button" class="btn btn-success" id="confirmReceiveBtn">
-                        <i class="fas fa-check-circle me-1"></i> Confirm Receive
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="confirmReceiveBtn">Confirm Receive</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receive Modal for Driver Credit -->
+    <div class="modal fade" id="driverCreditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Driver Credit Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="driverCreditForm">
+                        <input type="hidden" id="driver_credit_id">
+                        <input type="hidden" id="driver_credit_station_id">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Credit Details</label>
+                            <div class="border rounded p-3 bg-light">
+                                <div><strong>Given To:</strong> <span id="driver_given_to"></span></div>
+                                <div><strong>Vehicle/CNIC:</strong> <span id="driver_identifier"></span></div>
+                                <div><strong>Amount:</strong> <span id="driver_amount" class="fw-bold text-primary"></span></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold required-label">Select Shift</label>
+                            <select id="driver_shift_id" class="form-select" required>
+                                <option value="">Loading shifts...</option>
+                            </select>
+                            <small class="text-muted">Only open shifts will be shown</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold required-label">Payment Method</label>
+                            <select id="payment_method" class="form-select" required>
+                                <option value="">Select payment method...</option>
+                                <option value="cash">Cash</option>
+                                <option value="bank">Bank Transfer</option>
+                            </select>
+                        </div>
+
+                        <!-- Bank Account Selection (shown only when bank is selected and accounts exist) -->
+                        <div class="mb-3" id="bank_account_section" style="display: none;">
+                            <label class="form-label fw-semibold required-label">
+                                <i class="fas fa-university me-1"></i>Select Bank Account
+                            </label>
+                            <select id="bank_account_id" class="form-select">
+                                <option value="">Loading bank accounts...</option>
+                            </select>
+                            <small class="text-muted">Amount will be added to selected bank account</small>
+                        </div>
+
+                        <div class="payment-method-box" id="cash_details_section" style="display: none;">
+                            <div class="alert alert-success">
+                                <i class="fas fa-info-circle"></i> Amount will be updated in shift cash handover/return
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="confirmDriverCreditBtn">Confirm Receive</button>
                 </div>
             </div>
         </div>
@@ -237,7 +330,8 @@
 
         let fuelTable = null;
         let creditTable = null;
-        let currentStationId = null;
+        let creditDriverTable = null;
+        let hasBankAccounts = false;
 
         function getDataUrl(type) {
             if (AUTH_ROLE === 'admin') {
@@ -250,10 +344,20 @@
             return null;
         }
 
-        // ✅ Load open shifts from API
-        function loadOpenShifts(stationId) {
+        function getDriverCreditUrl() {
+            if (AUTH_ROLE === 'admin') {
+                return '/api/driver-credit/admin';
+            } else if (AUTH_ROLE === 'owner') {
+                return `/api/driver-credit/owner/${AUTH_USER_ID}`;
+            } else if (AUTH_ROLE === 'employee') {
+                return `/api/driver-credit/employee/${AUTH_USER_ID}`;
+            }
+            return null;
+        }
+
+        function loadOpenShifts(stationId, selectElementId) {
             if (!stationId) {
-                $('#shift_id').html('<option value="">No station available</option>');
+                $(selectElementId).html('<option value="">No station available</option>');
                 return;
             }
 
@@ -268,23 +372,58 @@
                         shifts.forEach(shift => {
                             options += `<option value="${shift.id}">Shift #${shift.shift_no} - ${shift.start_time}</option>`;
                         });
-                        $('#shift_id').html(options);
-                        $('#shift_id').prop('disabled', false);
+                        $(selectElementId).html(options);
+                        $(selectElementId).prop('disabled', false);
                     } else {
-                        $('#shift_id').html('<option value="">No open shifts found</option>');
-                        $('#shift_id').prop('disabled', true);
-                        Swal.fire('Warning', 'No open shifts available for this station', 'warning');
+                        $(selectElementId).html('<option value="">No open shifts found</option>');
+                        $(selectElementId).prop('disabled', true);
                     }
                 },
                 error: function(xhr) {
                     console.error('Error loading shifts:', xhr);
-                    $('#shift_id').html('<option value="">Error loading shifts</option>');
-                    $('#shift_id').prop('disabled', true);
-                    Swal.fire('Error', 'Failed to load open shifts', 'error');
+                    $(selectElementId).html('<option value="">Error loading shifts</option>');
+                    $(selectElementId).prop('disabled', true);
                 }
             });
         }
 
+        // Load bank accounts for a station
+        function loadBankAccounts(stationId) {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: `/api/station/${stationId}/bank-accounts`,
+                    method: "GET",
+                    success: function(response) {
+                        let accounts = response.data || response;
+                        let options = '<option value="">Select bank account...</option>';
+                        
+                        if (Array.isArray(accounts) && accounts.length > 0) {
+                            hasBankAccounts = true;
+                            accounts.forEach(account => {
+                                options += `<option value="${account.id}">${account.name} - ${account.bank_name || 'Bank Account'}</option>`;
+                            });
+                            $('#bank_account_id').html(options);
+                            $('#bank_account_id').prop('disabled', false);
+                            resolve(true);
+                        } else {
+                            hasBankAccounts = false;
+                            $('#bank_account_id').html('<option value="">No bank accounts found</option>');
+                            $('#bank_account_id').prop('disabled', true);
+                            resolve(false);
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error loading bank accounts:', xhr);
+                        hasBankAccounts = false;
+                        $('#bank_account_id').html('<option value="">Error loading accounts</option>');
+                        $('#bank_account_id').prop('disabled', true);
+                        resolve(false);
+                    }
+                });
+            });
+        }
+
+        // Load Fuel Card Data
         function loadFuelData() {
             const url = getDataUrl('fuel');
             if (!url) return;
@@ -294,7 +433,6 @@
                 method: "GET",
                 success: function(data) {
                     if (fuelTable) {
-                        fuelTable.clear();
                         fuelTable.destroy();
                     }
 
@@ -308,14 +446,14 @@
                             { 
                                 data: "is_paid", 
                                 render: (d) => d == '1' 
-                                    ? '<span class="badge-paid"><i class="fas fa-check-circle me-1"></i> Received</span>' 
-                                    : '<span class="badge-pending"><i class="fas fa-clock me-1"></i> Not Received</span>' 
+                                    ? '<span class="badge-paid">Received</span>' 
+                                    : '<span class="badge-pending">Not Received</span>' 
                             },
                             {
                                 data: null, 
                                 render: (row) => {
                                     if (row.is_paid == '1') {
-                                        return '<button class="btn btn-sm btn-secondary" disabled><i class="fas fa-check me-1"></i> Received</button>';
+                                        return '<button class="btn btn-sm btn-secondary" disabled>Received</button>';
                                     }
                                     return `<button class="btn btn-sm btn-success receive-btn" 
                                         data-id="${row.id}"
@@ -325,7 +463,7 @@
                                         data-mdr="${row.mdr || 0}"
                                         data-station-id="${row.station_id}"
                                         data-type="fuel">
-                                        <i class="fas fa-hand-holding-usd me-1"></i> Receive Payment
+                                        Receive Payment
                                     </button>`;
                                 }, 
                                 orderable: false
@@ -333,18 +471,16 @@
                         ],
                         pageLength: 10,
                         searching: false,
-                        info: false,
-                        destroy: true,
-                        language: { emptyTable: "No fuel card records found" }
+                        destroy: true
                     });
                 },
                 error: function(xhr) {
                     console.error('Error:', xhr);
-                    Swal.fire('Error', 'Failed to load fuel card data', 'error');
                 }
             });
         }
 
+        // Load Credit Card Data
         function loadCreditData() {
             const url = getDataUrl('credit');
             if (!url) return;
@@ -354,7 +490,6 @@
                 method: "GET",
                 success: function(data) {
                     if (creditTable) {
-                        creditTable.clear();
                         creditTable.destroy();
                     }
 
@@ -368,14 +503,14 @@
                             { 
                                 data: "is_paid", 
                                 render: (d) => d == '1' 
-                                    ? '<span class="badge-paid"><i class="fas fa-check-circle me-1"></i> Received</span>' 
-                                    : '<span class="badge-pending"><i class="fas fa-clock me-1"></i> Not Received</span>' 
+                                    ? '<span class="badge-paid">Received</span>' 
+                                    : '<span class="badge-pending">Not Received</span>' 
                             },
                             {
                                 data: null, 
                                 render: (row) => {
                                     if (row.is_paid == '1') {
-                                        return '<button class="btn btn-sm btn-secondary" disabled><i class="fas fa-check me-1"></i> Received</button>';
+                                        return '<button class="btn btn-sm btn-secondary" disabled>Received</button>';
                                     }
                                     return `<button class="btn btn-sm btn-success receive-btn" 
                                         data-id="${row.id}"
@@ -385,7 +520,7 @@
                                         data-mdr="${row.mdr || 0}"
                                         data-station-id="${row.station_id}"
                                         data-type="credit">
-                                        <i class="fas fa-hand-holding-usd me-1"></i> Receive Payment
+                                        Receive Payment
                                     </button>`;
                                 }, 
                                 orderable: false
@@ -393,19 +528,81 @@
                         ],
                         pageLength: 10,
                         searching: false,
-                        info: false,
-                        destroy: true,
-                        language: { emptyTable: "No credit card records found" }
+                        destroy: true
                     });
                 },
                 error: function(xhr) {
                     console.error('Error:', xhr);
-                    Swal.fire('Error', 'Failed to load credit card data', 'error');
                 }
             });
         }
 
-        // Open modal and load open shifts
+        // Load Driver Credit Data
+        function loadDriverCreditData() {
+            const url = getDriverCreditUrl();
+            if (!url) return;
+
+            $.ajax({
+                url: url,
+                method: "GET",
+                success: function(data) {
+                    if (creditDriverTable) {
+                        creditDriverTable.destroy();
+                    }
+
+                    creditDriverTable = $('#creditDriverTable').DataTable({
+                        data: data,
+                        columns: [
+                            { data: null, render: (d, t, r, m) => m.row + 1 },
+                            { data: "amount_given_to", defaultContent: "N/A" },
+                            { 
+                                data: null,
+                                render: (row) => {
+                                    if (row.amount_given_to === 'Driver') {
+                                        return row.cnic || 'N/A';
+                                    } else {
+                                        return row.vehicle_number || 'N/A';
+                                    }
+                                }
+                            },
+                            { data: "shift_no", defaultContent: "N/A" },
+                            { data: "amount", render: (d) => `<span class="fw-bold">PKR ${parseFloat(d).toFixed(2)}</span>` },
+                            { 
+                                data: "is_paid", 
+                                render: (d) => d == '1' 
+                                    ? '<span class="badge-paid">Received</span>' 
+                                    : '<span class="badge-pending">Not Received</span>' 
+                            },
+                            {
+                                data: null, 
+                                render: (row) => {
+                                    if (row.is_paid == '1') {
+                                        return '<button class="btn btn-sm btn-secondary" disabled>Received</button>';
+                                    }
+                                    return `<button class="btn btn-sm btn-success driver-credit-receive-btn" 
+                                        data-id="${row.id}"
+                                        data-station-id="${row.station_id}"
+                                        data-amount="${row.amount}"
+                                        data-given-to="${row.amount_given_to}"
+                                        data-identifier="${row.amount_given_to === 'Driver' ? row.cnic : row.vehicle_number}">
+                                        Receive Payment
+                                    </button>`;
+                                }, 
+                                orderable: false
+                            }
+                        ],
+                        pageLength: 10,
+                        searching: false,
+                        destroy: true
+                    });
+                },
+                error: function(xhr) {
+                    console.error('Error:', xhr);
+                }
+            });
+        }
+
+        // Fuel/Credit Card Receive Handler
         $(document).on('click', '.receive-btn', function() {
             const id = $(this).data('id');
             const accountId = $(this).data('account-id');
@@ -423,23 +620,19 @@
             $('#receive_amount').val(`PKR ${parseFloat(amount).toFixed(2)}`);
             $('#mdr_percentage').val(`${mdr}%`);
 
-            // Calculate MDR Amount and Net Amount
             const mdrAmount = (parseFloat(amount) * parseFloat(mdr)) / 100;
             const netAmount = parseFloat(amount) - mdrAmount;
             $('#mdr_amount').val(`PKR ${mdrAmount.toFixed(2)}`);
             $('#net_amount').val(`PKR ${netAmount.toFixed(2)}`);
 
-            // Reset shift dropdown and load open shifts from API
             $('#shift_id').html('<option value="">Loading shifts...</option>');
             $('#shift_id').prop('disabled', true);
             
-            // Load open shifts for this station
-            loadOpenShifts(stationId);
+            loadOpenShifts(stationId, '#shift_id');
 
             $('#receiveModal').modal('show');
         });
 
-        // Confirm receive payment
         $('#confirmReceiveBtn').on('click', function() {
             const cashFlowId = $('#cash_flow_id').val();
             const paymentType = $('#payment_type').val();
@@ -454,7 +647,7 @@
             }
 
             const btn = $(this);
-            btn.html('<span class="spinner-border spinner-border-sm me-1"></span> Processing...');
+            btn.html('Processing...');
             btn.prop('disabled', true);
 
             $.ajax({
@@ -470,27 +663,7 @@
                     mdr_percentage: mdrPercentage
                 }),
                 success: function(response) {
-                    Swal.fire({
-                        title: 'Payment Received!',
-                        html: `
-                            <div style="text-align: left;">
-                                <div class="alert alert-success">
-                                    <i class="fas fa-check-circle"></i> ${response.message}
-                                </div>
-                                <table class="table table-sm table-borderless">
-                                    <tr><td><strong>Total Amount:</strong></td><td class="text-end">PKR ${parseFloat(response.total_amount).toFixed(2)}</td></tr>
-                                    <tr class="text-danger"><td><strong>MDR (${response.mdr_percentage}%):</strong></td><td class="text-end">- PKR ${parseFloat(response.mdr_amount).toFixed(2)}</td></tr>
-                                    <tr class="text-success fw-bold"><td><strong>Net Amount:</strong></td><td class="text-end">PKR ${parseFloat(response.net_amount).toFixed(2)}</td></tr>
-                                    <tr><td colspan="2"><hr></td></tr>
-                                    <tr><td><strong>Previous Balance:</strong></td><td class="text-end">PKR ${parseFloat(response.previous_balance).toFixed(2)}</td></tr>
-                                    <tr class="fw-bold"><td><strong>New Balance:</strong></td><td class="text-end text-success">PKR ${parseFloat(response.new_balance).toFixed(2)}</td></tr>
-                                </table>
-                            </div>
-                        `,
-                        icon: 'success',
-                        confirmButtonColor: '#10b981',
-                        confirmButtonText: 'Done'
-                    });
+                    Swal.fire('Success!', response.message, 'success');
                     $('#receiveModal').modal('hide');
                     loadFuelData();
                     loadCreditData();
@@ -500,21 +673,153 @@
                     Swal.fire('Error!', errorMsg, 'error');
                 },
                 complete: function() {
-                    btn.html('<i class="fas fa-check-circle me-1"></i> Confirm Receive');
+                    btn.html('Confirm Receive');
                     btn.prop('disabled', false);
                 }
             });
         });
 
+        // Driver Credit Receive Handler
+        $(document).on('click', '.driver-credit-receive-btn', function() {
+    const id = $(this).data('id');
+    const stationId = $(this).data('station-id');
+    const amount = $(this).data('amount');
+    const givenTo = $(this).data('given-to');
+    const identifier = $(this).data('identifier');
+
+    $('#driver_credit_id').val(id);
+    $('#driver_credit_station_id').val(stationId);
+    $('#driver_given_to').text(givenTo);
+    $('#driver_identifier').text(identifier);
+    $('#driver_amount').text(`PKR ${parseFloat(amount).toFixed(2)}`);
+    
+    // Reset form
+    $('#payment_method').val('');
+    $('#bank_account_section').hide();
+    $('#cash_details_section').hide();
+    $('#bank_account_id').val('');
+    
+    // Load open shifts
+    $('#driver_shift_id').html('<option value="">Loading shifts...</option>');
+    $('#driver_shift_id').prop('disabled', true);
+    
+    loadOpenShifts(stationId, '#driver_shift_id');
+
+    $('#driverCreditModal').modal('show');
+});
+
+        $('#payment_method').on('change', function() {
+    const method = $(this).val();
+    $('#bank_account_section').hide();
+    $('#cash_details_section').hide();
+    $('#bank_account_id').prop('required', false);
+    
+    if (method === 'bank') {
+        $('#bank_account_section').show();
+        $('#bank_account_id').prop('required', true);
+        
+        // Load bank accounts when bank is selected
+        const stationId = $('#driver_credit_station_id').val();
+        if (stationId) {
+            loadBankAccounts(stationId);
+        }
+    } else if (method === 'cash') {
+        $('#cash_details_section').show();
+    }
+});
+
+
+        $('#confirmDriverCreditBtn').on('click', function() {
+    const driverCreditId = $('#driver_credit_id').val();
+    const stationId = $('#driver_credit_station_id').val();
+    const shiftId = $('#driver_shift_id').val();
+    const paymentMethod = $('#payment_method').val();
+    const amount = $('#driver_amount').text().replace('PKR ', '').replace(/,/g, '');
+    const bankAccountId = $('#bank_account_id').val();
+
+    if (!shiftId) {
+        Swal.fire('Error', 'Please select a shift', 'error');
+        return;
+    }
+
+    if (!paymentMethod) {
+        Swal.fire('Error', 'Please select a payment method', 'error');
+        return;
+    }
+
+    if (paymentMethod === 'bank' && !bankAccountId) {
+        Swal.fire('Error', 'Please select a bank account', 'error');
+        return;
+    }
+
+    const btn = $(this);
+    btn.html('<span class="spinner-border spinner-border-sm me-1"></span> Processing...');
+    btn.prop('disabled', true);
+
+    const requestData = {
+        driver_credit_id: driverCreditId,
+        station_id: stationId,
+        shift_id: shiftId,
+        payment_method: paymentMethod,
+        amount: amount
+    };
+
+    if (paymentMethod === 'bank') {
+        requestData.bank_account_id = bankAccountId;
+    }
+
+    $.ajax({
+        url: `/api/driver-credit/receive`,
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(requestData),
+        success: function(response) {
+            Swal.fire({
+                title: 'Payment Received!',
+                html: `
+                    <div style="text-align: left;">
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> ${response.message}
+                        </div>
+                        <div class="alert alert-info">
+                            <strong>Payment Method:</strong> ${response.payment_method.toUpperCase()}<br>
+                            <strong>Amount Received:</strong> PKR ${parseFloat(response.amount).toFixed(2)}<br>
+                            <strong>Shift:</strong> #${response.shift_no}
+                        </div>
+                    </div>
+                `,
+                icon: 'success',
+                confirmButtonColor: '#10b981',
+                confirmButtonText: 'Done'
+            });
+            $('#driverCreditModal').modal('hide');
+            loadDriverCreditData();
+        },
+                error: function(xhr) {
+            const errorMsg = xhr.responseJSON?.message || 'Failed to receive payment';
+            Swal.fire('Error!', errorMsg, 'error');
+        },
+        complete: function() {
+            btn.html('<i class="fas fa-check-circle me-1"></i> Confirm Receive');
+            btn.prop('disabled', false);
+        }
+    });
+});
+
+
         $(document).ready(function() {
             loadFuelData();
             loadCreditData();
+            loadDriverCreditData();
             
             $('#fuel-tab').on('click', function() { 
                 setTimeout(() => loadFuelData(), 100);
             });
             $('#credit-tab').on('click', function() { 
                 setTimeout(() => loadCreditData(), 100);
+            });
+            $('#credit-driver-tab').on('click', function() { 
+                setTimeout(() => loadDriverCreditData(), 100);
             });
         });
     </script>

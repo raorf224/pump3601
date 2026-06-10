@@ -35,7 +35,7 @@ class DriverCreditController extends Controller
         DB::beginTransaction();
         try {
             foreach ($validated['driver_data'] as $data) {
-                // ✅ CHECK IF RECORD ALREADY EXISTS
+                // âœ… CHECK IF RECORD ALREADY EXISTS
                 $existing = DB::table('credit_driver')
                     ->where('shift_id', $data['shift_id'])
                     ->where('amount_given_to', $data['amount_given_to'])
@@ -98,26 +98,6 @@ class DriverCreditController extends Controller
 
     // Get driver credits by shift
     public function getByShift($shiftId)
-    {
-        $credits = DB::table('credit_driver as cd')
-            ->join('stations as s', 'cd.station_id', '=', 's.id')
-            ->join('accounts as a', 'cd.account_id', '=', 'a.id')
-            ->join('users as u', 'cd.created_by', '=', 'u.id')
-            ->where('cd.shift_id', $shiftId)
-            ->select(
-                'cd.*',
-                's.name as station_name',
-                'a.name as customer_name',
-                'a.phone as customer_phone',
-                'u.full_name as created_by_name'
-            )
-            ->orderBy('cd.created_at', 'desc')
-            ->get();
-
-        return response()->json($credits);
-    }
-
-        public function getByShiftId($shiftId)
     {
         $credits = DB::table('credit_driver as cd')
             ->join('stations as s', 'cd.station_id', '=', 's.id')

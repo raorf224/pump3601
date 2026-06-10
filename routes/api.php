@@ -490,7 +490,11 @@ Route::get('/credit-driver/shift/{shiftId}', [DriverCreditController::class, 'ge
 Route::get('/currentstatus/{id}', [StationController::class, 'currentstatus'])->name('currentstatus');
 Route::get('/station/{stationId}/audit-pdf', [StationController::class, 'downloadAuditReport']);
 Route::get('/audit-pdf/{stationId}', [StationController::class, 'generateAuditPdf']);
- 
+ Route::get('/driver-credit/admin', [DriverCreditController::class, 'getAdminData']);
+Route::get('/driver-credit/owner/{userId}', [DriverCreditController::class, 'getOwnerData']);
+Route::get('/driver-credit/employee/{userId}', [DriverCreditController::class, 'getEmployeeData']);
+Route::post('/driver-credit/receive', [DriverCreditController::class, 'receivePayment']);
+Route::get('/station/{stationId}/bank-accounts', [DriverCreditController::class, 'getBankAccounts']);
 Route::put('/test', function () {
     dd('PUT working');
 });
