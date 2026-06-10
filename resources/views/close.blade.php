@@ -2802,91 +2802,122 @@
 
             // ✅ ADD DRIVER CREDIT FORM
             function addDriverCreditForm() {
-                const formNumber = $(".driver-credit-form").length + 1;
-                const uniqueRadioName = `amount_given_to_${formNumber}`;
+    const formNumber = $(".driver-credit-form").length + 1;
+    const uniqueRadioName = `amount_given_to_${formNumber}`;
 
-                const formHtml = `
-            <div class="driver-credit-form mb-4 p-3 border rounded" style="display: block !important;">
-                <div class="row">
-                    <div class="col-md-12 mb-3">
-                        <h6 class="text-primary">Driver Credit Entry <span class="form-number">#${formNumber}</span>
-                            <button type="button" class="btn btn-danger btn-sm float-end remove-driver-form">
-                                <i class="bi bi-trash"></i> Remove
-                            </button>
-                        </h6>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label required-label">Station</label>
-                        <select class="form-control credit-station-select" required>
-                            <option value="">Select Station...</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label required-label">Customer</label>
-                        <select class="form-control credit-customer-select" required>
-                            <option value="">Select Customer...</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label required-label">Amount Given To</label>
-                        <div class="mt-2">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input amount-given-to" type="radio" 
-                                    name="${uniqueRadioName}" value="Driver" checked>
-                                <label class="form-check-label">Driver</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input amount-given-to" type="radio" 
-                                    name="${uniqueRadioName}" value="Vehicle">
-                                <label class="form-check-label">Vehicle</label>
-                            </div>
+    const formHtml = `
+        <div class="driver-credit-form mb-4 p-3 border rounded" style="display: block !important;">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <h6 class="text-primary">Driver Credit Entry <span class="form-number">#${formNumber}</span>
+                        <button type="button" class="btn btn-danger btn-sm float-end remove-driver-form">
+                            <i class="bi bi-trash"></i> Remove
+                        </button>
+                    </h6>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label required-label">Station</label>
+                    <select class="form-control credit-station-select" required>
+                        <option value="">Select Station...</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label required-label">Customer</label>
+                    <select class="form-control credit-customer-select" required>
+                        <option value="">Select Customer...</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label required-label">Amount Given To</label>
+                    <div class="mt-2">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input amount-given-to" type="radio" 
+                                name="${uniqueRadioName}" value="Driver" checked>
+                            <label class="form-check-label">Driver</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input amount-given-to" type="radio" 
+                                name="${uniqueRadioName}" value="Vehicle">
+                            <label class="form-check-label">Vehicle</label>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label required-label">Amount</label>
-                        <input type="number" class="form-control credit-amount" step="0.01" min="0" placeholder="0.00" required>
-                    </div>
                 </div>
-                <div class="row mt-2 driver-cnic-section" style="display: block;">
-                    <div class="col-md-4">
-                        <label class="form-label required-label">Driver CNIC</label>
-                        <input type="text" class="form-control credit-cnic" placeholder="Enter 13-digit CNIC" maxlength="13">
-                        <small class="text-muted">13 digits without dashes</small>
-                    </div>
-                </div>
-                <div class="row mt-2 vehicle-number-section" style="display: none;">
-                    <div class="col-md-4">
-                        <label class="form-label required-label">Vehicle Number</label>
-                        <input type="text" class="form-control credit-vehicle-number" placeholder="Enter vehicle number">
-                    </div>
+                <div class="col-md-3">
+                    <label class="form-label required-label">Amount</label>
+                    <input type="number" class="form-control credit-amount" step="0.01" min="0" placeholder="0.00" required>
                 </div>
             </div>
-        `;
+            <div class="row mt-2 driver-cnic-section" style="display: block;">
+                <div class="col-md-4">
+                    <label class="form-label required-label">Driver CNIC</label>
+                    <input type="text" class="form-control credit-cnic" placeholder="Enter 13-digit CNIC" maxlength="13">
+                    <small class="text-muted">13 digits without dashes</small>
+                </div>
+            </div>
+            <div class="row mt-2 vehicle-number-section" style="display: none;">
+                <div class="col-md-4">
+                    <label class="form-label required-label">Vehicle Number</label>
+                    <input type="text" class="form-control credit-vehicle-number" placeholder="Enter vehicle number">
+                </div>
+            </div>
+        </div>
+    `;
 
-                $("#credit_driver_forms_container").append(formHtml);
-                const newForm = $("#credit_driver_forms_container .driver-credit-form").last();
+    $("#credit_driver_forms_container").append(formHtml);
+    const newForm = $("#credit_driver_forms_container .driver-credit-form").last();
 
-                // Handle amount given to toggle
-                newForm.find('.amount-given-to').on('change', function () {
-                    const form = $(this).closest('.driver-credit-form');
-                    if ($(this).val() === 'Vehicle') {
-                        form.find('.vehicle-number-section').show();
-                        form.find('.driver-cnic-section').hide();
-                        form.find('.credit-vehicle-number').prop('required', true);
-                        form.find('.credit-cnic').prop('required', false);
-                    } else {
-                        form.find('.driver-cnic-section').show();
-                        form.find('.vehicle-number-section').hide();
-                        form.find('.credit-cnic').prop('required', true);
-                        form.find('.credit-vehicle-number').prop('required', false);
+    // Handle amount given to toggle
+    newForm.find('.amount-given-to').on('change', function() {
+        const form = $(this).closest('.driver-credit-form');
+        if ($(this).val() === 'Vehicle') {
+            form.find('.vehicle-number-section').show();
+            form.find('.driver-cnic-section').hide();
+            form.find('.credit-vehicle-number').prop('required', true);
+            form.find('.credit-cnic').prop('required', false);
+        } else {
+            form.find('.driver-cnic-section').show();
+            form.find('.vehicle-number-section').hide();
+            form.find('.credit-cnic').prop('required', true);
+            form.find('.credit-vehicle-number').prop('required', false);
+        }
+    });
+
+    // ✅ EXISTING STATION SE COPY KARO - Pehle wali form se station copy karo
+    const existingStationSelect = $(".credit-station-select").first();
+    const newStationSelect = newForm.find('.credit-station-select');
+    
+    if (existingStationSelect.length > 0 && existingStationSelect.val()) {
+        // Copy the HTML options from existing select
+        newStationSelect.html(existingStationSelect.html());
+        // Set the same value
+        newStationSelect.val(existingStationSelect.val());
+        // Trigger change to load customers
+        newStationSelect.trigger('change');
+    } else {
+        // Fallback: Load station from shift
+        const shiftId = $("#close_shift_id").val();
+        $.ajax({
+            url: getApiUrl(`shifts/${shiftId}`),
+            method: "GET",
+            success: function (shift) {
+                const currentStationId = shift.station_id;
+                $.ajax({
+                    url: `/api/stationss/${currentStationId}`,
+                    method: "GET",
+                    success: function (station) {
+                        if (station && station.id) {
+                            newStationSelect.empty();
+                            newStationSelect.append(`<option value="${station.id}" selected>${station.name}</option>`);
+                            newStationSelect.trigger('change');
+                        }
                     }
                 });
-
-                // ✅ Load stations using the same function
-                loadStationsForCreditDriver();
-
-                return newForm;
             }
+        });
+    }
+
+    return newForm;
+}
 
 
             // ✅ LOAD STATIONS FOR NEW FORM
