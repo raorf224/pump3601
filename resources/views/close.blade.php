@@ -2672,7 +2672,7 @@ function renderCashFlowSummary(
             
             // Directly get station details by ID
             $.ajax({
-                url: `/api/stations/${currentStationId}`,
+                url: `/api/stationss/${currentStationId}`,
                 method: "GET",
                 success: function (station) {
                     console.log("Station loaded:", station);
