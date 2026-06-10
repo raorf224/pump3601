@@ -2670,17 +2670,20 @@ function renderCashFlowSummary(
             const currentStationId = shift.station_id;
             console.log("Current station ID from shift:", currentStationId);
             
-            // Get all stations for this user
+            // Directly get station details by ID
             $.ajax({
-                url: `/api/stations/${AUTH_USER_ID}`,
+                url: `/api/stations/${currentStationId}`,
                 method: "GET",
-                success: function (stations) {
-                    console.log("Stations loaded:", stations);
+                success: function (station) {
+                    console.log("Station loaded:", station);
                     
-                    if (!stations || stations.length === 0) {
-                        console.log("No stations found");
+                    if (!station) {
+                        console.log("No station found");
                         return;
                     }
+                    
+                    // Create an array with this single station
+                    const stationsArray = [station];
                     
                     // Load stations for ALL existing forms
                     $(".credit-station-select").each(function () {
@@ -2689,9 +2692,9 @@ function renderCashFlowSummary(
                         
                         $select.empty().append('<option value="">Select Station...</option>');
                         
-                        stations.forEach(station => {
-                            const selected = (station.id == currentStationId) ? 'selected' : '';
-                            $select.append(`<option value="${station.id}" ${selected}>${station.name}</option>`);
+                        stationsArray.forEach(st => {
+                            const selected = (st.id == currentStationId) ? 'selected' : '';
+                            $select.append(`<option value="${st.id}" ${selected}>${st.name}</option>`);
                         });
                         
                         if (currentValue && currentValue !== "") {
@@ -2705,8 +2708,8 @@ function renderCashFlowSummary(
                     });
                 },
                 error: function (xhr) {
-                    console.error("Error loading stations:", xhr.responseText);
-                    showToast("Error loading stations!", "error");
+                    console.error("Error loading station:", xhr.responseText);
+                    showToast("Error loading station!", "error");
                 }
             });
         },
@@ -2715,6 +2718,7 @@ function renderCashFlowSummary(
         }
     });
 }
+
 
 
             // ✅ WHEN STATION CHANGES, LOAD CUSTOMERS AND TANKS
@@ -2915,17 +2919,18 @@ function renderCashFlowSummary(
             console.log("Loading stations for new form, current station:", currentStationId);
             
             $.ajax({
-                url: `/api/stations/${AUTH_USER_ID}`,
+                url: `/api/stations/${currentStationId}`,
                 method: "GET",
-                success: function (stations) {
-                    console.log("Stations for new form:", stations);
+                success: function (station) {
+                    console.log("Station for new form:", station);
                     
+                    const stationsArray = [station];
                     const $select = formElement.find('.credit-station-select');
                     $select.empty().append('<option value="">Select Station...</option>');
                     
-                    stations.forEach(station => {
-                        const selected = (station.id == currentStationId) ? 'selected' : '';
-                        $select.append(`<option value="${station.id}" ${selected}>${station.name}</option>`);
+                    stationsArray.forEach(st => {
+                        const selected = (st.id == currentStationId) ? 'selected' : '';
+                        $select.append(`<option value="${st.id}" ${selected}>${st.name}</option>`);
                     });
                     
                     // Load customers when station changes
@@ -2943,7 +2948,7 @@ function renderCashFlowSummary(
                     }
                 },
                 error: function (xhr) {
-                    console.error("Error loading stations:", xhr.responseText);
+                    console.error("Error loading station:", xhr.responseText);
                 }
             });
         },
@@ -2952,6 +2957,7 @@ function renderCashFlowSummary(
         }
     });
 }
+
 
 // ✅ LOAD CUSTOMERS FOR STATION (FIXED)
 function loadCustomersForStation(stationId, formElement, selectedCustomerId = null) {
