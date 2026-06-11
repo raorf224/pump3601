@@ -177,9 +177,9 @@
                             <th>Product</th>
                             <th class="text-end">Opening (L)</th>
                             <th class="text-end">Closing (L)</th>
-                            <th class="text-end">Physical Usage (L)</th>
+                            <!-- <th class="text-end">Physical Usage (L)</th> -->
                             <th class="text-end">Oil Recived (L)</th>
-                            <th class="text-end">Adjusted Usage (L)</th>
+                            <!-- <th class="text-end">Adjusted Usage (L)</th> -->
                             <th class="text-end">Nozzle Sales (L)</th>
                             <th class="text-end">Variance (L)</th>
                             <th class="text-end">Variance %</th>
@@ -193,7 +193,7 @@
                                 <td>{{ $calculation['product_name'] }}</td>
                                 <td class="text-end">{{ number_format($calculation['opening_stock'], 2) }}</td>
                                 <td class="text-end">{{ number_format($calculation['closing_stock'], 2) }}</td>
-                                <td class="text-end {{ $calculation['physical_usage'] > 0 ? 'text-success' : ($calculation['physical_usage'] < 0 ? 'text-danger' : '') }}">
+                                <!-- <td class="text-end {{ $calculation['physical_usage'] > 0 ? 'text-success' : ($calculation['physical_usage'] < 0 ? 'text-danger' : '') }}">
                                     @if($calculation['physical_usage'] > 0)
                                         +{{ number_format($calculation['physical_usage'], 2) }}
                                     @elseif($calculation['physical_usage'] < 0)
@@ -201,9 +201,9 @@
                                     @else
                                         0.00
                                     @endif
-                                </td>
+                                </td> -->
                                 <td class="text-end">{{ number_format($calculation['oil_purchased'], 2) }}</td>
-                                <td class="text-end {{ $calculation['adjusted_physical_usage'] > 0 ? 'text-success' : ($calculation['adjusted_physical_usage'] < 0 ? 'text-danger' : '') }}">
+                                <!-- <td class="text-end {{ $calculation['adjusted_physical_usage'] > 0 ? 'text-success' : ($calculation['adjusted_physical_usage'] < 0 ? 'text-danger' : '') }}">
                                     @if($calculation['adjusted_physical_usage'] > 0)
                                         +{{ number_format($calculation['adjusted_physical_usage'], 2) }}
                                     @elseif($calculation['adjusted_physical_usage'] < 0)
@@ -211,7 +211,7 @@
                                     @else
                                         0.00
                                     @endif
-                                </td>
+                                </td> -->
                                 <td class="text-end">{{ number_format($calculation['total_nozzle_sales'], 2) }}</td>
                                 <td class="text-end {{ $calculation['gain_loss_class'] == 'success' ? 'variance-positive' : ($calculation['gain_loss_class'] == 'danger' ? 'variance-negative' : '') }}">
                                     @if($calculation['variance'] > 0)
