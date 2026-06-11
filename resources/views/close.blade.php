@@ -138,6 +138,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <!-- ✅ EXPENSES SECTION -->
                         <div class="row mt-3">
                             <div class="col-md-12">
@@ -159,6 +160,7 @@
                                 </div>
                             </div>
                         </div>
+
 
                         <!-- ✅ CASH FLOW SUMMARY SECTION -->
                         <div class="card mb-4">
@@ -266,8 +268,13 @@
                                     <div class="row mt-3" id="bank_transfer_section" style="display: none;">
                                         <div class="col-md-12">
                                             <div class="card border-primary">
-                                                <div class="card-header bg-primary text-white">
+                                                <div
+                                                    class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                                                     <h6 class="mb-0">Bank Transfer Details</h6>
+                                                    <button type="button" class="btn btn-light btn-sm"
+                                                        id="add_bank_transfer_row">
+                                                        <i class="bi bi-plus-circle me-1"></i> Add Another
+                                                    </button>
                                                 </div>
                                                 <div class="card-body">
                                                     <div class="row">
@@ -277,10 +284,23 @@
                                                                 <option value="">Select Bank Account...</option>
                                                             </select>
                                                         </div>
-                                                        <div class="col-md-8">
-                                                            <label class="form-label">Product-wise Transfer Liters</label>
+                                                    </div>
+                                                    <div id="bank_transfer_rows_container">
+                                                        <!-- First Row with Products -->
+                                                        <div class="bank-transfer-row card mt-3 p-3">
+                                                            <div class="row">
+                                                                <div class="col-md-12 mb-2">
+                                                                    <strong>Transfer #1 (Product-wise)</strong>
+                                                                </div>
+                                                            </div>
                                                             <div id="bank_transfer_products_container">
                                                                 <!-- Dynamic product rows will appear here -->
+                                                            </div>
+                                                            <div class="row mt-2">
+                                                                <div class="col-md-12 text-end">
+                                                                    <small>Total from products: <span
+                                                                            id="bank_products_total">0.00</span></small>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -296,7 +316,7 @@
                                                             <label class="form-label required-label">Transfer Amount</label>
                                                             <input type="number" class="form-control" id="transfer_amount"
                                                                 readonly style="background-color: #f8f9fa;">
-                                                            <small class="text-muted">Auto-calculated from products</small>
+                                                            <small class="text-muted">Auto-calculated from all rows</small>
                                                         </div>
                                                         <div class="col-md-4">
                                                             <label class="form-label">New In Bank Total</label>
@@ -310,12 +330,18 @@
                                     </div>
 
 
+
                                     <!-- FUEL CARD SECTION -->
                                     <div class="row mt-3" id="fuelcard_section" style="display: none;">
                                         <div class="col-md-12">
                                             <div class="card border-info">
-                                                <div class="card-header bg-info text-white">
+                                                <div
+                                                    class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                                                     <h6 class="mb-0">Fuel Card Details</h6>
+                                                    <button type="button" class="btn btn-light btn-sm"
+                                                        id="add_fuelcard_row">
+                                                        <i class="bi bi-plus-circle me-1"></i> Add Another
+                                                    </button>
                                                 </div>
                                                 <div class="card-body">
                                                     <div class="row">
@@ -326,10 +352,23 @@
                                                                 <option value="">Select Fuel Card Account...</option>
                                                             </select>
                                                         </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Product-wise Fuel Card Liters</label>
+                                                    </div>
+                                                    <div id="fuelcard_rows_container">
+                                                        <!-- First Row with Products -->
+                                                        <div class="fuelcard-row card mt-3 p-3">
+                                                            <div class="row">
+                                                                <div class="col-md-12 mb-2">
+                                                                    <strong>Fuel Card Entry #1 (Product-wise)</strong>
+                                                                </div>
+                                                            </div>
                                                             <div id="fuelcard_products_container">
                                                                 <!-- Dynamic product rows will appear here -->
+                                                            </div>
+                                                            <div class="row mt-2">
+                                                                <div class="col-md-12 text-end">
+                                                                    <small>Total from products: <span
+                                                                            id="fuelcard_products_total">0.00</span></small>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -346,7 +385,7 @@
                                                                 Amount</label>
                                                             <input type="number" class="form-control" id="fuelcard_amount"
                                                                 readonly style="background-color: #f8f9fa;">
-                                                            <small class="text-muted">Auto-calculated from products</small>
+                                                            <small class="text-muted">Auto-calculated from all rows</small>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -355,12 +394,18 @@
                                     </div>
 
 
+
                                     <!-- CREDIT CARD SECTION -->
                                     <div class="row mt-3" id="creditcard_section" style="display: none;">
                                         <div class="col-md-12">
                                             <div class="card border-warning">
-                                                <div class="card-header bg-warning text-white">
+                                                <div
+                                                    class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
                                                     <h6 class="mb-0">Credit Card Details</h6>
+                                                    <button type="button" class="btn btn-light btn-sm"
+                                                        id="add_creditcard_row">
+                                                        <i class="bi bi-plus-circle me-1"></i> Add Another
+                                                    </button>
                                                 </div>
                                                 <div class="card-body">
                                                     <div class="row">
@@ -371,11 +416,23 @@
                                                                 <option value="">Select Credit Card Account...</option>
                                                             </select>
                                                         </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Product-wise Credit Card
-                                                                Liters</label>
+                                                    </div>
+                                                    <div id="creditcard_rows_container">
+                                                        <!-- First Row with Products -->
+                                                        <div class="creditcard-row card mt-3 p-3">
+                                                            <div class="row">
+                                                                <div class="col-md-12 mb-2">
+                                                                    <strong>Credit Card Entry #1 (Product-wise)</strong>
+                                                                </div>
+                                                            </div>
                                                             <div id="creditcard_products_container">
                                                                 <!-- Dynamic product rows will appear here -->
+                                                            </div>
+                                                            <div class="row mt-2">
+                                                                <div class="col-md-12 text-end">
+                                                                    <small>Total from products: <span
+                                                                            id="creditcard_products_total">0.00</span></small>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -392,13 +449,14 @@
                                                                 Amount</label>
                                                             <input type="number" class="form-control" id="creditcard_amount"
                                                                 readonly style="background-color: #f8f9fa;">
-                                                            <small class="text-muted">Auto-calculated from products</small>
+                                                            <small class="text-muted">Auto-calculated from all rows</small>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+
 
 
                                     <!-- CREDIT TO DRIVER SECTION -->
@@ -588,39 +646,39 @@
                 const shiftId = $("#close_shift_id").val();
 
                 const rowHtml = `
-                                    <div class="row mb-2 align-items-end expense-row  rounded p-2 mx-0" id="${rowId}">
-                                        <div class="col-md-3" style="display:none;">
-                                            <label class="form-label form-label-sm required-label">Payment Type</label>
-                                            <select class="form-control form-control-sm expense-payment-type" required>
-                                                <option value="">Select...</option>
-                                                <option value="cash" selected>Cash</option>
-                                                <option value="bank">Bank</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-3 expense-bank-col" style="display:none;">
-                                            <label class="form-label form-label-sm required-label">Bank Account</label>
-                                            <select class="form-control form-control-sm expense-bank-select">
-                                                <option value="">Select Bank...</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label form-label-sm required-label">Amount</label>
-                                            <input type="number" class="form-control form-control-sm expense-amount" 
-                                                   step="0.01" min="0" placeholder="0.00" required>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label form-label-sm required-label">Notes</label>
-                                            <input type="text" class="form-control form-control-sm expense-notes" 
-                                                   placeholder="e.g. Electricity bill" required>
-                                        </div>
-                                        <div class="col-md-1 text-end">
-                                            <label class="form-label form-label-sm">&nbsp;</label>
-                                            <button type="button" class="btn btn-danger btn-sm d-block remove-expense-row" data-row-id="${rowId}">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                `;
+                                            <div class="row mb-2 align-items-end expense-row  rounded p-2 mx-0" id="${rowId}">
+                                                <div class="col-md-3" style="display:none;">
+                                                    <label class="form-label form-label-sm required-label">Payment Type</label>
+                                                    <select class="form-control form-control-sm expense-payment-type" required>
+                                                        <option value="">Select...</option>
+                                                        <option value="cash" selected>Cash</option>
+                                                        <option value="bank">Bank</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3 expense-bank-col" style="display:none;">
+                                                    <label class="form-label form-label-sm required-label">Bank Account</label>
+                                                    <select class="form-control form-control-sm expense-bank-select">
+                                                        <option value="">Select Bank...</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label form-label-sm required-label">Amount</label>
+                                                    <input type="number" class="form-control form-control-sm expense-amount" 
+                                                           step="0.01" min="0" placeholder="0.00" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label form-label-sm required-label">Notes</label>
+                                                    <input type="text" class="form-control form-control-sm expense-notes" 
+                                                           placeholder="e.g. Electricity bill" required>
+                                                </div>
+                                                <div class="col-md-1 text-end">
+                                                    <label class="form-label form-label-sm">&nbsp;</label>
+                                                    <button type="button" class="btn btn-danger btn-sm d-block remove-expense-row" data-row-id="${rowId}">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        `;
 
                 $("#no_expense_msg").hide();
                 $("#expenses_container").append(rowHtml);
@@ -804,13 +862,13 @@
                 const bgClass = type === "success" ? "bg-success text-white" : "bg-danger text-white";
 
                 const toastHtml = `
-                                                                                                                                                                                                                <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
-                                                                                                                                                                                                                    <div class="d-flex">
-                                                                                                                                                                                                                        <div class="toast-body">${message}</div>
-                                                                                                                                                                                                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                            `;
+                                                                                                                                                                                                                        <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                                                                                                                                                                                                                            <div class="d-flex">
+                                                                                                                                                                                                                                <div class="toast-body">${message}</div>
+                                                                                                                                                                                                                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                    `;
 
                 $("#toastContainer").append(toastHtml);
                 const toastElement = document.getElementById(toastId);
@@ -866,18 +924,18 @@
 
                         // Display shift information
                         $("#shift_info_container").html(`
-                                                                                    <div class="row">
-                                                                                        <div class="col-md-6">
-                                                                                            <strong>Station:</strong> ${shift.station_name || 'N/A'}<br>
-                                                                                            <strong>Shift:</strong> ${shift.shift_no === 1 ? 'Day' : 'Night'}<br>
-                                                                                            <strong>Start Time:</strong> ${shift.start_time}
-                                                                                        </div>
-                                                                                        <div class="col-md-6">
-                                                                                            <strong>Shift Incharge:</strong> ${shift.shift_incharger_name || 'N/A'}<br>
-                                                                                            <strong>Station ID:</strong> ${shift.station_id || 'N/A'}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                `);
+                                                                                            <div class="row">
+                                                                                                <div class="col-md-6">
+                                                                                                    <strong>Station:</strong> ${shift.station_name || 'N/A'}<br>
+                                                                                                    <strong>Shift:</strong> ${shift.shift_no === 1 ? 'Day' : 'Night'}<br>
+                                                                                                    <strong>Start Time:</strong> ${shift.start_time}
+                                                                                                </div>
+                                                                                                <div class="col-md-6">
+                                                                                                    <strong>Shift Incharge:</strong> ${shift.shift_incharger_name || 'N/A'}<br>
+                                                                                                    <strong>Station ID:</strong> ${shift.station_id || 'N/A'}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        `);
                     },
                     error: function (xhr) {
                         console.error("Error fetching shift details:", xhr.responseText);
@@ -1084,48 +1142,48 @@
                     const capacity = tank.capacity || 'N/A';
 
                     container.append(`
-                                                                                                                            <div class="row mb-3 tank-dip-row" data-tank-id="${tank.id}">
-                                                                                                                                <div class="col-md-2">
-                                                                                                                                    <label class="form-label">Tank Name</label>
-                                                                                                                                    <input type="text" class="form-control" value="${tank.name}" readonly>
-                                                                                                                                    <small class="text-muted">Current Level: ${currentLevel} L</small>
-                                                                                                                                    <br>
-                                                                                                                                    <small class="text-muted">Capacity: ${capacity} L</small>
-                                                                                                                                </div>
-                                                                                                                                <div class="col-md-2">
-                                                                                                                                    <label class="form-label">Product</label>
-                                                                                                                                    <input type="text" class="form-control" value="${tank.product_name || 'N/A'}" readonly>
-                                                                                                                                </div>
-                                                                                                                                <div class="col-md-2">
-                                                                                                                                    <label class="form-label">Last Dip (mm)</label>
-                                                                                                                                    <input type="number" class="form-control" value="${tank.last_dip_mm}" readonly>
-                                                                                                                                    <small class="text-muted">Previous reading</small>
-                                                                                                                                </div>
-                                                                                                                                <div class="col-md-2">
-                                                                                                                                    <label class="form-label">Last Dip (Liters)</label>
-                                                                                                                                    <input type="number" class="form-control" value="${tank.last_dip_liters || currentLevel}" readonly>
-                                                                                                                                    <small class="text-muted">Previous reading</small>
-                                                                                                                                </div>
-                                                                                                                                <div class="col-md-2">
-                                                                                                                                    <label class="form-label required-label">New Dip (mm)</label>
-                                                                                                                                    <input type="number" class="form-control tank-dip-mm" name="tank_dip_mm[${tank.id}]" 
-                                                                                                                                           step="0.01" min="0" placeholder="Enter new dip in mm" required>
-                                                                                                                                    <div class="invalid-feedback">Dip in mm is required</div>
-                                                                                                                                </div>
-                                                                                                                                <div class="col-md-2">
-                                                                                                                                    <label class="form-label required-label">New Dip (Liters)</label>
-                                                                                                                                    <input type="number" class="form-control tank-dip-liters" name="tank_dip_liters[${tank.id}]" 
-                                                                                                                                           step="0.01" min="0" max="${capacity}" 
-                                                                                                                                           placeholder="Enter new dip in liters" 
-                                                                                                                                           data-current-level="${currentLevel}"
-                                                                                                                                           required>
-                                                                                                                                    <small class="text-muted">Max: ${capacity} L</small>
-                                                                                                                                    <br>
-                                                                                                                                    <small class="text-warning" id="tank-warning-${tank.id}"></small>
-                                                                                                                                    <div class="invalid-feedback">Dip in liters is required</div>
-                                                                                                                                </div>
-                                                                                                                            </div>
-                                                                                                                        `);
+                                                                                                                                    <div class="row mb-3 tank-dip-row" data-tank-id="${tank.id}">
+                                                                                                                                        <div class="col-md-2">
+                                                                                                                                            <label class="form-label">Tank Name</label>
+                                                                                                                                            <input type="text" class="form-control" value="${tank.name}" readonly>
+                                                                                                                                            <small class="text-muted">Current Level: ${currentLevel} L</small>
+                                                                                                                                            <br>
+                                                                                                                                            <small class="text-muted">Capacity: ${capacity} L</small>
+                                                                                                                                        </div>
+                                                                                                                                        <div class="col-md-2">
+                                                                                                                                            <label class="form-label">Product</label>
+                                                                                                                                            <input type="text" class="form-control" value="${tank.product_name || 'N/A'}" readonly>
+                                                                                                                                        </div>
+                                                                                                                                        <div class="col-md-2">
+                                                                                                                                            <label class="form-label">Last Dip (mm)</label>
+                                                                                                                                            <input type="number" class="form-control" value="${tank.last_dip_mm}" readonly>
+                                                                                                                                            <small class="text-muted">Previous reading</small>
+                                                                                                                                        </div>
+                                                                                                                                        <div class="col-md-2">
+                                                                                                                                            <label class="form-label">Last Dip (Liters)</label>
+                                                                                                                                            <input type="number" class="form-control" value="${tank.last_dip_liters || currentLevel}" readonly>
+                                                                                                                                            <small class="text-muted">Previous reading</small>
+                                                                                                                                        </div>
+                                                                                                                                        <div class="col-md-2">
+                                                                                                                                            <label class="form-label required-label">New Dip (mm)</label>
+                                                                                                                                            <input type="number" class="form-control tank-dip-mm" name="tank_dip_mm[${tank.id}]" 
+                                                                                                                                                   step="0.01" min="0" placeholder="Enter new dip in mm" required>
+                                                                                                                                            <div class="invalid-feedback">Dip in mm is required</div>
+                                                                                                                                        </div>
+                                                                                                                                        <div class="col-md-2">
+                                                                                                                                            <label class="form-label required-label">New Dip (Liters)</label>
+                                                                                                                                            <input type="number" class="form-control tank-dip-liters" name="tank_dip_liters[${tank.id}]" 
+                                                                                                                                                   step="0.01" min="0" max="${capacity}" 
+                                                                                                                                                   placeholder="Enter new dip in liters" 
+                                                                                                                                                   data-current-level="${currentLevel}"
+                                                                                                                                                   required>
+                                                                                                                                            <small class="text-muted">Max: ${capacity} L</small>
+                                                                                                                                            <br>
+                                                                                                                                            <small class="text-warning" id="tank-warning-${tank.id}"></small>
+                                                                                                                                            <div class="invalid-feedback">Dip in liters is required</div>
+                                                                                                                                        </div>
+                                                                                                                                    </div>
+                                                                                                                                `);
                 });
             }
 
@@ -1159,119 +1217,119 @@
 
                 nozzles.forEach(nozzle => {
                     container.append(`
-                                                                                                                                                                                                                    <div class="row mb-3 nozzle-reading-row" data-nozzle-id="${nozzle.id}">
-                                                                                                                                                                                                                        <div style="width:14.2%">
-                                                                                                                                                                                                                            <label class="form-label">Nozzle Name</label>
-                                                                                                                                                                                                                            <input type="text" class="form-control" value="${nozzle.name}" readonly>
-                                                                                                                                                                                                                            <small class="text-muted">Dispenser: ${nozzle.dispenser_name || 'N/A'}</small>
-                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                        <div style="width:14.2%">
-                                                                                                                                                                                                                            <label class="form-label">Product</label>
-                                                                                                                                                                                                                            <input type="text" class="form-control" value="${nozzle.product_name || 'N/A'}" readonly>
-                                                                                                                                                                                                                            <small class="text-muted">Tank: ${nozzle.tank_name || 'N/A'}</small>
-                                                                                                                                                                                                                        </div>
-                                                                            <div style="width:14.2%">
-                                                                                                                                                                                                                            <label class="form-label">Testing(LTR)</label>
-                                                                                                                                                                                                                            <input type="number"
-                                                                                   class="form-control nozzle-testing"
-                                                                                   name="nozzle_testing[${nozzle.id}]"
-                                                                                   step="0.01"
-                                                                                   min="0"
-                                                                                   value="0">
+                                                                                                                                                                                                                            <div class="row mb-3 nozzle-reading-row" data-nozzle-id="${nozzle.id}">
+                                                                                                                                                                                                                                <div style="width:14.2%">
+                                                                                                                                                                                                                                    <label class="form-label">Nozzle Name</label>
+                                                                                                                                                                                                                                    <input type="text" class="form-control" value="${nozzle.name}" readonly>
+                                                                                                                                                                                                                                    <small class="text-muted">Dispenser: ${nozzle.dispenser_name || 'N/A'}</small>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                <div style="width:14.2%">
+                                                                                                                                                                                                                                    <label class="form-label">Product</label>
+                                                                                                                                                                                                                                    <input type="text" class="form-control" value="${nozzle.product_name || 'N/A'}" readonly>
+                                                                                                                                                                                                                                    <small class="text-muted">Tank: ${nozzle.tank_name || 'N/A'}</small>
+                                                                                                                                                                                                                                </div>
+                                                                                    <div style="width:14.2%">
+                                                                                                                                                                                                                                    <label class="form-label">Testing(LTR)</label>
+                                                                                                                                                                                                                                    <input type="number"
+                                                                                           class="form-control nozzle-testing"
+                                                                                           name="nozzle_testing[${nozzle.id}]"
+                                                                                           step="0.01"
+                                                                                           min="0"
+                                                                                           value="0">
 
-                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                        <div style="width:14.2%">
-                                                                                                                                                                                                                            <label class="form-label">Opening Reading</label>
-                                                                                                                                                                                                                            <input type="number" class="form-control nozzle-opening" name="nozzle_opening[${nozzle.id}]" 
-                                                                                                                                                                                                                                value="${nozzle.last_reading}" step="0.01" min="0" readonly>
-                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                        <div style="width:14.2%">
-                                                                                                                                                                                                                            <label class="form-label required-label">Closing Reading</label>
-                                                                                                                                                                                                                            <input type="number" class="form-control nozzle-closing" name="nozzle_closing[${nozzle.id}]" 
-                                                                                                                                                                                                                                step="0.01" min="0" placeholder="Enter closing reading"
-                                                                                                                                                                                                                                data-opening="${nozzle.last_reading}" required>
-                                                                                                                                                                                                                            <div class="invalid-feedback">Closing reading is required</div>
-                                                                                                                                                                                                                            <small class="text-muted validation-message" id="validation-${nozzle.id}" style="display:none; color: red;"></small>
-                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                        <div style="width:14.2%">
-                                                                                                                                                                                                                            <label class="form-label">Total Dispensed</label>
-                                                                                                                                                                                                                            <input type="number" class="form-control nozzle-total" readonly>
-                                                                                                                                                                                                                            <small class="text-muted">Auto calculated</small>
-                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                <div style="width:14.2%">
+                                                                                                                                                                                                                                    <label class="form-label">Opening Reading</label>
+                                                                                                                                                                                                                                    <input type="number" class="form-control nozzle-opening" name="nozzle_opening[${nozzle.id}]" 
+                                                                                                                                                                                                                                        value="${nozzle.last_reading}" step="0.01" min="0" readonly>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                <div style="width:14.2%">
+                                                                                                                                                                                                                                    <label class="form-label required-label">Closing Reading</label>
+                                                                                                                                                                                                                                    <input type="number" class="form-control nozzle-closing" name="nozzle_closing[${nozzle.id}]" 
+                                                                                                                                                                                                                                        step="0.01" min="0" placeholder="Enter closing reading"
+                                                                                                                                                                                                                                        data-opening="${nozzle.last_reading}" required>
+                                                                                                                                                                                                                                    <div class="invalid-feedback">Closing reading is required</div>
+                                                                                                                                                                                                                                    <small class="text-muted validation-message" id="validation-${nozzle.id}" style="display:none; color: red;"></small>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                <div style="width:14.2%">
+                                                                                                                                                                                                                                    <label class="form-label">Total Dispensed</label>
+                                                                                                                                                                                                                                    <input type="number" class="form-control nozzle-total" readonly>
+                                                                                                                                                                                                                                    <small class="text-muted">Auto calculated</small>
+                                                                                                                                                                                                                                </div>
 
-                                                                                                                                                                                                                        <div style="width:14.2%">
-                                                                                                                                                                                                                            <label class="form-label">Actions</label>
-                                                                                                                                                                                                                            <div>
-                                                                                                                                                                                                                                <button class="btn btn-sm reset-nozzle-btn" 
-                                                                                                                                                                                                                                        style="background-color: #20c997; color: white; border: none;"
-                                                                                                                                                                                                                                        data-nozzle-id="${nozzle.id}" 
-                                                                                                                                                                                                                                        data-nozzle-name="${nozzle.name}" 
-                                                                                                                                                                                                                                        data-opening-reading="${nozzle.last_reading}"
-                                                                                                                                                                                                                                        data-product-name="${nozzle.product_name || 'N/A'}"
-                                                                                                                                                                                                                                        data-product-id="${nozzle.product_id || ''}">
-                                                                                                                                                                                                                                        Reset Nozzle
-                                                                                                                                                                                                                                </button>
+                                                                                                                                                                                                                                <div style="width:14.2%">
+                                                                                                                                                                                                                                    <label class="form-label">Actions</label>
+                                                                                                                                                                                                                                    <div>
+                                                                                                                                                                                                                                        <button class="btn btn-sm reset-nozzle-btn" 
+                                                                                                                                                                                                                                                style="background-color: #20c997; color: white; border: none;"
+                                                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" 
+                                                                                                                                                                                                                                                data-nozzle-name="${nozzle.name}" 
+                                                                                                                                                                                                                                                data-opening-reading="${nozzle.last_reading}"
+                                                                                                                                                                                                                                                data-product-name="${nozzle.product_name || 'N/A'}"
+                                                                                                                                                                                                                                                data-product-id="${nozzle.product_id || ''}">
+                                                                                                                                                                                                                                                Reset Nozzle
+                                                                                                                                                                                                                                        </button>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                </div>
+
+                                                                                                                                                                                                                                <!-- ✅ HIDDEN RESET FIELDS -->
+                                                                                                                                                                                                                                <div class="col-12 mt-3 reset-fields-container" id="reset-fields-${nozzle.id}" style="display: none;">
+                                                                                                                                                                                                                                    <div class="row">
+                                                                                                                                                                                                                                        <div class="col-md-12">
+                                                                                                                                                                                                                                            <h6 class="text-primary">Nozzle Reset Details</h6>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        <div class="col-md-3 mb-3">
+                                                                                                                                                                                                                                            <label class="form-label required-label">Reset Date & Time</label>
+                                                                                                                                                                                                                                            <input type="datetime-local" class="form-control reset-date" 
+                                                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" required>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        <div class="col-md-3 mb-3">
+                                                                                                                                                                                                                                            <label class="form-label required-label">Old Reading</label>
+                                                                                                                                                                                                                                            <input type="number" class="form-control reset-old-reading" 
+                                                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" 
+                                                                                                                                                                                                                                                value="${nozzle.last_reading}" 
+                                                                                                                                                                                                                                                step="0.01" min="0" required>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        <div class="col-md-3 mb-3">
+                                                                                                                                                                                                                                            <label class="form-label required-label">New Reading</label>
+                                                                                                                                                                                                                                            <input type="number" class="form-control reset-new-reading" 
+                                                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" 
+                                                                                                                                                                                                                                                step="0.01" min="0" placeholder="Enter new reading" required>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        <div class="col-md-3 mb-3">
+                                                                                                                                                                                                                                            <label class="form-label required-label">Rate (per liter)</label>
+                                                                                                                                                                                                                                            <input type="number" class="form-control reset-rate" 
+                                                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" 
+                                                                                                                                                                                                                                                step="0.01" min="0" required readonly>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        <div class="col-md-3 mb-3">
+                                                                                                                                                                                                                                            <label class="form-label">Reset Total Dispensed</label>
+                                                                                                                                                                                                                                            <input type="number" class="form-control reset-total-dispensed" 
+                                                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" readonly>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        <div class="col-md-3 mb-3">
+                                                                                                                                                                                                                                            <label class="form-label">Reset Total Amount</label>
+                                                                                                                                                                                                                                            <input type="number" class="form-control reset-total-amount" 
+                                                                                                                                                                                                                                                data-nozzle-id="${nozzle.id}" readonly>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        <div class="col-md-6 mb-3">
+                                                                                                                                                                                                                                            <label class="form-label required-label">Reason</label>
+                                                                                                                                                                                                                                            <textarea class="form-control reset-reason" 
+                                                                                                                                                                                                                                                    data-nozzle-id="${nozzle.id}" 
+                                                                                                                                                                                                                                                    rows="2" placeholder="Enter reason for nozzle reset" required>Nozzle reset during shift closing</textarea>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        <div class="col-md-12">
+                                                                                                                                                                                                                                            <button class="btn btn-success btn-sm save-reset-btn" data-nozzle-id="${nozzle.id}">
+                                                                                                                                                                                                                                                Save Reset
+                                                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                                                            <button class="btn btn-secondary btn-sm cancel-reset-btn ms-2" data-nozzle-id="${nozzle.id}">
+                                                                                                                                                                                                                                                Cancel
+                                                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                </div>
                                                                                                                                                                                                                             </div>
-                                                                                                                                                                                                                        </div>
-
-                                                                                                                                                                                                                        <!-- ✅ HIDDEN RESET FIELDS -->
-                                                                                                                                                                                                                        <div class="col-12 mt-3 reset-fields-container" id="reset-fields-${nozzle.id}" style="display: none;">
-                                                                                                                                                                                                                            <div class="row">
-                                                                                                                                                                                                                                <div class="col-md-12">
-                                                                                                                                                                                                                                    <h6 class="text-primary">Nozzle Reset Details</h6>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div class="col-md-3 mb-3">
-                                                                                                                                                                                                                                    <label class="form-label required-label">Reset Date & Time</label>
-                                                                                                                                                                                                                                    <input type="datetime-local" class="form-control reset-date" 
-                                                                                                                                                                                                                                        data-nozzle-id="${nozzle.id}" required>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div class="col-md-3 mb-3">
-                                                                                                                                                                                                                                    <label class="form-label required-label">Old Reading</label>
-                                                                                                                                                                                                                                    <input type="number" class="form-control reset-old-reading" 
-                                                                                                                                                                                                                                        data-nozzle-id="${nozzle.id}" 
-                                                                                                                                                                                                                                        value="${nozzle.last_reading}" 
-                                                                                                                                                                                                                                        step="0.01" min="0" required>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div class="col-md-3 mb-3">
-                                                                                                                                                                                                                                    <label class="form-label required-label">New Reading</label>
-                                                                                                                                                                                                                                    <input type="number" class="form-control reset-new-reading" 
-                                                                                                                                                                                                                                        data-nozzle-id="${nozzle.id}" 
-                                                                                                                                                                                                                                        step="0.01" min="0" placeholder="Enter new reading" required>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div class="col-md-3 mb-3">
-                                                                                                                                                                                                                                    <label class="form-label required-label">Rate (per liter)</label>
-                                                                                                                                                                                                                                    <input type="number" class="form-control reset-rate" 
-                                                                                                                                                                                                                                        data-nozzle-id="${nozzle.id}" 
-                                                                                                                                                                                                                                        step="0.01" min="0" required readonly>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div class="col-md-3 mb-3">
-                                                                                                                                                                                                                                    <label class="form-label">Reset Total Dispensed</label>
-                                                                                                                                                                                                                                    <input type="number" class="form-control reset-total-dispensed" 
-                                                                                                                                                                                                                                        data-nozzle-id="${nozzle.id}" readonly>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div class="col-md-3 mb-3">
-                                                                                                                                                                                                                                    <label class="form-label">Reset Total Amount</label>
-                                                                                                                                                                                                                                    <input type="number" class="form-control reset-total-amount" 
-                                                                                                                                                                                                                                        data-nozzle-id="${nozzle.id}" readonly>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div class="col-md-6 mb-3">
-                                                                                                                                                                                                                                    <label class="form-label required-label">Reason</label>
-                                                                                                                                                                                                                                    <textarea class="form-control reset-reason" 
-                                                                                                                                                                                                                                            data-nozzle-id="${nozzle.id}" 
-                                                                                                                                                                                                                                            rows="2" placeholder="Enter reason for nozzle reset" required>Nozzle reset during shift closing</textarea>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div class="col-md-12">
-                                                                                                                                                                                                                                    <button class="btn btn-success btn-sm save-reset-btn" data-nozzle-id="${nozzle.id}">
-                                                                                                                                                                                                                                        Save Reset
-                                                                                                                                                                                                                                    </button>
-                                                                                                                                                                                                                                    <button class="btn btn-secondary btn-sm cancel-reset-btn ms-2" data-nozzle-id="${nozzle.id}">
-                                                                                                                                                                                                                                        Cancel
-                                                                                                                                                                                                                                    </button>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                `);
+                                                                                                                                                                                                                        `);
                 });
             }
 
@@ -1704,26 +1762,44 @@
             }
 
             //AUTO CALCULATE IN HAND WHEN TOTAL SALES CHANGES
-            function autoCalculateDistribution(totalSales) {
+            function autoCalculateDistribution(grandTotalFromCashFlow) {
                 const isBankTransfer = $("#transfer_to_bank_checkbox").is(":checked");
                 const transferAmount = parseFloat($("#transfer_amount").val()) || 0;
                 const fuelCardAmount = parseFloat($("#fuelcard_amount").val()) || 0;
                 const creditCardAmount = parseFloat($("#creditcard_amount").val()) || 0;
 
+                // ✅ Page expenses
+                const pageExpensesTotal = getExpensesTotal();
+
+                // ✅ Get cash handover from the grand total (since grand total already includes cash handover)
+                // But we need cash handover separately. Let's get it from the shift data
+                const shiftId = $("#close_shift_id").val();
+
+                // Use synchronous approach to get cash handover
+                let cashHandover = 0;
+                $.ajax({
+                    url: `/api/shifts/${shiftId}`,
+                    method: "GET",
+                    async: false,
+                    success: function (shift) {
+                        cashHandover = parseFloat(shift.cash_handover) || 0;
+                    }
+                });
+
                 // ✅ Calculate driver credit amount
                 let driverCreditAmount = 0;
                 if ($("#credit_to_driver_checkbox").is(":checked")) {
                     $(".driver-credit-form").each(function () {
-                        const amount = parseFloat($(this).find('.credit-amount').val()) || 0;
-                        driverCreditAmount += amount;
+                        driverCreditAmount += parseFloat($(this).find('.credit-amount').val()) || 0;
                     });
                 }
 
+                // ✅ CORRECT: In Hand = Cash Handover - Page Expenses - Other Payments
                 const totalPayments = transferAmount + fuelCardAmount + creditCardAmount + driverCreditAmount;
-                const inHand = totalSales - totalPayments;
+                const inHand = cashHandover - pageExpensesTotal - totalPayments;
 
                 if (inHand < 0) {
-                    showToast(`Total payments (${totalPayments.toFixed(2)}) exceed total sales (${totalSales.toFixed(2)})!`, "error");
+                    showToast(`Total payments exceed available amount!`, "error");
                     $("#in_hand").val(0);
                     return;
                 }
@@ -1738,9 +1814,12 @@
                     $("#new_in_bank_total").val(transferAmount.toFixed(2));
                 }
 
-                validateCashDistribution(totalSales, inHand, transferAmount, fuelCardAmount, creditCardAmount, driverCreditAmount);
+                // ✅ Validation: Cash Handover = In Hand + Page Expenses + Payments
+                validateCashDistribution(cashHandover, inHand, transferAmount, fuelCardAmount, creditCardAmount, driverCreditAmount, pageExpensesTotal);
                 updateCreditSales();
             }
+
+
 
 
 
@@ -1799,42 +1878,33 @@
 
                                         const productPromises = Array.from(productsMap.values()).map(product => {
                                             return new Promise(resolve => {
-
                                                 $.ajax({
                                                     url: getApiUrl(`product-price/${stationId}/${product.product_id}/${shiftStartTime}`),
                                                     method: "GET",
                                                     success: function (priceData) {
-
                                                         const rate = parseFloat(priceData?.price) || 0;
-
                                                         let totalVolume = 0;
                                                         let testingAmount = 0;
                                                         let testingLiters = 0;
-                                                        let resetAmount = 0;
 
                                                         product.nozzles.forEach(nozzle => {
-
                                                             const opening = parseFloat($(`.nozzle-opening[name="nozzle_opening[${nozzle.id}]"]`).val()) || 0;
                                                             const closingInput = $(`.nozzle-closing[name="nozzle_closing[${nozzle.id}]"]`);
                                                             const closing = parseFloat(closingInput.val()) || 0;
-
                                                             const testing = parseFloat($(`.nozzle-testing[name="nozzle_testing[${nozzle.id}]"]`).val()) || 0;
 
                                                             if (!closingInput.val()) return;
 
                                                             if (closing >= opening) {
-
                                                                 const volume = closing - opening;
-
                                                                 totalVolume += volume;
-
                                                                 testingLiters += testing;
                                                                 testingAmount += testing * rate;
                                                             }
                                                         });
 
                                                         const grossAmount = totalVolume * rate;
-                                                        const nozzleTotal = grossAmount - testingAmount + resetAmount;
+                                                        const nozzleTotal = grossAmount - testingAmount;
 
                                                         resolve({
                                                             product_id: product.product_id,
@@ -1858,45 +1928,44 @@
                                                         });
                                                     }
                                                 });
-
                                             });
                                         });
 
                                         Promise.all(productPromises).then(productSummaries => {
 
-                                            // Inside calculateCashFlowSummary, where you calculate cashDebits:
+                                            // ✅ CRITICAL FIX: cashDebits mein ONLY API expenses honi chahiye (is_testing != 1)
                                             let cashCredits = 0;
-                                            let cashDebits = window.totalCashExpenses || 0; // Use the global variable
+                                            let cashDebits = 0;
 
                                             if (Array.isArray(transactions)) {
                                                 transactions.forEach(t => {
-                                                    if (t.method === 'cash') {
+                                                    if (t.method === 'cash' && t.is_testing != 1) {
                                                         cashCredits += parseFloat(t.credit) || 0;
                                                         cashDebits += parseFloat(t.debit) || 0;
                                                     }
                                                 });
                                             }
 
+                                            // ✅ Page expenses ko YAHAN add mat karo - woh renderCashFlowSummary mein handle hoga
+                                            const pageExpensesTotal = getExpensesTotal();
 
+                                            const totalNozzleSales = productSummaries.reduce((s, p) => s + p.nozzle_amount, 0);
+                                            const totalTestingAmount = productSummaries.reduce((s, p) => s + p.testing_amount, 0);
+                                            const totalTestingLiters = productSummaries.reduce((s, p) => s + p.testing_liters, 0);
+
+                                            const netCashTransactions = cashCredits - cashDebits;
 
                                             // ✅ ADDED: Calculate Lubricants
                                             calculateLubricantsCashTransactions(shiftId).then(lubricantsData => {
-                                                // ✅ ADDED: Calculate Oil Purchases
                                                 calculateOilPurchases(shiftId).then(oilPurchaseData => {
-                                                    // ✅ ADDED: Calculate Shortages
                                                     calculateShortagesCash(shiftId).then(shortagesData => {
-                                                        // ✅ ADDED: Calculate Driver Credit Cash Payments
                                                         calculateDriverCreditCashPayments(shiftId).then(driverCreditData => {
 
-                                                            const totalNozzleSales = productSummaries.reduce((s, p) => s + p.nozzle_amount, 0);
-                                                            const totalTestingAmount = productSummaries.reduce((s, p) => s + p.testing_amount, 0);
-                                                            const totalTestingLiters = productSummaries.reduce((s, p) => s + p.testing_liters, 0);
+                                                            // ✅ Grand Total WITHOUT page expenses
+                                                            const grandTotal = cashHandover + totalNozzleSales + netCashTransactions +
+                                                                lubricantsData.total - oilPurchaseData.total +
+                                                                shortagesData.total + driverCreditData.total;
 
-                                                            const netCashTransactions = cashCredits - cashDebits;
-
-                                                            // ✅ GRAND TOTAL MAI DRIVER CREDIT CASH PAYMENTS ADD KARO (POSITIVE)
-                                                            const cashExpensesTotal = getExpensesTotal(); // sirf cash expenses
-                                                            const grandTotal = cashHandover + totalNozzleSales + netCashTransactions + lubricantsData.total - oilPurchaseData.total + shortagesData.total + driverCreditData.total - cashExpensesTotal;
                                                             renderCashFlowSummary(
                                                                 productSummaries,
                                                                 cashCredits,
@@ -1907,25 +1976,25 @@
                                                                 lubricantsData,
                                                                 oilPurchaseData,
                                                                 shortagesData,
-                                                                driverCreditData,  // ✅ NEW PARAMETER
-                                                                grandTotal,
+                                                                driverCreditData,
+                                                                grandTotal,      // Without page expenses
                                                                 totalTestingAmount,
                                                                 totalTestingLiters,
-                                                                cashExpensesTotal  // ✅ NEW
+                                                                pageExpensesTotal // Pass page expenses separately
                                                             );
 
-                                                        }); // driverCreditData close
-                                                    }); // shortagesData close
-                                                }); // oilPurchaseData close
-                                            }); // lubricantsData close
-                                        }); // Promise.all close
-                                    } // transactions success close
-                                }); // transactions ajax close
-                            } // nozzles success close
-                        }); // nozzles ajax close
-                    } // shift success close
-                }); // shift ajax close
-            } // function close
+                                                        });
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
 
 
             // ✅ COMPLETE CALCULATE CASH FLOW SUMMARY FUNCTION
@@ -2178,95 +2247,95 @@
                         const amountDisplay = product.nozzle_amount ? product.nozzle_amount.toFixed(2) : '0.00';
 
                         container.append(`
-                                            <tr>
-                                                <td>${displayText}</td>
-                                                <td>${product.rate.toFixed(2)}</td>
-                                                <td>${volumeDisplay}</td>
-                                                <td>${testingLiters}</td>
-                                                <td>${testingAmount}</td>
-                                                <td>${amountDisplay}</td>
-                                            </tr>
-                                        `);
+                                                    <tr>
+                                                        <td>${displayText}</td>
+                                                        <td>${product.rate.toFixed(2)}</td>
+                                                        <td>${volumeDisplay}</td>
+                                                        <td>${testingLiters}</td>
+                                                        <td>${testingAmount}</td>
+                                                        <td>${amountDisplay}</td>
+                                                    </tr>
+                                                `);
                     }
                 });
 
                 // ✅ No sales fallback
                 if (!hasSales) {
                     container.append(`
-                                        <tr>
-                                            <td colspan="6" class="text-center text-muted">
-                                                <i class="bi bi-info-circle me-2"></i>
-                                                No nozzle sales recorded (fill nozzle closing readings)
-                                            </td>
-                                        </tr>
-                                    `);
+                                                <tr>
+                                                    <td colspan="6" class="text-center text-muted">
+                                                        <i class="bi bi-info-circle me-2"></i>
+                                                        No nozzle sales recorded (fill nozzle closing readings)
+                                                    </td>
+                                                </tr>
+                                            `);
                 }
 
                 // ✅ 2. Opening Cash Handover
                 container.append(`
-                                    <tr class="table-primary">
-                                        <td colspan="5" class="text-end"><strong>${rowNumber++}. Opening Cash Handover:</strong></td>
-                                        <td><strong>${cashHandover.toFixed(2)}</strong></td>
-                                    </tr>
-                                `);
+                                            <tr class="table-primary">
+                                                <td colspan="5" class="text-end"><strong>${rowNumber++}. Opening Cash Handover:</strong></td>
+                                                <td><strong>${cashHandover.toFixed(2)}</strong></td>
+                                            </tr>
+                                        `);
 
                 // ✅ 3. Total Nozzle Sales
                 container.append(`
-                                    <tr class="table-secondary">
-                                        <td colspan="5" class="text-end"><strong>${rowNumber++}. Total Nozzle Sales:</strong></td>
-                                        <td><strong>${totalNozzleSales.toFixed(2)}</strong></td>
-                                    </tr>
-                                `);
+                                            <tr class="table-secondary">
+                                                <td colspan="5" class="text-end"><strong>${rowNumber++}. Total Nozzle Sales:</strong></td>
+                                                <td><strong>${totalNozzleSales.toFixed(2)}</strong></td>
+                                            </tr>
+                                        `);
 
                 // ✅ 4. Lubricants
                 if (lubricantsData && lubricantsData.total !== 0) {
                     const sign = lubricantsData.total >= 0 ? '+' : '';
                     container.append(`
-                                        <tr class="table-info">
-                                            <td colspan="5" class="text-end"><strong>${rowNumber++}. Lubricants Cash:</strong></td>
-                                            <td><strong>${sign}${lubricantsData.total.toFixed(2)}</strong></td>
-                                        </tr>
-                                    `);
+                                                <tr class="table-info">
+                                                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Lubricants Cash:</strong></td>
+                                                    <td><strong>${sign}${lubricantsData.total.toFixed(2)}</strong></td>
+                                                </tr>
+                                            `);
                 }
 
                 // ✅ 5. Oil Purchases
                 if (oilPurchaseData && oilPurchaseData.total !== 0) {
                     container.append(`
-                                        <tr class="table-danger">
-                                            <td colspan="5" class="text-end"><strong>${rowNumber++}. Oil Purchases:</strong></td>
-                                            <td><strong>-${oilPurchaseData.total.toFixed(2)}</strong></td>
-                                        </tr>
-                                    `);
+                                                <tr class="table-danger">
+                                                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Oil Purchases:</strong></td>
+                                                    <td><strong>-${oilPurchaseData.total.toFixed(2)}</strong></td>
+                                                </tr>
+                                            `);
                 }
 
                 // ✅ 6. Shortages
                 if (shortagesData && shortagesData.total > 0) {
                     container.append(`
-                                        <tr class="table-success">
-                                            <td colspan="5" class="text-end"><strong>${rowNumber++}. Shortages Cash Received:</strong></td>
-                                            <td><strong>+${shortagesData.total.toFixed(2)}</strong></td>
-                                        </tr>
-                                    `);
+                                                <tr class="table-success">
+                                                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Shortages Cash Received:</strong></td>
+                                                    <td><strong>+${shortagesData.total.toFixed(2)}</strong></td>
+                                                </tr>
+                                            `);
                 }
 
                 // ✅ 7. Driver Credit Cash Payments
                 if (driverCreditData && driverCreditData.total > 0) {
                     container.append(`
-                                        <tr class="table-warning">
-                                            <td colspan="5" class="text-end"><strong>${rowNumber++}. Driver Credit Cash Received:</strong></td>
-                                            <td><strong>+${driverCreditData.total.toFixed(2)}</strong></td>
-                                        </tr>
-                                    `);
+                                                <tr class="table-warning">
+                                                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Driver Credit Cash Received:</strong></td>
+                                                    <td><strong>+${driverCreditData.total.toFixed(2)}</strong></td>
+                                                </tr>
+                                            `);
                 }
 
                 // ✅ 8. EXPENSE TRANSACTIONS SECTION
                 if (expenseTransactions && expenseTransactions.length > 0) {
                     // Add expense header
                     container.append(`
-                                        <tr class="table-danger">
-                                            <td colspan="6" class="text-danger"><strong>📋 EXPENSES (Cash Payments)</strong></td>
-                                        </tr>
-                                    `);
+                                                <tr class="table-danger">
+                                                    <td colspan="6" class="text-danger"><strong>📋 EXPENSES (Cash Payments)</strong></td>
+                                                </tr>
+                                            `);
 
                     let totalExpenses = 0;
 
@@ -2276,57 +2345,57 @@
                         if (expenseAmount > 0) {
                             totalExpenses += expenseAmount;
                             container.append(`
-                                                <tr class="table-light">
-                                                    <td colspan="4" class="text-end">
-                                                        <small>
-                                                            <strong>${index + 1}.</strong> ${expense.note || 'Expense'}
-                                                            <br>
-                                                            <span class="text-muted">${expense.created_at ? new Date(expense.created_at).toLocaleString() : ''}</span>
-                                                        </small>
-                                                    </td>
-                                                    <td class="text-end"><strong>Amount:</strong></td>
-                                                    <td class="text-danger"><strong>-${expenseAmount.toFixed(2)}</strong></td>
-                                                </tr>
-                                            `);
+                                                        <tr class="table-light">
+                                                            <td colspan="4" class="text-end">
+                                                                <small>
+                                                                    <strong>${index + 1}.</strong> ${expense.note || 'Expense'}
+                                                                    <br>
+                                                                    <span class="text-muted">${expense.created_at ? new Date(expense.created_at).toLocaleString() : ''}</span>
+                                                                </small>
+                                                            </td>
+                                                            <td class="text-end"><strong>Amount:</strong></td>
+                                                            <td class="text-danger"><strong>-${expenseAmount.toFixed(2)}</strong></td>
+                                                        </tr>
+                                                    `);
                         }
                     });
 
                     // Add total expenses row
                     container.append(`
-                                        <tr class="table-danger">
-                                            <td colspan="5" class="text-end"><strong>Total Expenses:</strong></td>
-                                            <td><strong class="text-danger">-${totalExpenses.toFixed(2)}</strong></td>
-                                        </tr>
-                                    `);
+                                                <tr class="table-danger">
+                                                    <td colspan="5" class="text-end"><strong>Total Expenses:</strong></td>
+                                                    <td><strong class="text-danger">-${totalExpenses.toFixed(2)}</strong></td>
+                                                </tr>
+                                            `);
                 }
 
                 // ✅ 9. Cash Income Transactions (credits)
                 if (cashCredits > 0) {
                     container.append(`
-                                        <tr class="table-success">
-                                            <td colspan="5" class="text-end"><strong>${rowNumber++}. ➕ Cash Income:</strong></td>
-                                            <td><strong>${cashCredits.toFixed(2)}</strong></td>
-                                        </tr>
-                                    `);
+                                                <tr class="table-success">
+                                                    <td colspan="5" class="text-end"><strong>${rowNumber++}. ➕ Cash Income:</strong></td>
+                                                    <td><strong>${cashCredits.toFixed(2)}</strong></td>
+                                                </tr>
+                                            `);
                 }
 
                 // ✅ 10. Net Cash Transactions
                 if ((cashCredits > 0 || cashDebits > 0) && netCashTransactions !== 0) {
                     container.append(`
-                                        <tr class="table-secondary">
-                                            <td colspan="5" class="text-end"><strong>${rowNumber++}. Net Cash Transactions:</strong></td>
-                                            <td><strong>${netCashTransactions.toFixed(2)}</strong></td>
-                                        </tr>
-                                    `);
+                                                <tr class="table-secondary">
+                                                    <td colspan="5" class="text-end"><strong>${rowNumber++}. Net Cash Transactions:</strong></td>
+                                                    <td><strong>${netCashTransactions.toFixed(2)}</strong></td>
+                                                </tr>
+                                            `);
                 }
 
                 // ✅ 11. FINAL TOTAL
                 container.append(`
-                                    <tr class="table-dark">
-                                        <td colspan="5" class="text-end"><strong>💵 TOTAL AVAILABLE CASH:</strong></td>
-                                        <td><strong>${grandTotal.toFixed(2)}</strong></td>
-                                    </tr>
-                                `);
+                                            <tr class="table-dark">
+                                                <td colspan="5" class="text-end"><strong>💵 TOTAL AVAILABLE CASH:</strong></td>
+                                                <td><strong>${grandTotal.toFixed(2)}</strong></td>
+                                            </tr>
+                                        `);
 
                 // Update footer and other fields
                 $("#grand_total_amount").text(grandTotal.toFixed(2));
@@ -2340,9 +2409,8 @@
                 $('#credit_card').val('0');
                 updateCreditSales();
             }
-            // ✅ Render Cash Flow Summary with LUBRICANTS - UPDATED
-            // ✅ Render Cash Flow Summary with DRIVER CREDIT CASH
-            // ✅ Render Cash Flow Summary with DRIVER CREDIT CASH - WITH PROPER CONDITIONS
+
+            // ✅ Render Cash Flow Summary with Page Expenses
             function renderCashFlowSummary(
                 productSummaries,
                 cashCredits,
@@ -2354,7 +2422,10 @@
                 oilPurchaseData,
                 shortagesData,
                 driverCreditData,
-                grandTotal
+                grandTotal,
+                totalTestingAmount,
+                totalTestingLiters,
+                pageExpensesTotal
             ) {
                 const container = $("#product_summary_body");
                 container.empty();
@@ -2366,148 +2437,115 @@
                     return a.product_name.localeCompare(b.product_name);
                 });
 
-                // ✅ 1. Product Rows
+                // Product Rows
                 sortedProducts.forEach(product => {
                     if (product.nozzle_amount > 0) {
                         hasSales = true;
-
-                        let displayText = `${product.product_name}`;
-                        if (product.reset_amount > 0) {
-                            displayText += `<br><small class="text-success">(Reset: ${product.reset_amount.toFixed(2)})</small>`;
-                        }
-
-                        const volumeDisplay = product.total_volume > 0 ? `${product.total_volume.toFixed(2)} L` : `0.00 L`;
-                        const testingLiters = product.testing_liters ? product.testing_liters.toFixed(2) : '0.00';
-                        const testingAmount = product.testing_amount ? product.testing_amount.toFixed(2) : '0.00';
-                        const amountDisplay = product.nozzle_amount ? product.nozzle_amount.toFixed(2) : '0.00';
-
                         container.append(`
-                                            <tr>
-                                                <td>${displayText}</td>
-                                                <td>${product.rate.toFixed(2)}</td>
-                                                <td>${volumeDisplay}</td>
-                                                <td>${testingLiters}</td>
-                                                <td>${testingAmount}</td>
-                                                <td>${amountDisplay}</td>
-                                            </tr>
-                                        `);
+                    <tr>
+                        <td>${product.product_name}</td>
+                        <td>${product.rate.toFixed(2)}</td>
+                        <td>${product.total_volume.toFixed(2)} L</td>
+                        <td>${product.testing_liters.toFixed(2)}</td>
+                        <td>${product.testing_amount.toFixed(2)}</td>
+                        <td>${product.nozzle_amount.toFixed(2)}</td>
+                    </tr>
+                `);
                     }
                 });
 
-                // ✅ No sales fallback
                 if (!hasSales) {
                     container.append(`
-                                        <tr>
-                                            <td colspan="6" class="text-center text-muted">
-                                                <i class="bi bi-info-circle me-2"></i>
-                                                No nozzle sales recorded (fill nozzle closing readings)
-                                            </td>
-                                        </tr>
-                                    `);
+                <tr><td colspan="6" class="text-center text-muted">No nozzle sales recorded (fill nozzle closing readings)</td></tr>
+            `);
                 }
 
-                // ✅ 2. Opening Cash Handover (ALWAYS SHOW)
+                // 1. Opening Cash Handover
                 container.append(`
-                                    <tr class="table-primary">
-                                        <td colspan="5" class="text-end"><strong>${rowNumber++}. Opening Cash Handover:</strong></td>
-                                        <td><strong>${cashHandover.toFixed(2)}</strong></td>
-                                    </tr>
-                                `);
+            <tr class="table-primary"><td colspan="5" class="text-end"><strong>${rowNumber++}. Opening Cash Handover:</strong></td>
+            <td><strong>${cashHandover.toFixed(2)}</strong></td></tr>
+        `);
 
-                // ✅ 3. Total Nozzle Sales (ALWAYS SHOW)
+                // 2. Total Nozzle Sales
                 container.append(`
-                                    <tr class="table-secondary">
-                                        <td colspan="5" class="text-end"><strong>${rowNumber++}. Total Nozzle Sales:</strong></td>
-                                        <td><strong>${totalNozzleSales.toFixed(2)}</strong></td>
-                                    </tr>
-                                `);
+            <tr class="table-secondary"><td colspan="5" class="text-end"><strong>${rowNumber++}. Total Nozzle Sales:</strong></td>
+            <td><strong>${totalNozzleSales.toFixed(2)}</strong></td></tr>
+        `);
 
-                // ✅ 4. Lubricants - ONLY SHOW IF VALUE EXISTS AND NOT ZERO
+                // 3. Lubricants
                 if (lubricantsData && lubricantsData.total !== 0) {
                     const sign = lubricantsData.total >= 0 ? '+' : '';
                     container.append(`
-                                        <tr class="table-info">
-                                            <td colspan="5" class="text-end"><strong>${rowNumber++}. Lubricants Cash:</strong></td>
-                                            <td><strong>${sign}${lubricantsData.total.toFixed(2)}</strong></td>
-                                        </tr>
-                                    `);
+                <tr class="table-info"><td colspan="5" class="text-end"><strong>${rowNumber++}. Lubricants Cash:</strong></td>
+                <td><strong>${sign}${lubricantsData.total.toFixed(2)}</strong></td></tr>
+            `);
                 }
 
-                // ✅ 5. Oil Purchases - ONLY SHOW IF VALUE EXISTS AND NOT ZERO
+                // 4. Oil Purchases
                 if (oilPurchaseData && oilPurchaseData.total !== 0) {
                     container.append(`
-                                        <tr class="table-danger">
-                                            <td colspan="5" class="text-end"><strong>${rowNumber++}. Oil Purchases:</strong></td>
-                                            <td><strong>-${oilPurchaseData.total.toFixed(2)}</strong></td>
-                                        </tr>
-                                    `);
+                <tr class="table-danger"><td colspan="5" class="text-end"><strong>${rowNumber++}. Oil Purchases:</strong></td>
+                <td><strong>-${oilPurchaseData.total.toFixed(2)}</strong></td></tr>
+            `);
                 }
 
-                // ✅ 6. Shortages - ONLY SHOW IF VALUE EXISTS AND NOT ZERO
+                // 5. Shortages
                 if (shortagesData && shortagesData.total > 0) {
                     container.append(`
-                                        <tr class="table-success">
-                                            <td colspan="5" class="text-end"><strong>${rowNumber++}. Shortages Cash Received:</strong></td>
-                                            <td><strong>+${shortagesData.total.toFixed(2)}</strong></td>
-                                        </tr>
-                                    `);
+                <tr class="table-success"><td colspan="5" class="text-end"><strong>${rowNumber++}. Shortages Cash Received:</strong></td>
+                <td><strong>+${shortagesData.total.toFixed(2)}</strong></td></tr>
+            `);
                 }
 
-                // ✅ 7. DRIVER CREDIT CASH PAYMENTS - ONLY SHOW IF VALUE EXISTS AND NOT ZERO
+                // 6. Driver Credit Cash Payments
                 if (driverCreditData && driverCreditData.total > 0) {
                     container.append(`
-                                        <tr class="table-warning">
-                                            <td colspan="5" class="text-end"><strong>${rowNumber++}. Driver Credit Cash Received:</strong></td>
-                                            <td><strong>+${driverCreditData.total.toFixed(2)}</strong></td>
-                                        </tr>
-                                    `);
+                <tr class="table-warning"><td colspan="5" class="text-end"><strong>${rowNumber++}. Driver Credit Cash Received:</strong></td>
+                <td><strong>+${driverCreditData.total.toFixed(2)}</strong></td></tr>
+            `);
                 }
 
-                // ✅ 8. Cash Transactions - ONLY SHOW IF THERE ARE TRANSACTIONS
-                if ((cashCredits > 0 || cashDebits > 0) && netCashTransactions !== 0) {
-
+                // 7. API Cash Transactions (Only if exists)
+                if (cashCredits > 0 || cashDebits > 0) {
                     if (cashCredits > 0) {
                         container.append(`
-                                            <tr class="table-success">
-                                                <td colspan="5" class="text-end"><strong>${rowNumber++}. ➕ Cash Income:</strong></td>
-                                                <td><strong>${cashCredits.toFixed(2)}</strong></td>
-                                            </tr>
-                                        `);
+                    <tr class="table-success"><td colspan="5" class="text-end"><strong>${rowNumber++}. ➕ Cash Income (API):</strong></td>
+                    <td><strong>${cashCredits.toFixed(2)}</strong></td></tr>
+                `);
                     }
-
                     if (cashDebits > 0) {
                         container.append(`
-                                            <tr class="table-danger">
-                                                <td colspan="5" class="text-end"><strong>${rowNumber++}. ➖ Cash Expenses:</strong></td>
-                                                <td><strong>-${cashDebits.toFixed(2)}</strong></td>
-                                            </tr>
-                                        `);
+                    <tr class="table-danger"><td colspan="5" class="text-end"><strong>${rowNumber++}. ➖ Cash Expenses (API):</strong></td>
+                    <td><strong>-${cashDebits.toFixed(2)}</strong></td></tr>
+                `);
                     }
-
                     container.append(`
-                                        <tr class="table-secondary">
-                                            <td colspan="5" class="text-end"><strong>${rowNumber++}. Net Cash Transactions:</strong></td>
-                                            <td><strong>${netCashTransactions.toFixed(2)}</strong></td>
-                                        </tr>
-                                    `);
+                <tr class="table-secondary"><td colspan="5" class="text-end"><strong>${rowNumber++}. Net Cash Transactions:</strong></td>
+                <td><strong>${netCashTransactions.toFixed(2)}</strong></td></tr>
+            `);
                 }
 
-                // ✅ 9. FINAL TOTAL (ALWAYS SHOW)
+                // 8. PAGE EXPENSES (User added from Shift Expenses section)
+                if (pageExpensesTotal > 0) {
+                    container.append(`
+                <tr class="table-danger"><td colspan="5" class="text-end"><strong>${rowNumber++}. Page Expenses (User Added):</strong></td>
+                <td><strong class="text-danger">-${pageExpensesTotal.toFixed(2)}</strong></td></tr>
+            `);
+                }
+
+                // 9. FINAL TOTAL
+                const finalGrandTotal = grandTotal - pageExpensesTotal;
                 container.append(`
-                                    <tr class="table-dark">
-                                        <td colspan="5" class="text-end"><strong>💵 TOTAL AVAILABLE CASH:</strong></td>
-                                        <td><strong>${grandTotal.toFixed(2)}</strong></td>
-                                    </tr>
-                                `);
+            <tr class="table-dark"><td colspan="5" class="text-end"><strong>💵 TOTAL AVAILABLE CASH:</strong></td>
+            <td><strong>${finalGrandTotal.toFixed(2)}</strong></td></tr>
+        `);
 
-                // ✅ Update footer and other fields
-                $("#grand_total_amount").text(grandTotal.toFixed(2));
-
+                $("#grand_total_amount").text(finalGrandTotal.toFixed(2));
                 $("#cash_flow_loading").hide();
                 $("#cash_flow_summary").show();
-                $('#total_cash').val(grandTotal.toFixed(2));
-                autoCalculateDistribution(grandTotal);
+                $('#total_cash').val(finalGrandTotal.toFixed(2));
 
+                autoCalculateDistribution(finalGrandTotal);
                 $('#fuel_card').val('0');
                 $('#credit_card').val('0');
                 updateCreditSales();
@@ -2535,20 +2573,27 @@
                 if (isChecked) {
                     $("#bank_transfer_section").slideDown();
                     loadBankAccountsForPayment(stationId);
-                    // ✅ ADD THIS LINE - Load products for bank transfer
                     loadProductsForBankTransfer(stationId);
-                    // ✅ IMPORTANT: Bank transfer time, in_bank field ko auto 0 set karo
+
+                    // Reset counters and containers
+                    bankTransferRowCounter = 1;
+                    $("#bank_transfer_rows_container .bank-transfer-row:not(:first)").remove();
+                    $("#bank_transfer_products_container").html('');
+
                     $("#in_bank").val(0).prop('readonly', true).css('background-color', '#f8f9fa');
                 } else {
                     $("#bank_transfer_section").slideUp();
-                    // ✅ Bank transfer cancel karte time in_bank field ko editable banao
                     $("#in_bank").val('').prop('readonly', false).css('background-color', '');
                     $("#transfer_amount").val("");
                     $("#new_in_bank_total").val("");
-                    // ✅ Clear products container
                     $("#bank_transfer_products_container").html('');
+                    $("#bank_transfer_rows_container .bank-transfer-row:not(:first)").remove();
+
+                    const grandTotal = parseFloat($("#grand_total_amount").text()) || 0;
+                    autoCalculateDistribution(grandTotal);
                 }
             });
+
 
             // ✅ TOGGLE CREDIT TO DRIVER SECTION
             $("#credit_to_driver_checkbox").on("change", function () {
@@ -2880,82 +2925,82 @@
                 const uniqueContainerId = `driver_products_${Date.now()}_${formNumber}`;
 
                 const formHtml = `
-            <div class="driver-credit-form mb-4 p-3 border rounded" style="display: block !important;">
-                <div class="row">
-                    <div class="col-md-12 mb-3">
-                        <h6 class="text-primary">Driver Credit Entry <span class="form-number">#${formNumber}</span>
-                            <button type="button" class="btn btn-danger btn-sm float-end remove-driver-form">
-                                <i class="bi bi-trash"></i> Remove
-                            </button>
-                        </h6>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label required-label">Station</label>
-                        <select class="form-control credit-station-select" required>
-                            <option value="">Select Station...</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label required-label">Customer</label>
-                        <select class="form-control credit-customer-select" required>
-                            <option value="">Select Customer...</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label required-label">Amount Given To</label>
-                        <div class="mt-2">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input amount-given-to" type="radio" 
-                                    name="${uniqueRadioName}" value="Driver" checked>
-                                <label class="form-check-label">Driver</label>
+                    <div class="driver-credit-form mb-4 p-3 border rounded" style="display: block !important;">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <h6 class="text-primary">Driver Credit Entry <span class="form-number">#${formNumber}</span>
+                                    <button type="button" class="btn btn-danger btn-sm float-end remove-driver-form">
+                                        <i class="bi bi-trash"></i> Remove
+                                    </button>
+                                </h6>
                             </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input amount-given-to" type="radio" 
-                                    name="${uniqueRadioName}" value="Vehicle">
-                                <label class="form-check-label">Vehicle</label>
+                            <div class="col-md-3">
+                                <label class="form-label required-label">Station</label>
+                                <select class="form-control credit-station-select" required>
+                                    <option value="">Select Station...</option>
+                                </select>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label required-label">Amount</label>
-                        <input type="number" class="form-control credit-amount" step="0.01" min="0" placeholder="0.00">
-                    </div>
-                </div>
-
-                <!-- ✅ PRODUCT WISE LITERS SECTION (OPTIONAL) -->
-                <div class="row mt-3">
-                    <div class="col-md-12">
-                        <div class="card border-secondary">
-                            <div class="card-header bg-secondary text-white py-1">
-                                <small><i class="bi bi-fuel-pump me-1"></i> Optional: Product-wise Liters (Auto-calculates amount)</small>
+                            <div class="col-md-3">
+                                <label class="form-label required-label">Customer</label>
+                                <select class="form-control credit-customer-select" required>
+                                    <option value="">Select Customer...</option>
+                                </select>
                             </div>
-                            <div class="card-body p-2" id="${uniqueContainerId}">
-                                <div class="text-center text-muted py-2">
-                                    <small>Loading products...</small>
+                            <div class="col-md-3">
+                                <label class="form-label required-label">Amount Given To</label>
+                                <div class="mt-2">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input amount-given-to" type="radio" 
+                                            name="${uniqueRadioName}" value="Driver" checked>
+                                        <label class="form-check-label">Driver</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input amount-given-to" type="radio" 
+                                            name="${uniqueRadioName}" value="Vehicle">
+                                        <label class="form-check-label">Vehicle</label>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="card-footer bg-light py-1 text-end">
-                                <small>Total from Products: <span class="driver-products-total">0.00</span></small>
+                            <div class="col-md-3">
+                                <label class="form-label required-label">Amount</label>
+                                <input type="number" class="form-control credit-amount" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                        </div>
+
+                        <!-- ✅ PRODUCT WISE LITERS SECTION (OPTIONAL) -->
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card border-secondary">
+                                    <div class="card-header bg-secondary text-white py-1">
+                                        <small><i class="bi bi-fuel-pump me-1"></i> Optional: Product-wise Liters (Auto-calculates amount)</small>
+                                    </div>
+                                    <div class="card-body p-2" id="${uniqueContainerId}">
+                                        <div class="text-center text-muted py-2">
+                                            <small>Loading products...</small>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-light py-1 text-end">
+                                        <small>Total from Products: <span class="driver-products-total">0.00</span></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-2 driver-cnic-section">
+                            <div class="col-md-4">
+                                <label class="form-label required-label">Driver CNIC</label>
+                                <input type="text" class="form-control credit-cnic" placeholder="Enter 13-digit CNIC" maxlength="13">
+                                <small class="text-muted">13 digits without dashes</small>
+                            </div>
+                        </div>
+                        <div class="row mt-2 vehicle-number-section" style="display: none;">
+                            <div class="col-md-4">
+                                <label class="form-label required-label">Vehicle Number</label>
+                                <input type="text" class="form-control credit-vehicle-number" placeholder="Enter vehicle number">
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="row mt-2 driver-cnic-section">
-                    <div class="col-md-4">
-                        <label class="form-label required-label">Driver CNIC</label>
-                        <input type="text" class="form-control credit-cnic" placeholder="Enter 13-digit CNIC" maxlength="13">
-                        <small class="text-muted">13 digits without dashes</small>
-                    </div>
-                </div>
-                <div class="row mt-2 vehicle-number-section" style="display: none;">
-                    <div class="col-md-4">
-                        <label class="form-label required-label">Vehicle Number</label>
-                        <input type="text" class="form-control credit-vehicle-number" placeholder="Enter vehicle number">
-                    </div>
-                </div>
-            </div>
-        `;
+                `;
 
                 $("#credit_driver_forms_container").append(formHtml);
                 const newForm = $("#credit_driver_forms_container .driver-credit-form").last();
@@ -3509,38 +3554,35 @@
 
 
             // ✅ Validate Cash Distribution
-            function validateCashDistribution(totalSales, inHand, inBank, fuelCardAmount, creditCardAmount, driverCreditAmount) {
+            function validateCashDistribution(cashHandover, inHand, inBank, fuelCardAmount, creditCardAmount, driverCreditAmount, pageExpensesTotal) {
                 const validationMsg = $("#cash_validation_msg");
                 const validationText = $("#validation_text");
 
-                // ✅ Driver Credit ko bhi include karo
-                const distributed = inHand + inBank + fuelCardAmount + creditCardAmount + driverCreditAmount;
-                const difference = Math.abs(distributed - totalSales);
+                // ✅ Formula: Cash Handover = In Hand + Page Expenses + In Bank + Fuel Card + Credit Card + Driver Credit
+                const distributed = inHand + pageExpensesTotal + inBank + fuelCardAmount + creditCardAmount + driverCreditAmount;
+                const difference = Math.abs(distributed - cashHandover);
 
                 if (difference > 0.01) {
                     validationText.html(`
-                                                    ⚠️ <strong>Cash Mismatch!</strong><br>
-                                                    Total Sales: <strong>${totalSales.toFixed(2)}</strong><br>
-                                                    In Hand: <strong>${inHand.toFixed(2)}</strong><br>
-                                                    In Bank: <strong>${inBank.toFixed(2)}</strong><br>
-                                                    Fuel Card: <strong>${fuelCardAmount.toFixed(2)}</strong><br>
-                                                    Credit Card: <strong>${creditCardAmount.toFixed(2)}</strong><br>
-                                                    Driver Credit: <strong>${driverCreditAmount.toFixed(2)}</strong><br>
-                                                    Total Distributed: <strong>${distributed.toFixed(2)}</strong><br>
-                                                    Difference: <strong class="text-danger">${difference.toFixed(2)}</strong>
-                                                `);
+                ⚠️ <strong>Cash Mismatch!</strong><br>
+                Cash Handover: <strong>${cashHandover.toFixed(2)}</strong><br>
+                In Hand: <strong>${inHand.toFixed(2)}</strong><br>
+                Page Expenses: <strong>${pageExpensesTotal.toFixed(2)}</strong><br>
+                In Bank: <strong>${inBank.toFixed(2)}</strong><br>
+                Fuel Card: <strong>${fuelCardAmount.toFixed(2)}</strong><br>
+                Credit Card: <strong>${creditCardAmount.toFixed(2)}</strong><br>
+                Driver Credit: <strong>${driverCreditAmount.toFixed(2)}</strong><br>
+                Total: <strong>${distributed.toFixed(2)}</strong><br>
+                Difference: <strong class="text-danger">${difference.toFixed(2)}</strong>
+            `);
                     validationMsg.show().removeClass("alert-success").addClass("alert-warning");
                     return false;
                 } else {
                     validationText.html(`
-                                                    ✅ <strong>Perfect Match!</strong><br>
-                                                    Total Sales: <strong>${totalSales.toFixed(2)}</strong><br>
-                                                    In Hand: <strong>${inHand.toFixed(2)}</strong><br>
-                                                    In Bank: <strong>${inBank.toFixed(2)}</strong><br>
-                                                    Fuel Card: <strong>${fuelCardAmount.toFixed(2)}</strong><br>
-                                                    Credit Card: <strong>${creditCardAmount.toFixed(2)}</strong><br>
-                                                    Driver Credit: <strong>${driverCreditAmount.toFixed(2)}</strong>
-                                                `);
+                ✅ <strong>Perfect Match!</strong><br>
+                Cash Handover: <strong>${cashHandover.toFixed(2)}</strong><br>
+                = In Hand: <strong>${inHand.toFixed(2)}</strong> + Page Expenses: <strong>${pageExpensesTotal.toFixed(2)}</strong> + In Bank: <strong>${inBank.toFixed(2)}</strong> + Fuel Card: <strong>${fuelCardAmount.toFixed(2)}</strong> + Credit Card: <strong>${creditCardAmount.toFixed(2)}</strong> + Driver Credit: <strong>${driverCreditAmount.toFixed(2)}</strong>
+            `);
                     validationMsg.show().removeClass("alert-warning").addClass("alert-success");
                     return true;
                 }
@@ -3674,8 +3716,10 @@
                     $("#fuelcard_amount").val('');
                     $("#fuel_card").val('0');
                     $("#fuelcard_products_container").html('');
-                    const totalSales = parseFloat($("#total_cash").val()) || 0;
-                    autoCalculateDistribution(totalSales);
+                    $("#fuelcard_rows_container .fuelcard-row:not(:first)").remove();
+                    fuelcardRowCounter = 1;
+                    const grandTotal = parseFloat($("#grand_total_amount").text()) || 0;
+                    autoCalculateDistribution(grandTotal);
                 }
             });
 
@@ -3695,10 +3739,13 @@
                     $("#creditcard_amount").val('');
                     $("#credit_card").val('0');
                     $("#creditcard_products_container").html('');
-                    const totalSales = parseFloat($("#total_cash").val()) || 0;
-                    autoCalculateDistribution(totalSales);
+                    $("#creditcard_rows_container .creditcard-row:not(:first)").remove();
+                    creditcardRowCounter = 1;
+                    const grandTotal = parseFloat($("#grand_total_amount").text()) || 0;
+                    autoCalculateDistribution(grandTotal);
                 }
             });
+
 
 
             // ✅ TOGGLE FUEL CARD SECTION - Move inside DOMContentLoaded
@@ -3916,8 +3963,8 @@
 
                 if (difference > 0.01) {
                     showToast(`Cash distribution (${distributed.toFixed(2)}) must equal total sales (${totalSales.toFixed(2)})! 
-                                                                                                          In Hand: ${inHand.toFixed(2)} + In Bank: ${inBank.toFixed(2)} + Driver Credit: ${driverCreditAmount.toFixed(2)} = ${distributed.toFixed(2)}
-                                                                                                          Difference: ${difference.toFixed(2)}`, "error");
+                                                                                                                  In Hand: ${inHand.toFixed(2)} + In Bank: ${inBank.toFixed(2)} + Driver Credit: ${driverCreditAmount.toFixed(2)} = ${distributed.toFixed(2)}
+                                                                                                                  Difference: ${difference.toFixed(2)}`, "error");
                     return;
                 }
 
@@ -4376,21 +4423,21 @@
                                     console.log(`Rate for ${productName}:`, rate);
 
                                     const productRow = `
-                                            <div class="row mb-2 bank-transfer-product-row" data-product-id="${productId}" data-rate="${rate}">
-                                                <div class="col-md-4">
-                                                    <label class="form-label">${productName}</label>
-                                                    <small class="text-muted d-block">Rate: ${rate.toFixed(2)} / L</small>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <label class="form-label">Liters</label>
-                                                    <input type="number" class="form-control bank-transfer-liters" step="0.01" min="0" value="0" placeholder="Enter liters">
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <label class="form-label">Amount (Rs)</label>
-                                                    <input type="number" class="form-control bank-transfer-amount" readonly style="background-color: #f8f9fa;" value="0">
-                                                </div>
-                                            </div>
-                                        `;
+                                                    <div class="row mb-2 bank-transfer-product-row" data-product-id="${productId}" data-rate="${rate}">
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">${productName}</label>
+                                                            <small class="text-muted d-block">Rate: ${rate.toFixed(2)} / L</small>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Liters</label>
+                                                            <input type="number" class="form-control bank-transfer-liters" step="0.01" min="0" value="0" placeholder="Enter liters">
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Amount (Rs)</label>
+                                                            <input type="number" class="form-control bank-transfer-amount" readonly style="background-color: #f8f9fa;" value="0">
+                                                        </div>
+                                                    </div>
+                                                `;
                                     container.append(productRow);
 
                                     // Add event listener for liters input
@@ -4402,21 +4449,21 @@
                                 error: function (xhr) {
                                     console.error(`Error loading rate for product ${productName}:`, xhr.responseText);
                                     const productRow = `
-                                            <div class="row mb-2 bank-transfer-product-row" data-product-id="${productId}" data-rate="0">
-                                                <div class="col-md-4">
-                                                    <label class="form-label">${productName}</label>
-                                                    <small class="text-muted d-block">Rate: 0.00 / L (Not set)</small>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <label class="form-label">Liters</label>
-                                                    <input type="number" class="form-control bank-transfer-liters" step="0.01" min="0" value="0" placeholder="Enter liters" disabled>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <label class="form-label">Amount (Rs)</label>
-                                                    <input type="number" class="form-control bank-transfer-amount" readonly style="background-color: #f8f9fa;" value="0">
-                                                </div>
-                                            </div>
-                                        `;
+                                                    <div class="row mb-2 bank-transfer-product-row" data-product-id="${productId}" data-rate="0">
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">${productName}</label>
+                                                            <small class="text-muted d-block">Rate: 0.00 / L (Not set)</small>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Liters</label>
+                                                            <input type="number" class="form-control bank-transfer-liters" step="0.01" min="0" value="0" placeholder="Enter liters" disabled>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Amount (Rs)</label>
+                                                            <input type="number" class="form-control bank-transfer-amount" readonly style="background-color: #f8f9fa;" value="0">
+                                                        </div>
+                                                    </div>
+                                                `;
                                     container.append(productRow);
                                 }
                             });
@@ -4547,21 +4594,21 @@
                                     const rate = parseFloat(priceData?.price) || 0;
 
                                     const productRow = `
-                                <div class="row mb-2 fuelcard-product-row" data-product-id="${productId}" data-rate="${rate}">
-                                    <div class="col-md-5">
-                                        <label class="form-label">${productName}</label>
-                                        <small class="text-muted d-block">Rate: ${rate.toFixed(2)} / L</small>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Liters</label>
-                                        <input type="number" class="form-control fuelcard-liters" step="0.01" min="0" value="0" placeholder="Enter liters">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Amount (Rs)</label>
-                                        <input type="number" class="form-control fuelcard-amount" readonly style="background-color: #f8f9fa;" value="0">
-                                    </div>
-                                </div>
-                            `;
+                                        <div class="row mb-2 fuelcard-product-row" data-product-id="${productId}" data-rate="${rate}">
+                                            <div class="col-md-5">
+                                                <label class="form-label">${productName}</label>
+                                                <small class="text-muted d-block">Rate: ${rate.toFixed(2)} / L</small>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Liters</label>
+                                                <input type="number" class="form-control fuelcard-liters" step="0.01" min="0" value="0" placeholder="Enter liters">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Amount (Rs)</label>
+                                                <input type="number" class="form-control fuelcard-amount" readonly style="background-color: #f8f9fa;" value="0">
+                                            </div>
+                                        </div>
+                                    `;
                                     container.append(productRow);
 
                                     const row = container.children().last();
@@ -4571,21 +4618,21 @@
                                 },
                                 error: function () {
                                     const productRow = `
-                                <div class="row mb-2 fuelcard-product-row" data-product-id="${productId}" data-rate="0">
-                                    <div class="col-md-5">
-                                        <label class="form-label">${productName}</label>
-                                        <small class="text-muted d-block">Rate: 0.00 / L</small>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Liters</label>
-                                        <input type="number" class="form-control fuelcard-liters" step="0.01" min="0" value="0" placeholder="Enter liters" disabled>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Amount (Rs)</label>
-                                        <input type="number" class="form-control fuelcard-amount" readonly value="0">
-                                    </div>
-                                </div>
-                            `;
+                                        <div class="row mb-2 fuelcard-product-row" data-product-id="${productId}" data-rate="0">
+                                            <div class="col-md-5">
+                                                <label class="form-label">${productName}</label>
+                                                <small class="text-muted d-block">Rate: 0.00 / L</small>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Liters</label>
+                                                <input type="number" class="form-control fuelcard-liters" step="0.01" min="0" value="0" placeholder="Enter liters" disabled>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Amount (Rs)</label>
+                                                <input type="number" class="form-control fuelcard-amount" readonly value="0">
+                                            </div>
+                                        </div>
+                                    `;
                                     container.append(productRow);
                                 }
                             });
@@ -4671,21 +4718,21 @@
                                     const rate = parseFloat(priceData?.price) || 0;
 
                                     const productRow = `
-                                <div class="row mb-2 creditcard-product-row" data-product-id="${productId}" data-rate="${rate}">
-                                    <div class="col-md-5">
-                                        <label class="form-label">${productName}</label>
-                                        <small class="text-muted d-block">Rate: ${rate.toFixed(2)} / L</small>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Liters</label>
-                                        <input type="number" class="form-control creditcard-liters" step="0.01" min="0" value="0" placeholder="Enter liters">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Amount (Rs)</label>
-                                        <input type="number" class="form-control creditcard-amount" readonly style="background-color: #f8f9fa;" value="0">
-                                    </div>
-                                </div>
-                            `;
+                                        <div class="row mb-2 creditcard-product-row" data-product-id="${productId}" data-rate="${rate}">
+                                            <div class="col-md-5">
+                                                <label class="form-label">${productName}</label>
+                                                <small class="text-muted d-block">Rate: ${rate.toFixed(2)} / L</small>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Liters</label>
+                                                <input type="number" class="form-control creditcard-liters" step="0.01" min="0" value="0" placeholder="Enter liters">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Amount (Rs)</label>
+                                                <input type="number" class="form-control creditcard-amount" readonly style="background-color: #f8f9fa;" value="0">
+                                            </div>
+                                        </div>
+                                    `;
                                     container.append(productRow);
 
                                     const row = container.children().last();
@@ -4695,21 +4742,21 @@
                                 },
                                 error: function () {
                                     const productRow = `
-                                <div class="row mb-2 creditcard-product-row" data-product-id="${productId}" data-rate="0">
-                                    <div class="col-md-5">
-                                        <label class="form-label">${productName}</label>
-                                        <small class="text-muted d-block">Rate: 0.00 / L</small>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Liters</label>
-                                        <input type="number" class="form-control creditcard-liters" step="0.01" min="0" value="0" placeholder="Enter liters" disabled>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Amount (Rs)</label>
-                                        <input type="number" class="form-control creditcard-amount" readonly value="0">
-                                    </div>
-                                </div>
-                            `;
+                                        <div class="row mb-2 creditcard-product-row" data-product-id="${productId}" data-rate="0">
+                                            <div class="col-md-5">
+                                                <label class="form-label">${productName}</label>
+                                                <small class="text-muted d-block">Rate: 0.00 / L</small>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Liters</label>
+                                                <input type="number" class="form-control creditcard-liters" step="0.01" min="0" value="0" placeholder="Enter liters" disabled>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Amount (Rs)</label>
+                                                <input type="number" class="form-control creditcard-amount" readonly value="0">
+                                            </div>
+                                        </div>
+                                    `;
                                     container.append(productRow);
                                 }
                             });
@@ -4816,19 +4863,19 @@
                                 const rate = parseFloat(priceData?.price) || 0;
 
                                 const productRow = `
-                            <div class="row mb-2 driver-product-row" data-product-id="${productId}" data-rate="${rate}">
-                                <div class="col-md-5">
-                                    <small class="fw-bold">${productName}</small>
-                                    <small class="text-muted d-block">Rate: ${rate.toFixed(2)} / L</small>
-                                </div>
-                                <div class="col-md-3">
-                                    <input type="number" class="form-control form-control-sm driver-product-liters" step="0.01" min="0" value="0" placeholder="Liters">
-                                </div>
-                                <div class="col-md-4">
-                                    <input type="number" class="form-control form-control-sm driver-product-amount" readonly style="background-color: #f8f9fa;" value="0" placeholder="Amount">
-                                </div>
-                            </div>
-                        `;
+                                    <div class="row mb-2 driver-product-row" data-product-id="${productId}" data-rate="${rate}">
+                                        <div class="col-md-5">
+                                            <small class="fw-bold">${productName}</small>
+                                            <small class="text-muted d-block">Rate: ${rate.toFixed(2)} / L</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="number" class="form-control form-control-sm driver-product-liters" step="0.01" min="0" value="0" placeholder="Liters">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="number" class="form-control form-control-sm driver-product-amount" readonly style="background-color: #f8f9fa;" value="0" placeholder="Amount">
+                                        </div>
+                                    </div>
+                                `;
                                 container.append(productRow);
 
                                 const row = container.children().last();
@@ -4843,19 +4890,19 @@
                             },
                             error: function () {
                                 const productRow = `
-                            <div class="row mb-2 driver-product-row" data-product-id="${productId}" data-rate="0">
-                                <div class="col-md-5">
-                                    <small class="fw-bold">${productName}</small>
-                                    <small class="text-muted d-block">Rate: 0.00 / L</small>
-                                </div>
-                                <div class="col-md-3">
-                                    <input type="number" class="form-control form-control-sm driver-product-liters" step="0.01" min="0" value="0" placeholder="Liters" disabled>
-                                </div>
-                                <div class="col-md-4">
-                                    <input type="number" class="form-control form-control-sm driver-product-amount" readonly value="0">
-                                </div>
-                            </div>
-                        `;
+                                    <div class="row mb-2 driver-product-row" data-product-id="${productId}" data-rate="0">
+                                        <div class="col-md-5">
+                                            <small class="fw-bold">${productName}</small>
+                                            <small class="text-muted d-block">Rate: 0.00 / L</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="number" class="form-control form-control-sm driver-product-liters" step="0.01" min="0" value="0" placeholder="Liters" disabled>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="number" class="form-control form-control-sm driver-product-amount" readonly value="0">
+                                        </div>
+                                    </div>
+                                `;
                                 container.append(productRow);
                                 pendingRequests--;
                             }
@@ -4908,6 +4955,208 @@
                 if (typeof autoCalculateDistribution === 'function') {
                     autoCalculateDistribution(totalSales);
                 }
+            }
+
+            // ========== BANK TRANSFER - ADD ANOTHER ROW ==========
+            let bankTransferRowCounter = 1;
+
+            function addBankTransferRow() {
+                bankTransferRowCounter++;
+                const rowId = `bank_transfer_row_${bankTransferRowCounter}`;
+
+                const rowHtml = `
+            <div class="bank-transfer-row card mt-3 p-3" id="${rowId}">
+                <div class="row">
+                    <div class="col-md-10">
+                        <strong>Transfer #${bankTransferRowCounter} (Manual Amount)</strong>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button type="button" class="btn btn-danger btn-sm remove-bank-transfer-row" data-row-id="${rowId}">
+                            <i class="bi bi-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Amount (Rs)</label>
+                        <input type="number" class="form-control bank-transfer-manual-amount" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+        `;
+
+                $("#bank_transfer_rows_container").append(rowHtml);
+
+                $(`#${rowId} .bank-transfer-manual-amount`).on('input', function () {
+                    calculateBankTransferTotal();
+                });
+            }
+
+            $(document).on('click', '.remove-bank-transfer-row', function () {
+                $(this).closest('.bank-transfer-row').remove();
+                calculateBankTransferTotal();
+            });
+
+            $("#add_bank_transfer_row").on('click', function () {
+                addBankTransferRow();
+            });
+
+            // Updated calculateBankTransferTotal
+            function calculateBankTransferTotal() {
+                let totalAmount = 0;
+
+                $(".bank-transfer-product-row").each(function () {
+                    const rate = parseFloat($(this).data('rate')) || 0;
+                    const liters = parseFloat($(this).find('.bank-transfer-liters').val()) || 0;
+                    totalAmount += liters * rate;
+                });
+                $("#bank_products_total").text(totalAmount.toFixed(2));
+
+                $(".bank-transfer-manual-amount").each(function () {
+                    totalAmount += parseFloat($(this).val()) || 0;
+                });
+
+                $("#bank_transfer_total_amount").val(totalAmount.toFixed(2));
+                $("#transfer_amount").val(totalAmount.toFixed(2));
+                $("#in_bank").val(totalAmount.toFixed(2));
+                $("#new_in_bank_total").val(totalAmount.toFixed(2));
+
+                const grandTotal = parseFloat($("#grand_total_amount").text()) || 0;
+                autoCalculateDistribution(grandTotal);
+            }
+
+            // ========== FUEL CARD - ADD ANOTHER ROW ==========
+            let fuelcardRowCounter = 1;
+
+            function addFuelCardRow() {
+                fuelcardRowCounter++;
+                const rowId = `fuelcard_row_${fuelcardRowCounter}`;
+
+                const rowHtml = `
+            <div class="fuelcard-row card mt-3 p-3" id="${rowId}">
+                <div class="row">
+                    <div class="col-md-10">
+                        <strong>Fuel Card Entry #${fuelcardRowCounter} (Manual Amount)</strong>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button type="button" class="btn btn-danger btn-sm remove-fuelcard-row" data-row-id="${rowId}">
+                            <i class="bi bi-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Amount (Rs)</label>
+                        <input type="number" class="form-control fuelcard-manual-amount" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+        `;
+
+                $("#fuelcard_rows_container").append(rowHtml);
+
+                $(`#${rowId} .fuelcard-manual-amount`).on('input', function () {
+                    calculateFuelCardTotal();
+                });
+            }
+
+            $(document).on('click', '.remove-fuelcard-row', function () {
+                $(this).closest('.fuelcard-row').remove();
+                calculateFuelCardTotal();
+            });
+
+            $("#add_fuelcard_row").on('click', function () {
+                addFuelCardRow();
+            });
+
+            // Updated calculateFuelCardTotal
+            function calculateFuelCardTotal() {
+                let totalAmount = 0;
+
+                $(".fuelcard-product-row").each(function () {
+                    const rate = parseFloat($(this).data('rate')) || 0;
+                    const liters = parseFloat($(this).find('.fuelcard-liters').val()) || 0;
+                    totalAmount += liters * rate;
+                });
+                $("#fuelcard_products_total").text(totalAmount.toFixed(2));
+
+                $(".fuelcard-manual-amount").each(function () {
+                    totalAmount += parseFloat($(this).val()) || 0;
+                });
+
+                $("#fuelcard_total_amount").val(totalAmount.toFixed(2));
+                $("#fuelcard_amount").val(totalAmount.toFixed(2));
+                $("#fuel_card").val(totalAmount.toFixed(2));
+
+                const grandTotal = parseFloat($("#grand_total_amount").text()) || 0;
+                autoCalculateDistribution(grandTotal);
+            }
+
+            // ========== CREDIT CARD - ADD ANOTHER ROW ==========
+            let creditcardRowCounter = 1;
+
+            function addCreditCardRow() {
+                creditcardRowCounter++;
+                const rowId = `creditcard_row_${creditcardRowCounter}`;
+
+                const rowHtml = `
+            <div class="creditcard-row card mt-3 p-3" id="${rowId}">
+                <div class="row">
+                    <div class="col-md-10">
+                        <strong>Credit Card Entry #${creditcardRowCounter} (Manual Amount)</strong>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button type="button" class="btn btn-danger btn-sm remove-creditcard-row" data-row-id="${rowId}">
+                            <i class="bi bi-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Amount (Rs)</label>
+                        <input type="number" class="form-control creditcard-manual-amount" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+        `;
+
+                $("#creditcard_rows_container").append(rowHtml);
+
+                $(`#${rowId} .creditcard-manual-amount`).on('input', function () {
+                    calculateCreditCardTotal();
+                });
+            }
+
+            $(document).on('click', '.remove-creditcard-row', function () {
+                $(this).closest('.creditcard-row').remove();
+                calculateCreditCardTotal();
+            });
+
+            $("#add_creditcard_row").on('click', function () {
+                addCreditCardRow();
+            });
+
+            // Updated calculateCreditCardTotal
+            function calculateCreditCardTotal() {
+                let totalAmount = 0;
+
+                $(".creditcard-product-row").each(function () {
+                    const rate = parseFloat($(this).data('rate')) || 0;
+                    const liters = parseFloat($(this).find('.creditcard-liters').val()) || 0;
+                    totalAmount += liters * rate;
+                });
+                $("#creditcard_products_total").text(totalAmount.toFixed(2));
+
+                $(".creditcard-manual-amount").each(function () {
+                    totalAmount += parseFloat($(this).val()) || 0;
+                });
+
+                $("#creditcard_total_amount").val(totalAmount.toFixed(2));
+                $("#creditcard_amount").val(totalAmount.toFixed(2));
+                $("#credit_card").val(totalAmount.toFixed(2));
+
+                const grandTotal = parseFloat($("#grand_total_amount").text()) || 0;
+                autoCalculateDistribution(grandTotal);
             }
 
             function getApiUrl(endpoint) {
