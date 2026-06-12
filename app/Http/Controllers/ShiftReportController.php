@@ -19,6 +19,7 @@ use App\Models\Transaction;
 use App\Models\OilPurchase;
 use App\Models\Account;
 use DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ShiftReportController extends Controller
 {
@@ -627,83 +628,89 @@ class ShiftReportController extends Controller
         ));
     }
 
-  public function downloadPDF($shiftId)
-    {
-        $shift = Shift::with(['station', 'shiftIncharger.user'])
-            ->where('id', $shiftId)
-            ->firstOrFail();
+public function downloadPDF($shiftId)
+{
+    $shift = Shift::with(['station', 'shiftIncharger.user'])
+        ->where('id', $shiftId)
+        ->firstOrFail();
 
-        $tankDips = TankDip::with(['tank', 'tank.product'])
-            ->whereHas('tank', function ($query) use ($shift) {
-                $query->where('station_id', $shift->station_id);
-            })
-            ->whereBetween('from_date', [$shift->start_time, $shift->end_time])
-            ->orWhereBetween('to_date', [$shift->start_time, $shift->end_time])
-            ->get();
+    $tankDips = TankDip::with(['tank', 'tank.product'])
+        ->whereHas('tank', function ($query) use ($shift) {
+            $query->where('station_id', $shift->station_id);
+        })
+        ->whereBetween('from_date', [$shift->start_time, $shift->end_time])
+        ->orWhereBetween('to_date', [$shift->start_time, $shift->end_time])
+        ->get();
 
-        $nozzleReadings = ShiftNozzleReading::with(['nozzle', 'nozzle.dispenser', 'nozzle.product'])
-            ->where('shift_id', $shiftId)
-            ->get();
+    $nozzleReadings = ShiftNozzleReading::with(['nozzle', 'nozzle.dispenser', 'nozzle.product'])
+        ->where('shift_id', $shiftId)
+        ->get();
 
-        $nozzleResets = NozzleTotalizerReset::with(['nozzle', 'nozzle.dispenser'])
-            ->where('shift_id', $shiftId)
-            ->get();
+    $nozzleResets = NozzleTotalizerReset::with(['nozzle', 'nozzle.dispenser'])
+        ->where('shift_id', $shiftId)
+        ->get();
 
-        $lubeDocuments = LubeDocument::with(['lines', 'lines.product', 'account'])
-            ->where('shift_id', $shiftId)
-            ->get();
+    $lubeDocuments = LubeDocument::with(['lines', 'lines.product', 'account'])
+        ->where('shift_id', $shiftId)
+        ->get();
 
-        $oilPurchases = OilPurchase::with(['tank', 'tank.product', 'supplier'])
-            ->where('shift_id', $shiftId)
-            ->get();
+    $oilPurchases = OilPurchase::with(['tank', 'tank.product', 'supplier'])
+        ->where('shift_id', $shiftId)
+        ->get();
 
-        $lubeSummary = $this->calculateLubeSummary($lubeDocuments);
-        $oilPurchaseSummary = $this->calculateOilPurchases($shiftId);
-        $cashFlow = ShiftCashFlow::where('shift_id', $shiftId)->first();
-        $transactions = Transaction::with(['account', 'toAccount'])
-            ->where('shift_id', $shiftId)
-            ->get();
+    $lubeSummary = $this->calculateLubeSummary($lubeDocuments);
+    $oilPurchaseSummary = $this->calculateOilPurchases($shiftId);
+    $cashFlow = ShiftCashFlow::where('shift_id', $shiftId)->first();
+    $transactions = Transaction::with(['account', 'toAccount'])
+        ->where('shift_id', $shiftId)
+        ->get();
 
-        $tankCalculations = $this->calculateTankGainLoss(
-            $tankDips,
-            $nozzleReadings,
-            $nozzleResets,
-            $shift->station_id,
-            $shift->start_time,
-            $shift->id
-        );
+    $tankCalculations = $this->calculateTankGainLoss(
+        $tankDips,
+        $nozzleReadings,
+        $nozzleResets,
+        $shift->station_id,
+        $shift->start_time,
+        $shift->id
+    );
 
-        $financialSummary = $this->calculateFinancialSummary(
-            $nozzleReadings,
-            $nozzleResets,
-            $lubeSummary,
-            $oilPurchaseSummary,
-            $transactions,
-            $cashFlow,
-            $shift
-        );
+    $financialSummary = $this->calculateFinancialSummary(
+        $nozzleReadings,
+        $nozzleResets,
+        $lubeSummary,
+        $oilPurchaseSummary,
+        $transactions,
+        $cashFlow,
+        $shift
+    );
 
-        $pdfFileName = 'shift_stock_report_SHIFT-' . $shift->id . '_'
-            . date('Y-m-d', strtotime($shift->start_time))
-            . '_to_'
-            . date('Y-m-d', strtotime($shift->end_time ?? $shift->start_time));
+    $pdfFileName = 'shift_stock_report_SHIFT-' . $shift->id . '_'
+        . date('Y-m-d', strtotime($shift->start_time))
+        . '_to_'
+        . date('Y-m-d', strtotime($shift->end_time ?? $shift->start_time));
 
-        return view('pdf_download', compact(
-            'shift',
-            'tankCalculations',
-            'nozzleReadings',
-            'nozzleResets',
-            'tankDips',
-            'financialSummary',
-            'cashFlow',
-            'lubeDocuments',
-            'lubeSummary',
-            'oilPurchases',
-            'oilPurchaseSummary',
-            'transactions',
-            'pdfFileName'
-        ));
-    }
+    // Load view and generate PDF
+    $pdf = PDF::loadView('pdf_download', compact(
+        'shift',
+        'tankCalculations',
+        'nozzleReadings',
+        'nozzleResets',
+        'financialSummary',
+        'cashFlow',
+        'lubeDocuments',
+        'lubeSummary',
+        'oilPurchases',
+        'oilPurchaseSummary',
+        'transactions'
+    ));
+
+    // Set paper size to Landscape
+    $pdf->setPaper('A4', 'landscape');
+    
+    // Download PDF
+    return $pdf->download($pdfFileName . '.pdf');
+}
+
 
 
 }
