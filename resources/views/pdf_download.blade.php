@@ -8,87 +8,61 @@
     <style>
         /* ========== PRINT STYLES ========== */
         @media print {
-            .no-print,
-            .loading-overlay {
+            .no-print {
                 display: none !important;
             }
 
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-
-            body, html {
-                height: auto !important;
-                overflow: visible !important;
-                background: white !important;
+            body,
+            html {
+                height: auto;
+                overflow: visible;
             }
 
             .report-container {
                 max-width: 100% !important;
-                padding: 0 !important;
-                margin: 0 !important;
+                padding: 0.1in !important;
+            }
+
+            .card,
+            .card-body,
+            .card-header,
+            .summary-card,
+            .table-responsive,
+            table,
+            tr,
+            td,
+            th,
+            tbody,
+            thead,
+            .row,
+            .company-header,
+            footer {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
             }
 
             .card {
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-                margin-bottom: 10px !important;
-                border: 1px solid #ccc !important;
-                box-shadow: none !important;
+                margin-bottom: 6px !important;
             }
 
             .card-body {
-                padding: 0.5rem !important;
-            }
-
-            .summary-card {
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-                padding: 6px !important;
-                margin-bottom: 6px !important;
-                box-shadow: none !important;
-            }
-
-            table {
-                break-inside: auto !important;
-            }
-
-            tr {
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            thead {
-                display: table-header-group;
-            }
-
-            .company-header {
-                break-inside: avoid !important;
-                margin-bottom: 10px !important;
-                padding-bottom: 5px !important;
+                padding: 0.3rem !important;
             }
 
             .table-sm th,
             .table-sm td {
-                padding: 0.25rem !important;
-                font-size: 9px !important;
+                padding: 0.2rem !important;
+                font-size: 8px !important;
             }
 
-            .bg-success  { background-color: #28a745 !important; color: white !important; }
-            .bg-danger   { background-color: #dc3545 !important; color: white !important; }
-            .bg-warning  { background-color: #ffc107 !important; color: #212529 !important; }
-            .bg-info     { background-color: #17a2b8 !important; color: white !important; }
-            .bg-secondary{ background-color: #6c757d !important; color: white !important; }
-            .bg-light    { background-color: #f8f9fc !important; }
-
-            .variance-positive { color: #28a745 !important; }
-            .variance-negative { color: #dc3545 !important; }
+            .summary-card {
+                padding: 4px !important;
+                margin-bottom: 4px !important;
+            }
 
             @page {
-                size: A4 portrait;
-                margin: 0.4cm 0.5cm;
+                size: A4 landscape;
+                margin: 0.1in;
             }
         }
 
@@ -96,34 +70,37 @@
         .report-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 15px;
             background: white;
         }
 
         .company-header {
             border-bottom: 2px solid #333;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .company-header h2 {
-            margin-bottom: 5px;
+            font-size: 18px;
+            margin-bottom: 3px;
+        }
+
+        .company-header h4 {
+            font-size: 13px;
         }
 
         .summary-card {
             border: 1px solid #dee2e6;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 15px;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 8px;
             background: #ffffff;
-            border-radius: 12px;
-            transition: all 0.25s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
-        .summary-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+        .summary-card h6 {
+            font-size: 11px;
+            margin-bottom: 5px;
+            font-weight: 600;
         }
 
         .variance-positive {
@@ -138,46 +115,30 @@
 
         .table-sm th,
         .table-sm td {
-            padding: 0.5rem;
-        }
-
-        .summary-card h4,
-        .summary-card h5 {
-            margin-bottom: 10px;
-        }
-
-        .summary-card p {
-            font-size: 14px;
-        }
-
-        .summary-card small {
-            font-size: 13px;
+            padding: 0.3rem;
+            font-size: 10px;
         }
 
         .card {
             border: 1px solid #dee2e6;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .card-header {
             background-color: #f8f9fc;
             border-bottom: 1px solid #dee2e6;
-            padding: 10px 15px;
+            padding: 8px 12px;
             font-weight: 600;
+            font-size: 12px;
         }
 
         .badge {
-            padding: 4px 8px;
+            padding: 3px 6px;
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 9px;
         }
 
-        .bg-light {
-            background-color: #f8f9fc;
-        }
-
-        /* Loading overlay */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -193,32 +154,19 @@
 
         .loading-spinner {
             background: white;
-            padding: 30px 40px;
+            padding: 25px 35px;
             border-radius: 12px;
             text-align: center;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
         }
 
         .loading-spinner .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #1e466e;
+            width: 45px;
+            height: 45px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1e466e;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        .loading-spinner p {
-            font-size: 14px;
-            color: #333;
-            margin: 0;
-        }
-
-        .loading-spinner .progress-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 10px;
+            margin: 0 auto 12px;
         }
 
         @keyframes spin {
@@ -238,6 +186,34 @@
     <div class="report-container" id="pdfContent">
         @php
             $pdfFileName = "shift_stock_report_SHIFT-{$shift->id}_" . date('Y-m-d', strtotime($shift->start_time)) . "_to_" . date('Y-m-d', strtotime($shift->end_time));
+
+            // Fetch shortage payments
+            $shiftShortagePayments = DB::select('
+                            SELECT sapb.id, sapb.shift_id, sapb.total_shortage, sapb.total_amount, sapb.created_at, sapb.payment_type,
+                            a.name as supplier_name, ort.recive_date,
+                            CASE WHEN sapb.account_id IS NOT NULL THEN "bank" ELSE "cash" END as payment_method,
+                            acc.name as bank_name
+                            FROM shortage_ammount_paid_back sapb
+                            LEFT JOIN oil_purchase op ON sapb.oil_purchase_id = op.id
+                            LEFT JOIN accounts a ON op.supplier_id = a.id
+                            LEFT JOIN oil_recived_tanks ort ON sapb.oil_recived_id = ort.id
+                            LEFT JOIN accounts acc ON sapb.account_id = acc.id
+                            WHERE sapb.shift_id = ' . ($shift->id ?? 0) . ' AND sapb.oil_recived_id IS NOT NULL
+                            ORDER BY sapb.created_at DESC
+                        ');
+            $totalShortagePaid = 0;
+            $totalShortageLiters = 0;
+            $totalCashShortage = 0;
+            $totalBankShortage = 0;
+            foreach ($shiftShortagePayments as $payment) {
+                $totalShortagePaid += floatval($payment->total_amount ?? 0);
+                $totalShortageLiters += floatval($payment->total_shortage ?? 0);
+                if (($payment->payment_method ?? '') == 'cash') {
+                    $totalCashShortage += floatval($payment->total_amount ?? 0);
+                } else {
+                    $totalBankShortage += floatval($payment->total_amount ?? 0);
+                }
+            }
         @endphp
 
         <!-- Header -->
@@ -256,58 +232,36 @@
         </div>
 
         <!-- Shift Overview -->
-        <div class="card mb-4">
+        <div class="card mb-3">
             <div class="card-header bg-light">
                 <h5 class="mb-0">Shift Overview</h5>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-3">
-                        <strong>Station:</strong><br>
-                        <span class="text-dark">{{ $shift->station->name ?? 'N/A' }}</span>
-                    </div>
-                    <div class="col-md-2">
-                        <strong>Shift Type:</strong><br>
-                        <span class="text-dark">{{ $shift->shift_no == 1 ? 'Day Shift' : 'Night Shift' }}</span>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Shift Incharge:</strong><br>
-                        <span class="text-dark">{{ $shift->shiftIncharger->user->full_name ?? 'N/A' }}</span>
-                    </div>
-                    <div class="col-md-2">
-                        <strong>Opening Balance:</strong><br>
-                        <span class="text-dark">Rs. {{ number_format($shift->cash_handover ?? 0, 2) }}</span>
-                    </div>
-                    <div class="col-md-2">
-                        <strong>Status:</strong><br>
-                        <span class="badge bg-{{ $shift->status == 'open' ? 'warning' : 'secondary' }}">
-                            {{ ucfirst($shift->status) }}
-                        </span>
+                    <div class="col-md-3"><strong>Station:</strong><br>{{ $shift->station->name ?? 'N/A' }}</div>
+                    <div class="col-md-2"><strong>Shift
+                            Type:</strong><br>{{ $shift->shift_no == 1 ? 'Day Shift' : 'Night Shift' }}</div>
+                    <div class="col-md-3"><strong>Shift
+                            Incharge:</strong><br>{{ $shift->shiftIncharger->user->full_name ?? 'N/A' }}</div>
+                    <div class="col-md-2"><strong>Opening Balance:</strong><br>Rs.
+                        {{ number_format($shift->cash_handover ?? 0, 2) }}</div>
+                    <div class="col-md-2"><strong>Status:</strong><br><span class="badge bg-secondary">Closed</span>
                     </div>
                 </div>
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <strong>Start Time:</strong><br>
-                        <span
-                            class="text-dark">{{ \Carbon\Carbon::parse($shift->start_time)->format('M d, Y H:i') }}</span>
+                <div class="row mt-2">
+                    <div class="col-md-6"><strong>Start
+                            Time:</strong><br>{{ \Carbon\Carbon::parse($shift->start_time)->format('M d, Y H:i') }}
                     </div>
-                    <div class="col-md-6">
-                        <strong>End Time:</strong><br>
-                        <span class="text-dark">
-                            @if($shift->end_time)
-                                {{ \Carbon\Carbon::parse($shift->end_time)->format('M d, Y H:i') }}
-                            @else
-                                Not Ended
-                            @endif
-                        </span>
+                    <div class="col-md-6"><strong>End
+                            Time:</strong><br>{{ $shift->end_time ? \Carbon\Carbon::parse($shift->end_time)->format('M d, Y H:i') : 'Not Ended' }}
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Professional Stock Analysis Table -->
+        <!-- Professional Stock Analysis -->
         @if(count($tankCalculations) > 0)
-            <div class="card mb-4">
+            <div class="card mb-3">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">Professional Stock Analysis</h5>
                 </div>
@@ -320,7 +274,7 @@
                                     <th>Product</th>
                                     <th class="text-end">Opening (L)</th>
                                     <th class="text-end">Closing (L)</th>
-                                    <th class="text-end">Oil Recived (L)</th>
+                                    <th class="text-end">Oil Received (L)</th>
                                     <th class="text-end">Nozzle Sales (L)</th>
                                     <th class="text-end">Variance (L)</th>
                                     <th class="text-end">Variance %</th>
@@ -336,18 +290,12 @@
                                         <td class="text-end">{{ number_format($calculation['closing_stock'], 2) }}</td>
                                         <td class="text-end">{{ number_format($calculation['oil_purchased'], 2) }}</td>
                                         <td class="text-end">{{ number_format($calculation['total_nozzle_sales'], 2) }}</td>
-                                        <td
-                                            class="text-end {{ $calculation['gain_loss_class'] == 'success' ? 'variance-positive' : ($calculation['gain_loss_class'] == 'danger' ? 'variance-negative' : '') }}">
-                                            @if($calculation['variance'] > 0)+{{ number_format($calculation['variance'], 2) }}@elseif($calculation['variance'] < 0){{ number_format($calculation['variance'], 2) }}@else
-                                            0.00 @endif
-                                        </td>
                                         <td class="text-end">
-                                            @if($calculation['total_nozzle_sales'] > 0)
-                                                @if($calculation['variance_percent'] > 0)+{{ number_format($calculation['variance_percent'], 2) }}%
-                                                @elseif($calculation['variance_percent'] < 0){{ number_format($calculation['variance_percent'], 2) }}%
-                                                @else 0.00% @endif
-                                            @else N/A @endif
-                                        </td>
+                                            @if($calculation['variance'] > 0)+{{ number_format($calculation['variance'], 2) }}@elseif($calculation['variance'] < 0){{ number_format($calculation['variance'], 2) }}@else
+                                            0.00 @endif</td>
+                                        <td class="text-end">
+                                            @if($calculation['total_nozzle_sales'] > 0)@if($calculation['variance_percent'] > 0)+{{ number_format($calculation['variance_percent'], 2) }}%@elseif($calculation['variance_percent'] < 0){{ number_format($calculation['variance_percent'], 2) }}%@else
+                                            0.00% @endif@else N/A @endif</td>
                                         <td><span
                                                 class="badge bg-{{ $calculation['status_class'] }}">{{ $calculation['status'] }}</span>
                                         </td>
@@ -360,42 +308,41 @@
             </div>
 
             <!-- Tank-wise Detailed Analysis -->
-            <h5 class="mb-3">Tank-wise Detailed Analysis</h5>
+            <h5 class="mb-2">Tank-wise Detailed Analysis</h5>
             @foreach($tankCalculations as $tankId => $calculation)
-                <div class="card mb-4">
+                <div class="card mb-3">
                     <div class="card-header bg-light">
                         <h6 class="mb-0">{{ $calculation['tank_name'] }} - {{ $calculation['product_name'] }}</h6>
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <!-- Stock Movement -->
                             <div class="col-md-6">
                                 <div class="summary-card">
                                     <h6>Stock Movement (Liters)</h6>
                                     <table class="table table-sm table-bordered">
                                         <tr>
-                                            <td width="60%">Opening Stock:</td>
+                                            <td width="55%">Opening Stock:</td>
                                             <td class="text-end">{{ number_format($calculation['opening_stock'], 2) }}</td>
                                         </tr>
                                         <tr>
-                                            <td width="60%">Closing Stock:</td>
+                                            <td width="55%">Closing Stock:</td>
                                             <td class="text-end">{{ number_format($calculation['closing_stock'], 2) }}</td>
                                         </tr>
                                         <tr>
-                                            <td width="60%">Physical Usage:</td>
+                                            <td width="55%">Physical Usage:</td>
                                             <td class="text-end">
                                                 @if($calculation['physical_usage'] > 0)+{{ number_format($calculation['physical_usage'], 2) }}@elseif($calculation['physical_usage'] < 0){{ number_format($calculation['physical_usage'], 2) }}@else
                                                 0.00 @endif</td>
                                         </tr>
                                         @if($calculation['oil_purchased'] > 0)
                                             <tr>
-                                                <td width="60%">Oil Purchased:</td>
+                                                <td width="55%">Oil Purchased:</td>
                                                 <td class="text-end text-info">
                                                     +{{ number_format($calculation['oil_purchased'], 2) }}</td>
                                             </tr>
                                         @endif
                                         <tr>
-                                            <td width="60%"><strong>Adjusted Usage:</strong></td>
+                                            <td width="55%"><strong>Adjusted Usage:</strong></td>
                                             <td class="text-end">
                                                 <strong>@if($calculation['adjusted_physical_usage'] > 0)+{{ number_format($calculation['adjusted_physical_usage'], 2) }}@elseif($calculation['adjusted_physical_usage'] < 0){{ number_format($calculation['adjusted_physical_usage'], 2) }}@else
                                                 0.00 @endif</strong></td>
@@ -403,43 +350,35 @@
                                     </table>
                                 </div>
                             </div>
-
-                            <!-- Sales & Variance -->
                             <div class="col-md-6">
                                 <div class="summary-card">
                                     <h6>Sales & Variance Analysis</h6>
                                     <table class="table table-sm table-bordered">
                                         <tr>
-                                            <td width="60%">Nozzle Sales (Liters):</td>
+                                            <td width="55%">Nozzle Sales (Liters):</td>
                                             <td class="text-end">{{ number_format($calculation['nozzle_sales_liters'], 2) }} L
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td width="60%">Reset Sales (Liters):</td>
+                                            <td width="55%">Reset Sales (Liters):</td>
                                             <td class="text-end">{{ number_format($calculation['reset_sales_liters'], 2) }} L
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td width="60%"><strong>Total Nozzle Sales:</strong></td>
+                                            <td width="55%"><strong>Total Nozzle Sales:</strong></td>
                                             <td class="text-end">
                                                 <strong>{{ number_format($calculation['total_nozzle_sales'], 2) }} L</strong>
                                             </td>
                                         </tr>
-                                        <tr
-                                            class="{{ $calculation['gain_loss_class'] == 'success' ? 'table-success' : ($calculation['gain_loss_class'] == 'danger' ? 'table-danger' : 'table-secondary') }}">
-                                            <td width="60%"><strong>Variance Analysis:</strong></td>
+                                        <tr>
+                                            <td width="55%"><strong>Variance Analysis:</strong></td>
                                             <td class="text-end">
-                                                <strong
-                                                    class="{{ $calculation['gain_loss_class'] == 'success' ? 'variance-positive' : ($calculation['gain_loss_class'] == 'danger' ? 'variance-negative' : '') }}">
-                                                    @if($calculation['variance'] > 0)+{{ number_format($calculation['variance'], 2) }}
-                                                        L
-                                                    @elseif($calculation['variance'] < 0){{ number_format($calculation['variance'], 2) }}
-                                                    L @else 0.00 L @endif
-                                                    @if($calculation['total_nozzle_sales'] > 0)
-                                                    ({{ number_format($calculation['variance_percent'], 2) }}%) @endif
-                                                </strong><br>
-                                                <small class="text-muted">{{ $calculation['variance_text'] }}</small><br>
-                                                <span
+                                                <strong>@if($calculation['variance'] > 0)+{{ number_format($calculation['variance'], 2) }}
+                                                    L
+                                                @elseif($calculation['variance'] < 0){{ number_format($calculation['variance'], 2) }}
+                                                    L @else 0.00 L @endif</strong>
+                                                <br><small>{{ $calculation['variance_text'] }}</small>
+                                                <br><span
                                                     class="badge bg-{{ $calculation['gain_loss_class'] }}">{{ $calculation['gain_loss'] }}</span>
                                             </td>
                                         </tr>
@@ -448,9 +387,9 @@
                             </div>
                         </div>
 
-                        <!-- Nozzle Details -->
+                        <!-- Nozzle Transactions -->
                         @if(isset($nozzleReadings) && count($nozzleReadings->where('nozzle.tank_id', $tankId)) > 0)
-                            <div class="mt-3">
+                            <div class="mt-2">
                                 <h6>Nozzle Transactions</h6>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-bordered">
@@ -483,9 +422,9 @@
                             </div>
                         @endif
 
-                        <!-- Nozzle Resets -->
+                        <!-- Nozzle Reset Records -->
                         @if(isset($nozzleResets) && count($nozzleResets->where('nozzle.tank_id', $tankId)) > 0)
-                            <div class="mt-3">
+                            <div class="mt-2">
                                 <h6>Nozzle Reset Records</h6>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-bordered">
@@ -518,154 +457,84 @@
                     </div>
                 </div>
             @endforeach
-        @else
-            <div class="alert alert-info">
-                <h6>No Data Available</h6>
-                <p class="mb-0">No tank dips or nozzle readings recorded for this shift period.</p>
-            </div>
         @endif
 
         <!-- Complete Financial Summary -->
         @if(isset($financialSummary))
-                <div class="card mt-4">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0">Complete Financial Summary</h5>
+            <div class="card mt-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Complete Financial Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-md-4">
+                            <div class="summary-card">
+                                <h6>Total Revenue</h6>
+                                <h4 class="text-success">Rs. {{ number_format($financialSummary['total_revenue'] ?? 0, 2) }}
+                                </h4>
+                                <small>Fuel: Rs. {{ number_format($financialSummary['fuel_sales'] ?? 0, 2) }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="summary-card">
+                                <h6>Total Expenses</h6>
+                                <h4 class="text-danger">Rs. {{ number_format($financialSummary['total_expenses'] ?? 0, 2) }}
+                                </h4>
+                                <small>Oil Purchase: Rs.
+                                    {{ number_format($financialSummary['oil_purchase'] ?? 0, 2) }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="summary-card">
+                                <h6>Net Income</h6>
+                                <h4 class="text-success">Rs. {{ number_format($financialSummary['net_income'] ?? 0, 2) }}
+                                </h4>
+                                <small>Fuel Card: Rs. {{ number_format($cashFlow->fuelcard ?? 0, 2) }}</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="row g-4 text-center mb-4">
-                            <div class="col-md-4">
-                                <div class="summary-card h-100 p-4 border rounded bg-white">
-                                    <h4 class="text-success fw-bold">Rs.
-                                        {{ number_format($financialSummary['total_revenue'] ?? 0, 2) }}</h4>
-                                    <p class="mb-3 text-muted fw-semibold">Total Revenue</p>
-                                    <div class="small text-start">
-                                        <div class="d-flex justify-content-between mb-2"><span>Fuel Sales:</span><strong>Rs.
-                                                {{ number_format($financialSummary['fuel_sales'] ?? 0, 2) }}</strong></div>
-                                        <div class="d-flex justify-content-between mb-2"><span>Lube Sales:</span><strong>Rs.
-                                                {{ number_format($financialSummary['lube_sales'] ?? 0, 2) }}</strong></div>
-                                        <div class="d-flex justify-content-between"><span>Other Income:</span><strong>Rs.
-                                                {{ number_format($financialSummary['transaction_income'] ?? 0, 2) }}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="summary-card h-100 p-4 border rounded bg-white">
-                                    <h4 class="text-danger fw-bold">Rs.
-                                        {{ number_format($financialSummary['total_expenses'] ?? 0, 2) }}</h4>
-                                    <p class="mb-3 text-muted fw-semibold">Total Expenses</p>
-                                    <div class="small text-start">
-                                        <div class="d-flex justify-content-between mb-2"><span>Fuel Oil
-                                                Purchase:</span><strong>Rs.
-                                                {{ number_format($financialSummary['oil_purchase'] ?? 0, 2) }}</strong></div>
-                                        <div class="d-flex justify-content-between mb-2"><span>Lube Purchase:</span><strong>Rs.
-                                                {{ number_format($financialSummary['lube_purchase'] ?? 0, 2) }}</strong></div>
-                                        <div class="d-flex justify-content-between"><span>Other Expenses:</span><strong>Rs.
-                                                {{ number_format($financialSummary['transaction_expense'] ?? 0, 2) }}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="summary-card p-4 border rounded bg-white mb-3">
-                                    <h4
-                                        class="{{ ($financialSummary['net_income'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }} fw-bold">
-                                        Rs. {{ number_format($financialSummary['net_income'] ?? 0, 2) }}</h4>
-                                    <p class="mb-0 text-muted fw-semibold">Net Income</p>
-                                </div>
-                                <div class="row g-3">
-                                    <div class="col-6">
-                                        <div class="summary-card p-3 border rounded bg-white h-100">
-                                            <h5 class="text-primary fw-bold mb-1">Rs.
-                                                {{ number_format($cashFlow->fuelcard ?? 0, 2) }}</h5><small
-                                                class="text-muted fw-semibold">Fuel Card</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="summary-card p-3 border rounded bg-white h-100">
-                                            <h5 class="text-info fw-bold mb-1">Rs.
-                                                {{ number_format($cashFlow->creditcard ?? 0, 2) }}</h5><small
-                                                class="text-muted fw-semibold">Credit Card</small>
-                                        </div>
-                                    </div>
-                                </div>
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="summary-card">
+                                <h6>Opening Balance</h6><strong>Rs.
+                                    {{ number_format($financialSummary['cash_handover'] ?? 0, 2) }}</strong>
                             </div>
                         </div>
-                        <div class="row g-4 mb-4">
-                            <div class="col-md-3">
-                                <div class="summary-card p-4 border rounded bg-white text-center h-100">
-                                    <h4 class="text-warning fw-bold">Rs.
-                                        {{ number_format($financialSummary['cash_handover'] ?? 0, 2) }}</h4>
-                                    <p class="mb-0 text-muted fw-semibold">Opening Balance</p>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="summary-card p-4 border rounded bg-white text-center h-100">
-                                    <h4 class="text-primary fw-bold">Rs.
-                                        {{ number_format($financialSummary['cash_in_hand'] ?? 0, 2) }}</h4>
-                                    <p class="mb-0 text-muted fw-semibold">Closing Balance</p>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="summary-card p-4 border rounded bg-white text-center h-100">
-                                    <h4 class="text-info fw-bold">Rs.
-                                        {{ number_format($financialSummary['cash_in_bank'] ?? 0, 2) }}</h4>
-                                    <p class="mb-0 text-muted fw-semibold">Cash in Bank</p>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="summary-card p-4 border rounded bg-white text-center h-100">
-                                    <h4 class="text-dark fw-bold">Rs.
-                                        {{ number_format($financialSummary['total_cash_balance'] ?? 0, 2) }}</h4>
-                                    <p class="mb-0 text-muted fw-semibold">Total Cash Balance</p>
-                                </div>
+                        <div class="col-md-3">
+                            <div class="summary-card">
+                                <h6>Closing Balance</h6><strong>Rs.
+                                    {{ number_format($financialSummary['cash_in_hand'] ?? 0, 2) }}</strong>
                             </div>
                         </div>
-
-            @php
-                $shiftShortagePayments = DB::select('
-                                        SELECT sapb.id, sapb.shift_id, sapb.total_shortage, sapb.total_amount, sapb.created_at, sapb.payment_type,
-                                        a.name as supplier_name, ort.recive_date,
-                                        CASE WHEN sapb.account_id IS NOT NULL THEN "bank" ELSE "cash" END as payment_method,
-                                        acc.name as bank_name
-                                        FROM shortage_ammount_paid_back sapb
-                                        LEFT JOIN oil_purchase op ON sapb.oil_purchase_id = op.id
-                                        LEFT JOIN accounts a ON op.supplier_id = a.id
-                                        LEFT JOIN oil_recived_tanks ort ON sapb.oil_recived_id = ort.id
-                                        LEFT JOIN accounts acc ON sapb.account_id = acc.id
-                                        WHERE sapb.shift_id = ' . ($shift->id ?? 0) . ' AND sapb.oil_recived_id IS NOT NULL
-                                        ORDER BY sapb.created_at DESC
-                                    ');
-                $totalShortagePaid = 0;
-                $totalShortageLiters = 0;
-                $totalCashShortage = 0;
-                $totalBankShortage = 0;
-                foreach ($shiftShortagePayments as $payment) {
-                    $totalShortagePaid += floatval($payment->total_amount ?? 0);
-                    $totalShortageLiters += floatval($payment->total_shortage ?? 0);
-                    if (($payment->payment_method ?? '') == 'cash') {
-                        $totalCashShortage += floatval($payment->total_amount ?? 0);
-                    } else {
-                        $totalBankShortage += floatval($payment->total_amount ?? 0);
-                    }
-                }
-            @endphp
+                        <div class="col-md-3">
+                            <div class="summary-card">
+                                <h6>Cash in Bank</h6><strong>Rs.
+                                    {{ number_format($financialSummary['cash_in_bank'] ?? 0, 2) }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-card">
+                                <h6>Total Cash Balance</h6><strong>Rs.
+                                    {{ number_format($financialSummary['total_cash_balance'] ?? 0, 2) }}</strong>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
         @endif
 
-        <!-- Lubricant Transactions Section -->
+        <!-- Lubricant Transactions -->
         @if(isset($lubeDocuments) && $lubeDocuments->count() > 0)
-            <div class="card mt-4">
+            <div class="card mt-3">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">Lubricant Transactions</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-4">
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="summary-card">
                                 <h6>Lubricant Purchase Summary</h6>
-                                <table class="table table-sm table-bordered">
+                                <table class="table table-sm">
                                     <tr>
                                         <td>Total Quantity:</td>
                                         <td class="text-end">{{ number_format($lubeSummary['purchase']['total_qty'], 2) }}
@@ -682,7 +551,7 @@
                         <div class="col-md-6">
                             <div class="summary-card">
                                 <h6>Lubricant Sale Summary</h6>
-                                <table class="table table-sm table-bordered">
+                                <table class="table table-sm">
                                     <tr>
                                         <td>Total Quantity:</td>
                                         <td class="text-end">{{ number_format($lubeSummary['sale']['total_qty'], 2) }} Units
@@ -701,71 +570,60 @@
             </div>
         @endif
 
-        <!-- Oil Purchase Section -->
+        <!-- Fuel Oil Purchase -->
         @if(isset($oilPurchaseSummary) && $oilPurchaseSummary['count'] > 0)
-            <div class="card mt-4">
+            <div class="card mt-3">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">Fuel Oil Purchase</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <div class="summary-card">
-                                <h6>Fuel Oil Purchase Summary</h6>
-                                <table class="table table-sm table-bordered">
-                                    <tr>
-                                        <td>Total Quantity:</td>
-                                        <td class="text-end">{{ number_format($oilPurchaseSummary['total_qty'], 2) }} Liters
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Total Amount:</td>
-                                        <td class="text-end text-danger">Rs.
-                                            {{ number_format($oilPurchaseSummary['total_amount'], 2) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Total Purchases:</td>
-                                        <td class="text-end">{{ $oilPurchaseSummary['count'] }} records</td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
+                    <div class="summary-card">
+                        <h6>Fuel Oil Purchase Summary</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Total Quantity:</td>
+                                <td class="text-end">{{ number_format($oilPurchaseSummary['total_qty'], 2) }} Liters</td>
+                            </tr>
+                            <tr>
+                                <td>Total Amount:</td>
+                                <td class="text-end">Rs. {{ number_format($oilPurchaseSummary['total_amount'], 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Total Purchases:</td>
+                                <td class="text-end">{{ $oilPurchaseSummary['count'] }} records</td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </div>
         @endif
 
-        <!-- Shortage Payments Section -->
-        @if(isset($shiftShortagePayments) && count($shiftShortagePayments) > 0)
-            <div class="card mt-4">
+        <!-- Shortage Payments -->
+        @if(count($shiftShortagePayments) > 0)
+            <div class="card mt-3">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">Shortage Payments</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row g-4 mb-4">
+                    <div class="row text-center">
                         <div class="col-md-3">
-                            <div class="summary-card p-3 border rounded bg-white text-center">
-                                <h4 class="text-warning fw-bold mb-2">{{ number_format($totalShortageLiters, 2) }}
-                                    <small>L</small></h4>
-                                <p class="mb-0 text-muted">Total Shortage</p>
+                            <div class="summary-card">
+                                <h6>Total Shortage</h6><strong>{{ number_format($totalShortageLiters, 2) }} L</strong>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="summary-card p-3 border rounded bg-white text-center">
-                                <h4 class="text-success fw-bold mb-2">Rs. {{ number_format($totalShortagePaid, 2) }}</h4>
-                                <p class="mb-0 text-muted">Total Amount Paid</p>
+                            <div class="summary-card">
+                                <h6>Total Amount Paid</h6><strong>Rs. {{ number_format($totalShortagePaid, 2) }}</strong>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="summary-card p-3 border rounded bg-white text-center">
-                                <h4 class="text-primary fw-bold mb-2">Rs. {{ number_format($totalBankShortage, 2) }}</h4>
-                                <p class="mb-0 text-muted">Bank Payments</p>
+                            <div class="summary-card">
+                                <h6>Bank Payments</h6><strong>Rs. {{ number_format($totalBankShortage, 2) }}</strong>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="summary-card p-3 border rounded bg-white text-center">
-                                <h4 class="text-info fw-bold mb-2">Rs. {{ number_format($totalCashShortage, 2) }}</h4>
-                                <p class="mb-0 text-muted">Cash Payments</p>
+                            <div class="summary-card">
+                                <h6>Cash Payments</h6><strong>Rs. {{ number_format($totalCashShortage, 2) }}</strong>
                             </div>
                         </div>
                     </div>
@@ -775,7 +633,7 @@
 
         <!-- Other Financial Transactions -->
         @if(isset($transactions) && $transactions->count() > 0)
-            <div class="card mt-4">
+            <div class="card mt-3">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">Other Financial Transactions</h5>
                 </div>
@@ -825,9 +683,7 @@
                                     <td class="text-end"><strong>Rs.
                                             {{ number_format($financialSummary['transaction_summary']['income']['total'] ?? 0, 2) }}</strong>
                                     </td>
-                                    <td colspan="2"
-                                        class="{{ ($financialSummary['transaction_net'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
-                                        <strong>Net: Rs.
+                                    <td colspan="2"><strong>Net: Rs.
                                             {{ number_format($financialSummary['transaction_net'] ?? 0, 2) }}</strong></td>
                                 </tr>
                             </tfoot>
@@ -838,7 +694,7 @@
         @endif
 
         <!-- Footer -->
-        <div class="mt-5 pt-3 border-top text-center">
+        <div class="mt-3 pt-2 border-top text-center">
             <p class="text-muted small">Generated by Pump360 • {{ now()->format('M d, Y \a\t H:i') }}</p>
         </div>
     </div>
@@ -847,30 +703,44 @@
         <div class="loading-spinner">
             <div class="spinner"></div>
             <p>Generating PDF, please wait...</p>
-            <div class="progress-text">Preparing report...</div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        window.addEventListener('load', function () {
-            // Browser uses document.title as default PDF filename
-            document.title = '{{ $pdfFileName }}';
-
-            var progressText = document.querySelector('.progress-text');
+        (function () {
+            var element = document.getElementById('pdfContent');
+            var fileName = '{{ $pdfFileName }}';
             var loading = document.getElementById('loadingOverlay');
 
-            if (progressText) progressText.innerHTML = 'Opening print dialog...';
+            window.scrollTo(0, 0);
 
             setTimeout(function () {
-                loading.style.display = 'none';
-                window.print();
-
-                // Close tab after print dialog is dismissed
-                window.addEventListener('afterprint', function () {
-                    window.close();
+                html2canvas(element, {
+                    scale: 1.3,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    useCORS: true,
+                    windowWidth: element.scrollWidth,
+                    windowHeight: element.scrollHeight
+                }).then(function (canvas) {
+                    var imgData = canvas.toDataURL('image/jpeg', 0.8);
+                    var { jsPDF } = window.jspdf;
+                    var imgWidth = 280;
+                    var pageHeight = 210;
+                    var imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    var pdf = new jsPDF('l', 'mm', 'a4');
+                    pdf.addImage(imgData, 'JPEG', 5, 5, imgWidth - 10, imgHeight, undefined, 'FAST');
+                    pdf.save(fileName + '.pdf');
+                    loading.style.display = 'none';
+                    setTimeout(function () { window.close(); }, 1000);
+                }).catch(function (error) {
+                    loading.style.display = 'none';
+                    alert('PDF generation failed. Please try Print option (Ctrl+P).');
                 });
             }, 800);
-        });
+        })();
     </script>
 </body>
 
