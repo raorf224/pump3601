@@ -627,7 +627,7 @@ class ShiftReportController extends Controller
         ));
     }
 
-    public function downloadPDF($shiftId)
+  public function downloadPDF($shiftId)
     {
         $shift = Shift::with(['station', 'shiftIncharger.user'])
             ->where('id', $shiftId)
@@ -683,12 +683,25 @@ class ShiftReportController extends Controller
             $shift
         );
 
+        $pdfFileName = 'shift_stock_report_SHIFT-' . $shift->id . '_'
+            . date('Y-m-d', strtotime($shift->start_time))
+            . '_to_'
+            . date('Y-m-d', strtotime($shift->end_time ?? $shift->start_time));
+
         return view('pdf_download', compact(
             'shift',
             'tankCalculations',
             'nozzleReadings',
+            'nozzleResets',
+            'tankDips',
             'financialSummary',
-            'cashFlow'
+            'cashFlow',
+            'lubeDocuments',
+            'lubeSummary',
+            'oilPurchases',
+            'oilPurchaseSummary',
+            'transactions',
+            'pdfFileName'
         ));
     }
 

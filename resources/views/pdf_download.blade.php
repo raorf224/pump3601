@@ -6,57 +6,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shift Stock Report - {{ $shift->station->name ?? 'Fuel Station' }}</title>
     <style>
-        /* ========== PRINT STYLES - PREVENT PAGE BREAKS ========== */
+        /* ========== PRINT STYLES ========== */
         @media print {
-            .no-print {
+            .no-print,
+            .loading-overlay {
                 display: none !important;
             }
 
-            body,
-            html {
-                height: auto;
-                overflow: visible;
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            body, html {
+                height: auto !important;
+                overflow: visible !important;
+                background: white !important;
             }
 
             .report-container {
                 max-width: 100% !important;
-                padding: 0.1in !important;
-            }
-
-            /* Prevent ALL page breaks */
-            .card,
-            .card-body,
-            .card-header,
-            .summary-card,
-            .table-responsive,
-            table,
-            tr,
-            td,
-            th,
-            tbody,
-            thead,
-            .row,
-            .col-md-2,
-            .col-md-3,
-            .col-md-4,
-            .col-md-6,
-            .company-header,
-            footer {
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-                break-after: avoid !important;
-                page-break-after: avoid !important;
-                break-before: avoid !important;
-                page-break-before: avoid !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
 
             .card {
-                margin-bottom: 8px !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                margin-bottom: 10px !important;
                 border: 1px solid #ccc !important;
+                box-shadow: none !important;
             }
 
             .card-body {
                 padding: 0.5rem !important;
+            }
+
+            .summary-card {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                padding: 6px !important;
+                margin-bottom: 6px !important;
+                box-shadow: none !important;
+            }
+
+            table {
+                break-inside: auto !important;
+            }
+
+            tr {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            .company-header {
+                break-inside: avoid !important;
+                margin-bottom: 10px !important;
+                padding-bottom: 5px !important;
             }
 
             .table-sm th,
@@ -65,24 +76,19 @@
                 font-size: 9px !important;
             }
 
-            .summary-card {
-                padding: 6px !important;
-                margin-bottom: 6px !important;
-            }
+            .bg-success  { background-color: #28a745 !important; color: white !important; }
+            .bg-danger   { background-color: #dc3545 !important; color: white !important; }
+            .bg-warning  { background-color: #ffc107 !important; color: #212529 !important; }
+            .bg-info     { background-color: #17a2b8 !important; color: white !important; }
+            .bg-secondary{ background-color: #6c757d !important; color: white !important; }
+            .bg-light    { background-color: #f8f9fc !important; }
 
-            .company-header {
-                margin-bottom: 10px !important;
-                padding-bottom: 5px !important;
-            }
-
-            footer {
-                margin-top: 8px !important;
-                padding-top: 5px !important;
-            }
+            .variance-positive { color: #28a745 !important; }
+            .variance-negative { color: #dc3545 !important; }
 
             @page {
-                size: A4;
-                margin: 0.15in;
+                size: A4 portrait;
+                margin: 0.4cm 0.5cm;
             }
         }
 
@@ -841,66 +847,30 @@
         <div class="loading-spinner">
             <div class="spinner"></div>
             <p>Generating PDF, please wait...</p>
-            <div class="progress-text">Capturing report data...</div>
+            <div class="progress-text">Preparing report...</div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        (function () {
-            var element = document.getElementById('pdfContent');
-            var fileName = '{{ $pdfFileName }}';
-            var loading = document.getElementById('loadingOverlay');
+        window.addEventListener('load', function () {
+            // Browser uses document.title as default PDF filename
+            document.title = '{{ $pdfFileName }}';
+
             var progressText = document.querySelector('.progress-text');
+            var loading = document.getElementById('loadingOverlay');
 
-            // Scroll to top to capture full content
-            window.scrollTo(0, 0);
+            if (progressText) progressText.innerHTML = 'Opening print dialog...';
 
-            // Wait for page to be fully loaded and rendered
             setTimeout(function () {
-                if (progressText) progressText.innerHTML = 'Rendering report content...';
+                loading.style.display = 'none';
+                window.print();
 
-                html2canvas(element, {
-                    scale: 1.5,
-                    backgroundColor: '#ffffff',
-                    logging: false,
-                    useCORS: true,
-                    windowWidth: element.scrollWidth,
-                    windowHeight: element.scrollHeight,
-                    onclone: function (clonedDoc, element) {
-                        // Ensure cloned document has proper styling
-                        console.log('Clone ready');
-                    }
-                }).then(function (canvas) {
-                    if (progressText) progressText.innerHTML = 'Creating PDF file...';
-
-                    var imgData = canvas.toDataURL('image/jpeg', 0.85);
-                    var { jsPDF } = window.jspdf;
-                    var imgWidth = 210; // A4 width in mm
-                    var pageHeight = 297; // A4 height in mm
-                    var imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-                    var pdf = new jsPDF('p', 'mm', 'a4');
-
-                    // Add image to PDF
-                    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
-
-                    // Save PDF
-                    pdf.save(fileName + '.pdf');
-
-                    // Hide loading and close window
-                    loading.style.display = 'none';
-                    setTimeout(function () {
-                        window.close();
-                    }, 1000);
-                }).catch(function (error) {
-                    console.error('PDF Error:', error);
-                    loading.style.display = 'none';
-                    alert('PDF generation failed. Please try again or use Print option (Ctrl+P).');
+                // Close tab after print dialog is dismissed
+                window.addEventListener('afterprint', function () {
+                    window.close();
                 });
-            }, 800); // Increased delay to ensure full rendering
-        })();
+            }, 800);
+        });
     </script>
 </body>
 
