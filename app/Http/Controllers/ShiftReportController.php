@@ -19,7 +19,7 @@ use App\Models\Transaction;
 use App\Models\OilPurchase;
 use App\Models\Account;
 use DB;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF;
 
 class ShiftReportController extends Controller
 {
@@ -689,8 +689,7 @@ public function downloadPDF($shiftId)
         . '_to_'
         . date('Y-m-d', strtotime($shift->end_time ?? $shift->start_time));
 
-    // Load view and generate PDF
-    $pdf = PDF::loadView('pdf_download', compact(
+    $data = compact(
         'shift',
         'tankCalculations',
         'nozzleReadings',
@@ -702,13 +701,19 @@ public function downloadPDF($shiftId)
         'oilPurchases',
         'oilPurchaseSummary',
         'transactions'
-    ));
+    );
 
-    // Set paper size to Landscape
-    $pdf->setPaper('A4', 'landscape');
+    // ✅ Method 1: Using DomPDF directly (No facade, No config change)
+    $html = view('pdf_download', $data)->render();
     
-    // Download PDF
-    return $pdf->download($pdfFileName . '.pdf');
+    $dompdf = new \Dompdf\Dompdf();
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'landscape');
+    $dompdf->setOption('isRemoteEnabled', true);
+    $dompdf->setOption('isHtml5ParserEnabled', true);
+    $dompdf->render();
+    
+    return $dompdf->download($pdfFileName . '.pdf');
 }
 
 
