@@ -19,7 +19,6 @@ use App\Models\Transaction;
 use App\Models\OilPurchase;
 use App\Models\Account;
 use DB;
-use Barryvdh\DomPDF\PDF;
 
 class ShiftReportController extends Controller
 {
@@ -638,8 +637,7 @@ public function downloadPDF($shiftId)
         ->whereHas('tank', function ($query) use ($shift) {
             $query->where('station_id', $shift->station_id);
         })
-        ->whereBetween('from_date', [$shift->start_time, $shift->end_time])
-        ->orWhereBetween('to_date', [$shift->start_time, $shift->end_time])
+        ->where('shift_id', $shiftId)  // ✅ Ye line add karo
         ->get();
 
     $nozzleReadings = ShiftNozzleReading::with(['nozzle', 'nozzle.dispenser', 'nozzle.product'])
@@ -703,17 +701,10 @@ public function downloadPDF($shiftId)
         'transactions'
     );
 
-    // ✅ Method 1: Using DomPDF directly (No facade, No config change)
-    $html = view('pdf_download', $data)->render();
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf_download', $data);
+    $pdf->setPaper('A4', 'landscape');
     
-    $dompdf = new \Dompdf\Dompdf();
-    $dompdf->loadHtml($html);
-    $dompdf->setPaper('A4', 'landscape');
-    $dompdf->setOption('isRemoteEnabled', true);
-    $dompdf->setOption('isHtml5ParserEnabled', true);
-    $dompdf->render();
-    
-    return $dompdf->download($pdfFileName . '.pdf');
+    return $pdf->download($pdfFileName . '.pdf');
 }
 
 
