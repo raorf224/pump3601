@@ -98,9 +98,9 @@
                 </div>
                 <div class="col-4 text-end">
                     <div class="no-print">
-                        <button class="btn btn-outline-primary btn-sm" onclick="window.print()">
-                            📄 Download PDF
-                        </button>
+<a href="{{ route('shift.download.pdf', $shift->id) }}" class="btn btn-primary btn-sm" target="_blank">
+    📄 Download PDF
+</a>
                         <a href="/shifts" class="btn btn-outline-secondary btn-sm">
                             ← Back to Shifts
                         </a>

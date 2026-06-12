@@ -285,6 +285,7 @@ Route::post('/site-total-amounts', [ShiftController::class, 'storeSiteTotalAmoun
 Route::get('/shift-reports', [ShiftReportController::class, 'index']);
 Route::get('/shift-reports/{shift_id}', [ShiftReportController::class, 'show']);
 Route::post('/shift-reports/generate', [ShiftReportController::class, 'generateReport']);
+Route::get('/shift-reports/download-pdf/{shiftId}', [ShiftReportController::class, 'downloadPDF'])->name('shift.download.pdf');
 
 // Site Total Amount Routes
 Route::get('/site-total-amount', [SiteTotalAmountController::class, 'index']);

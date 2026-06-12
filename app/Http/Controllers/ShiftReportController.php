@@ -169,15 +169,15 @@ class ShiftReportController extends Controller
             // ✅ **PHYSICAL USAGE** (Opening - Closing)
             $physicalUsage = $openingStock - $closingStock;
 
-// ✅ **OIL PURCHASE** - Sirf us shift ka oil receive dikhao jisme actually receive hua hai
-$oilPurchases = DB::table('oil_recived_tanks as ort')
-    ->join('oil_purchase as op', 'op.id', '=', 'ort.oil_purchase_id')
-    ->where('op.tank_id', $tankId)
-    ->where('ort.shift_id', $shiftId)  // ✅ RECEIVE SHIFT ID MATCH
-   
-    ->sum('ort.recived_qty');
+            // ✅ **OIL PURCHASE** - Sirf us shift ka oil receive dikhao jisme actually receive hua hai
+            $oilPurchases = DB::table('oil_recived_tanks as ort')
+                ->join('oil_purchase as op', 'op.id', '=', 'ort.oil_purchase_id')
+                ->where('op.tank_id', $tankId)
+                ->where('ort.shift_id', $shiftId)  // ✅ RECEIVE SHIFT ID MATCH
 
-\Log::info("Tank {$tank->name} - Shift {$shiftId} - Oil Purchased (Received): {$oilPurchases}");
+                ->sum('ort.recived_qty');
+
+            \Log::info("Tank {$tank->name} - Shift {$shiftId} - Oil Purchased (Received): {$oilPurchases}");
 
 
             // ✅ **ADJUSTED PHYSICAL USAGE**
@@ -624,6 +624,71 @@ $oilPurchases = DB::table('oil_recived_tanks as ort')
             'cashFlow',
             'transactions',
             'financialSummary'
+        ));
+    }
+
+    public function downloadPDF($shiftId)
+    {
+        $shift = Shift::with(['station', 'shiftIncharger.user'])
+            ->where('id', $shiftId)
+            ->firstOrFail();
+
+        $tankDips = TankDip::with(['tank', 'tank.product'])
+            ->whereHas('tank', function ($query) use ($shift) {
+                $query->where('station_id', $shift->station_id);
+            })
+            ->whereBetween('from_date', [$shift->start_time, $shift->end_time])
+            ->orWhereBetween('to_date', [$shift->start_time, $shift->end_time])
+            ->get();
+
+        $nozzleReadings = ShiftNozzleReading::with(['nozzle', 'nozzle.dispenser', 'nozzle.product'])
+            ->where('shift_id', $shiftId)
+            ->get();
+
+        $nozzleResets = NozzleTotalizerReset::with(['nozzle', 'nozzle.dispenser'])
+            ->where('shift_id', $shiftId)
+            ->get();
+
+        $lubeDocuments = LubeDocument::with(['lines', 'lines.product', 'account'])
+            ->where('shift_id', $shiftId)
+            ->get();
+
+        $oilPurchases = OilPurchase::with(['tank', 'tank.product', 'supplier'])
+            ->where('shift_id', $shiftId)
+            ->get();
+
+        $lubeSummary = $this->calculateLubeSummary($lubeDocuments);
+        $oilPurchaseSummary = $this->calculateOilPurchases($shiftId);
+        $cashFlow = ShiftCashFlow::where('shift_id', $shiftId)->first();
+        $transactions = Transaction::with(['account', 'toAccount'])
+            ->where('shift_id', $shiftId)
+            ->get();
+
+        $tankCalculations = $this->calculateTankGainLoss(
+            $tankDips,
+            $nozzleReadings,
+            $nozzleResets,
+            $shift->station_id,
+            $shift->start_time,
+            $shift->id
+        );
+
+        $financialSummary = $this->calculateFinancialSummary(
+            $nozzleReadings,
+            $nozzleResets,
+            $lubeSummary,
+            $oilPurchaseSummary,
+            $transactions,
+            $cashFlow,
+            $shift
+        );
+
+        return view('pdf_download', compact(
+            'shift',
+            'tankCalculations',
+            'nozzleReadings',
+            'financialSummary',
+            'cashFlow'
         ));
     }
 
