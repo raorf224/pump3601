@@ -54,7 +54,6 @@ Route::get('/station-audit/{stationId?}', function ($stationId = null) {
     return view('station-audit', compact('stationId'));
 })->name('station.audit')->middleware('auth');
 
-Route::get('/shift/{id}/download-pdf', [ShiftReportController::class, 'downloadPDF'])->name('shift.download.pdf');
 	Route::get('/shift-reports', [ShiftReportController::class, 'index']);
     Route::get('/shift-reports/{shift_id}', [ShiftReportController::class, 'show']);
     Route::post('/shift-reports/generate', [ShiftReportController::class, 'generateReport']);
