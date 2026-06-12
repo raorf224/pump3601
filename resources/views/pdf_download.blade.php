@@ -23,7 +23,7 @@
                 padding: 0.1in !important;
             }
 
-            /* CRITICAL: Prevent ALL page breaks */
+            /* Prevent ALL page breaks */
             .card,
             .card-body,
             .card-header,
@@ -41,8 +41,7 @@
             .col-md-4,
             .col-md-6,
             .company-header,
-            footer,
-            div:not(.loading-overlay) {
+            footer {
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
                 break-after: avoid !important;
@@ -179,7 +178,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             z-index: 9999;
             display: flex;
             align-items: center;
@@ -188,20 +187,32 @@
 
         .loading-spinner {
             background: white;
-            padding: 25px 35px;
+            padding: 30px 40px;
             border-radius: 12px;
             text-align: center;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
         }
 
         .loading-spinner .spinner {
-            width: 45px;
-            height: 45px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #1e466e;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #1e466e;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 12px;
+            margin: 0 auto 15px;
+        }
+
+        .loading-spinner p {
+            font-size: 14px;
+            color: #333;
+            margin: 0;
+        }
+
+        .loading-spinner .progress-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
         }
 
         @keyframes spin {
@@ -303,9 +314,7 @@
                                     <th>Product</th>
                                     <th class="text-end">Opening (L)</th>
                                     <th class="text-end">Closing (L)</th>
-                                    <!-- <th class="text-end">Physical Usage (L)</th> -->
                                     <th class="text-end">Oil Recived (L)</th>
-                                    <!-- <th class="text-end">Adjusted Usage (L)</th> -->
                                     <th class="text-end">Nozzle Sales (L)</th>
                                     <th class="text-end">Variance (L)</th>
                                     <th class="text-end">Variance %</th>
@@ -323,9 +332,8 @@
                                         <td class="text-end">{{ number_format($calculation['total_nozzle_sales'], 2) }}</td>
                                         <td
                                             class="text-end {{ $calculation['gain_loss_class'] == 'success' ? 'variance-positive' : ($calculation['gain_loss_class'] == 'danger' ? 'variance-negative' : '') }}">
-                                            @if($calculation['variance'] > 0) +{{ number_format($calculation['variance'], 2) }}
-                                            @elseif($calculation['variance'] < 0)
-                                            {{ number_format($calculation['variance'], 2) }} @else 0.00 @endif
+                                            @if($calculation['variance'] > 0)+{{ number_format($calculation['variance'], 2) }}@elseif($calculation['variance'] < 0){{ number_format($calculation['variance'], 2) }}@else
+                                            0.00 @endif
                                         </td>
                                         <td class="text-end">
                                             @if($calculation['total_nozzle_sales'] > 0)
@@ -369,8 +377,7 @@
                                         </tr>
                                         <tr>
                                             <td width="60%">Physical Usage:</td>
-                                            <td
-                                                class="text-end {{ $calculation['physical_usage'] > 0 ? 'text-success' : ($calculation['physical_usage'] < 0 ? 'text-danger' : '') }}">
+                                            <td class="text-end">
                                                 @if($calculation['physical_usage'] > 0)+{{ number_format($calculation['physical_usage'], 2) }}@elseif($calculation['physical_usage'] < 0){{ number_format($calculation['physical_usage'], 2) }}@else
                                                 0.00 @endif</td>
                                         </tr>
@@ -383,8 +390,7 @@
                                         @endif
                                         <tr>
                                             <td width="60%"><strong>Adjusted Usage:</strong></td>
-                                            <td
-                                                class="text-end {{ $calculation['adjusted_physical_usage'] > 0 ? 'text-success' : ($calculation['adjusted_physical_usage'] < 0 ? 'text-danger' : '') }}">
+                                            <td class="text-end">
                                                 <strong>@if($calculation['adjusted_physical_usage'] > 0)+{{ number_format($calculation['adjusted_physical_usage'], 2) }}@elseif($calculation['adjusted_physical_usage'] < 0){{ number_format($calculation['adjusted_physical_usage'], 2) }}@else
                                                 0.00 @endif</strong></td>
                                         </tr>
@@ -425,10 +431,8 @@
                                                     L @else 0.00 L @endif
                                                     @if($calculation['total_nozzle_sales'] > 0)
                                                     ({{ number_format($calculation['variance_percent'], 2) }}%) @endif
-                                                </strong>
-                                                <br>
-                                                <small class="text-muted">{{ $calculation['variance_text'] }}</small>
-                                                <br>
+                                                </strong><br>
+                                                <small class="text-muted">{{ $calculation['variance_text'] }}</small><br>
                                                 <span
                                                     class="badge bg-{{ $calculation['gain_loss_class'] }}">{{ $calculation['gain_loss'] }}</span>
                                             </td>
@@ -517,103 +521,103 @@
 
         <!-- Complete Financial Summary -->
         @if(isset($financialSummary))
-            <div class="card mt-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">Complete Financial Summary</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-4 text-center mb-4">
-                        <div class="col-md-4">
-                            <div class="summary-card h-100 p-4 border rounded bg-white">
-                                <h4 class="text-success fw-bold">Rs.
-                                    {{ number_format($financialSummary['total_revenue'] ?? 0, 2) }}</h4>
-                                <p class="mb-3 text-muted fw-semibold">Total Revenue</p>
-                                <div class="small text-start">
-                                    <div class="d-flex justify-content-between mb-2"><span>Fuel Sales:</span><strong>Rs.
-                                            {{ number_format($financialSummary['fuel_sales'] ?? 0, 2) }}</strong></div>
-                                    <div class="d-flex justify-content-between mb-2"><span>Lube Sales:</span><strong>Rs.
-                                            {{ number_format($financialSummary['lube_sales'] ?? 0, 2) }}</strong></div>
-                                    <div class="d-flex justify-content-between"><span>Other Income:</span><strong>Rs.
-                                            {{ number_format($financialSummary['transaction_income'] ?? 0, 2) }}</strong>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="summary-card h-100 p-4 border rounded bg-white">
-                                <h4 class="text-danger fw-bold">Rs.
-                                    {{ number_format($financialSummary['total_expenses'] ?? 0, 2) }}</h4>
-                                <p class="mb-3 text-muted fw-semibold">Total Expenses</p>
-                                <div class="small text-start">
-                                    <div class="d-flex justify-content-between mb-2"><span>Fuel Oil
-                                            Purchase:</span><strong>Rs.
-                                            {{ number_format($financialSummary['oil_purchase'] ?? 0, 2) }}</strong></div>
-                                    <div class="d-flex justify-content-between mb-2"><span>Lube Purchase:</span><strong>Rs.
-                                            {{ number_format($financialSummary['lube_purchase'] ?? 0, 2) }}</strong></div>
-                                    <div class="d-flex justify-content-between"><span>Other Expenses:</span><strong>Rs.
-                                            {{ number_format($financialSummary['transaction_expense'] ?? 0, 2) }}</strong>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="summary-card p-4 border rounded bg-white mb-3">
-                                <h4
-                                    class="{{ ($financialSummary['net_income'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }} fw-bold">
-                                    Rs. {{ number_format($financialSummary['net_income'] ?? 0, 2) }}</h4>
-                                <p class="mb-0 text-muted fw-semibold">Net Income</p>
-                            </div>
-                            <div class="row g-3">
-                                <div class="col-6">
-                                    <div class="summary-card p-3 border rounded bg-white h-100">
-                                        <h5 class="text-primary fw-bold mb-1">Rs.
-                                            {{ number_format($cashFlow->fuelcard ?? 0, 2) }}</h5><small
-                                            class="text-muted fw-semibold">Fuel Card</small>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="summary-card p-3 border rounded bg-white h-100">
-                                        <h5 class="text-info fw-bold mb-1">Rs.
-                                            {{ number_format($cashFlow->creditcard ?? 0, 2) }}</h5><small
-                                            class="text-muted fw-semibold">Credit Card</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                <div class="card mt-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Complete Financial Summary</h5>
                     </div>
-                    <div class="row g-4 mb-4">
-                        <div class="col-md-3">
-                            <div class="summary-card p-4 border rounded bg-white text-center h-100">
-                                <h4 class="text-warning fw-bold">Rs.
-                                    {{ number_format($financialSummary['cash_handover'] ?? 0, 2) }}</h4>
-                                <p class="mb-0 text-muted fw-semibold">Opening Balance</p>
+                    <div class="card-body">
+                        <div class="row g-4 text-center mb-4">
+                            <div class="col-md-4">
+                                <div class="summary-card h-100 p-4 border rounded bg-white">
+                                    <h4 class="text-success fw-bold">Rs.
+                                        {{ number_format($financialSummary['total_revenue'] ?? 0, 2) }}</h4>
+                                    <p class="mb-3 text-muted fw-semibold">Total Revenue</p>
+                                    <div class="small text-start">
+                                        <div class="d-flex justify-content-between mb-2"><span>Fuel Sales:</span><strong>Rs.
+                                                {{ number_format($financialSummary['fuel_sales'] ?? 0, 2) }}</strong></div>
+                                        <div class="d-flex justify-content-between mb-2"><span>Lube Sales:</span><strong>Rs.
+                                                {{ number_format($financialSummary['lube_sales'] ?? 0, 2) }}</strong></div>
+                                        <div class="d-flex justify-content-between"><span>Other Income:</span><strong>Rs.
+                                                {{ number_format($financialSummary['transaction_income'] ?? 0, 2) }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="summary-card h-100 p-4 border rounded bg-white">
+                                    <h4 class="text-danger fw-bold">Rs.
+                                        {{ number_format($financialSummary['total_expenses'] ?? 0, 2) }}</h4>
+                                    <p class="mb-3 text-muted fw-semibold">Total Expenses</p>
+                                    <div class="small text-start">
+                                        <div class="d-flex justify-content-between mb-2"><span>Fuel Oil
+                                                Purchase:</span><strong>Rs.
+                                                {{ number_format($financialSummary['oil_purchase'] ?? 0, 2) }}</strong></div>
+                                        <div class="d-flex justify-content-between mb-2"><span>Lube Purchase:</span><strong>Rs.
+                                                {{ number_format($financialSummary['lube_purchase'] ?? 0, 2) }}</strong></div>
+                                        <div class="d-flex justify-content-between"><span>Other Expenses:</span><strong>Rs.
+                                                {{ number_format($financialSummary['transaction_expense'] ?? 0, 2) }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="summary-card p-4 border rounded bg-white mb-3">
+                                    <h4
+                                        class="{{ ($financialSummary['net_income'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }} fw-bold">
+                                        Rs. {{ number_format($financialSummary['net_income'] ?? 0, 2) }}</h4>
+                                    <p class="mb-0 text-muted fw-semibold">Net Income</p>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="summary-card p-3 border rounded bg-white h-100">
+                                            <h5 class="text-primary fw-bold mb-1">Rs.
+                                                {{ number_format($cashFlow->fuelcard ?? 0, 2) }}</h5><small
+                                                class="text-muted fw-semibold">Fuel Card</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="summary-card p-3 border rounded bg-white h-100">
+                                            <h5 class="text-info fw-bold mb-1">Rs.
+                                                {{ number_format($cashFlow->creditcard ?? 0, 2) }}</h5><small
+                                                class="text-muted fw-semibold">Credit Card</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="summary-card p-4 border rounded bg-white text-center h-100">
-                                <h4 class="text-primary fw-bold">Rs.
-                                    {{ number_format($financialSummary['cash_in_hand'] ?? 0, 2) }}</h4>
-                                <p class="mb-0 text-muted fw-semibold">Closing Balance</p>
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-3">
+                                <div class="summary-card p-4 border rounded bg-white text-center h-100">
+                                    <h4 class="text-warning fw-bold">Rs.
+                                        {{ number_format($financialSummary['cash_handover'] ?? 0, 2) }}</h4>
+                                    <p class="mb-0 text-muted fw-semibold">Opening Balance</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-card p-4 border rounded bg-white text-center h-100">
+                                    <h4 class="text-primary fw-bold">Rs.
+                                        {{ number_format($financialSummary['cash_in_hand'] ?? 0, 2) }}</h4>
+                                    <p class="mb-0 text-muted fw-semibold">Closing Balance</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-card p-4 border rounded bg-white text-center h-100">
+                                    <h4 class="text-info fw-bold">Rs.
+                                        {{ number_format($financialSummary['cash_in_bank'] ?? 0, 2) }}</h4>
+                                    <p class="mb-0 text-muted fw-semibold">Cash in Bank</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-card p-4 border rounded bg-white text-center h-100">
+                                    <h4 class="text-dark fw-bold">Rs.
+                                        {{ number_format($financialSummary['total_cash_balance'] ?? 0, 2) }}</h4>
+                                    <p class="mb-0 text-muted fw-semibold">Total Cash Balance</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="summary-card p-4 border rounded bg-white text-center h-100">
-                                <h4 class="text-info fw-bold">Rs.
-                                    {{ number_format($financialSummary['cash_in_bank'] ?? 0, 2) }}</h4>
-                                <p class="mb-0 text-muted fw-semibold">Cash in Bank</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="summary-card p-4 border rounded bg-white text-center h-100">
-                                <h4 class="text-dark fw-bold">Rs.
-                                    {{ number_format($financialSummary['total_cash_balance'] ?? 0, 2) }}</h4>
-                                <p class="mb-0 text-muted fw-semibold">Total Cash Balance</p>
-                            </div>
-                        </div>
-                    </div>
 
-                    @php
-                        $shiftShortagePayments = DB::select('
+            @php
+                $shiftShortagePayments = DB::select('
                                         SELECT sapb.id, sapb.shift_id, sapb.total_shortage, sapb.total_amount, sapb.created_at, sapb.payment_type,
                                         a.name as supplier_name, ort.recive_date,
                                         CASE WHEN sapb.account_id IS NOT NULL THEN "bank" ELSE "cash" END as payment_method,
@@ -626,22 +630,22 @@
                                         WHERE sapb.shift_id = ' . ($shift->id ?? 0) . ' AND sapb.oil_recived_id IS NOT NULL
                                         ORDER BY sapb.created_at DESC
                                     ');
-                        $totalShortagePaid = 0;
-                        $totalShortageLiters = 0;
-                        $totalCashShortage = 0;
-                        $totalBankShortage = 0;
-                        foreach ($shiftShortagePayments as $payment) {
-                            $totalShortagePaid += floatval($payment->total_amount ?? 0);
-                            $totalShortageLiters += floatval($payment->total_shortage ?? 0);
-                            if (($payment->payment_method ?? '') == 'cash') {
-                                $totalCashShortage += floatval($payment->total_amount ?? 0);
-                            } else {
-                                $totalBankShortage += floatval($payment->total_amount ?? 0);
-                            }
-                        }
-                    @endphp
+                $totalShortagePaid = 0;
+                $totalShortageLiters = 0;
+                $totalCashShortage = 0;
+                $totalBankShortage = 0;
+                foreach ($shiftShortagePayments as $payment) {
+                    $totalShortagePaid += floatval($payment->total_amount ?? 0);
+                    $totalShortageLiters += floatval($payment->total_shortage ?? 0);
+                    if (($payment->payment_method ?? '') == 'cash') {
+                        $totalCashShortage += floatval($payment->total_amount ?? 0);
+                    } else {
+                        $totalBankShortage += floatval($payment->total_amount ?? 0);
+                    }
+                }
+            @endphp
+                    </div>
                 </div>
-            </div>
         @endif
 
         <!-- Lubricant Transactions Section -->
@@ -837,31 +841,66 @@
         <div class="loading-spinner">
             <div class="spinner"></div>
             <p>Generating PDF, please wait...</p>
+            <div class="progress-text">Capturing report data...</div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        setTimeout(function () {
+        (function () {
             var element = document.getElementById('pdfContent');
             var fileName = '{{ $pdfFileName }}';
             var loading = document.getElementById('loadingOverlay');
-            html2canvas(element, { scale: 1.3, backgroundColor: '#ffffff', logging: false, useCORS: true }).then(function (canvas) {
-                var imgData = canvas.toDataURL('image/jpeg', 0.75);
-                var { jsPDF } = window.jspdf;
-                var imgWidth = 210;
-                var imgHeight = (canvas.height * imgWidth) / canvas.width;
-                var pdf = new jsPDF('p', 'mm', 'a4');
-                pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
-                pdf.save(fileName + '.pdf');
-                loading.style.display = 'none';
-                setTimeout(function () { window.close(); }, 1000);
-            }).catch(function (error) {
-                loading.style.display = 'none';
-                alert('PDF generation failed. Please try again.');
-            });
-        }, 500);
+            var progressText = document.querySelector('.progress-text');
+
+            // Scroll to top to capture full content
+            window.scrollTo(0, 0);
+
+            // Wait for page to be fully loaded and rendered
+            setTimeout(function () {
+                if (progressText) progressText.innerHTML = 'Rendering report content...';
+
+                html2canvas(element, {
+                    scale: 1.5,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    useCORS: true,
+                    windowWidth: element.scrollWidth,
+                    windowHeight: element.scrollHeight,
+                    onclone: function (clonedDoc, element) {
+                        // Ensure cloned document has proper styling
+                        console.log('Clone ready');
+                    }
+                }).then(function (canvas) {
+                    if (progressText) progressText.innerHTML = 'Creating PDF file...';
+
+                    var imgData = canvas.toDataURL('image/jpeg', 0.85);
+                    var { jsPDF } = window.jspdf;
+                    var imgWidth = 210; // A4 width in mm
+                    var pageHeight = 297; // A4 height in mm
+                    var imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                    var pdf = new jsPDF('p', 'mm', 'a4');
+
+                    // Add image to PDF
+                    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+
+                    // Save PDF
+                    pdf.save(fileName + '.pdf');
+
+                    // Hide loading and close window
+                    loading.style.display = 'none';
+                    setTimeout(function () {
+                        window.close();
+                    }, 1000);
+                }).catch(function (error) {
+                    console.error('PDF Error:', error);
+                    loading.style.display = 'none';
+                    alert('PDF generation failed. Please try again or use Print option (Ctrl+P).');
+                });
+            }, 800); // Increased delay to ensure full rendering
+        })();
     </script>
 </body>
 
