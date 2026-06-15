@@ -18,6 +18,15 @@ use App\Models\ShiftCashFlow;
 use App\Models\Transaction;
 use App\Models\OilPurchase;
 use App\Models\Account;
+use Barryvdh\DomPDF\Facade\Pdf;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use DB;
 
 class ShiftReportController extends Controller
@@ -538,6 +547,7 @@ class ShiftReportController extends Controller
             'total_cash_balance' => $cashInHand + $cashInBank // NOT + $cashHandover
         ];
     }
+
     public function show($shiftId)
     {
         $shift = Shift::with(['station', 'shiftIncharger.user'])
@@ -626,5 +636,804 @@ class ShiftReportController extends Controller
             'financialSummary'
         ));
     }
+
+    public function downloadPDF($shiftId)
+    {
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
+        $shift = Shift::with(['station', 'shiftIncharger.user'])->findOrFail($shiftId);
+
+        // Fetch all required data
+        $tankDips = TankDip::with(['tank', 'tank.product'])
+            ->whereHas('tank', fn($q) => $q->where('station_id', $shift->station_id))
+            ->where('shift_id', $shiftId)->get();
+
+        $nozzleReadings = ShiftNozzleReading::with(['nozzle', 'nozzle.dispenser', 'nozzle.product'])
+            ->where('shift_id', $shiftId)->get();
+
+        $nozzleResets = NozzleTotalizerReset::with(['nozzle', 'nozzle.dispenser'])
+            ->where('shift_id', $shiftId)->get();
+
+        $lubeDocuments = LubeDocument::with(['lines', 'lines.product', 'account'])
+            ->where('shift_id', $shiftId)->get();
+
+        $oilPurchases = OilPurchase::with(['tank', 'tank.product', 'supplier'])
+            ->where('shift_id', $shiftId)->get();
+
+        $lubeSummary = $this->calculateLubeSummary($lubeDocuments);
+        $oilPurchaseSummary = $this->calculateOilPurchases($shiftId);
+        $cashFlow = ShiftCashFlow::where('shift_id', $shiftId)->first();
+        $transactions = Transaction::with(['account', 'toAccount'])->where('shift_id', $shiftId)->get();
+
+        $tankCalculations = $this->calculateTankGainLoss(
+            $tankDips,
+            $nozzleReadings,
+            $nozzleResets,
+            $shift->station_id,
+            $shift->start_time,
+            $shift->id
+        );
+
+        $financialSummary = $this->calculateFinancialSummary(
+            $nozzleReadings,
+            $nozzleResets,
+            $lubeSummary,
+            $oilPurchaseSummary,
+            $transactions,
+            $cashFlow,
+            $shift
+        );
+
+        $data = compact(
+            'shift',
+            'tankCalculations',
+            'nozzleReadings',
+            'nozzleResets',
+            'financialSummary',
+            'cashFlow',
+            'lubeDocuments',
+            'lubeSummary',
+            'oilPurchases',
+            'oilPurchaseSummary',
+            'transactions'
+        );
+
+        // Return view with auto-download option
+        // Add ?auto=true to URL to auto-download PDF
+        return view('pdf_download', $data);
+
+    }
+
+
+    public function exportToExcel($shiftId)
+    {
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+        
+        $shift = Shift::with(['station', 'shiftIncharger.user'])->findOrFail($shiftId);
+        
+        // Fetch all data
+        $tankDips = TankDip::with(['tank', 'tank.product'])
+            ->whereHas('tank', fn($q) => $q->where('station_id', $shift->station_id))
+            ->where('shift_id', $shiftId)->get();
+
+        $nozzleReadings = ShiftNozzleReading::with(['nozzle', 'nozzle.dispenser', 'nozzle.product'])
+            ->where('shift_id', $shiftId)->get();
+
+        $nozzleResets = NozzleTotalizerReset::with(['nozzle', 'nozzle.dispenser'])
+            ->where('shift_id', $shiftId)->get();
+
+        $lubeDocuments = LubeDocument::with(['lines', 'lines.product', 'account'])
+            ->where('shift_id', $shiftId)->get();
+
+        $oilPurchases = OilPurchase::with(['tank', 'tank.product', 'supplier'])
+            ->where('shift_id', $shiftId)->get();
+
+        $lubeSummary = $this->calculateLubeSummary($lubeDocuments);
+        $oilPurchaseSummary = $this->calculateOilPurchases($shiftId);
+        $cashFlow = ShiftCashFlow::where('shift_id', $shiftId)->first();
+        $transactions = Transaction::with(['account', 'toAccount'])->where('shift_id', $shiftId)->get();
+
+        $tankCalculations = $this->calculateTankGainLoss(
+            $tankDips, $nozzleReadings, $nozzleResets, 
+            $shift->station_id, $shift->start_time, $shift->id
+        );
+
+        $financialSummary = $this->calculateFinancialSummary(
+            $nozzleReadings, $nozzleResets, $lubeSummary, 
+            $oilPurchaseSummary, $transactions, $cashFlow, $shift
+        );
+
+        // Create Excel file
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Shift Stock Report');
+        
+        // Set page layout to Landscape A4
+        $sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
+        $sheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
+        $sheet->getPageMargins()->setTop(0.75);
+        $sheet->getPageMargins()->setBottom(0.75);
+        $sheet->getPageMargins()->setLeft(0.5);
+        $sheet->getPageMargins()->setRight(0.5);
+        
+        $row = 1;
+        
+        // ========================================
+        // HEADER SECTION (EXACT MATCH)
+        // ========================================
+        
+        // Company Header
+        $sheet->mergeCells('A' . $row . ':M' . $row);
+        $sheet->setCellValue('A' . $row, 'Shift Stock Reconciliation Report');
+        $sheet->getStyle('A' . $row)->getFont()->setSize(18)->setBold(true);
+        $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $row++;
+        
+        $sheet->mergeCells('A' . $row . ':M' . $row);
+        $sheet->setCellValue('A' . $row, $shift->station->name ?? 'Fuel Station');
+        $sheet->getStyle('A' . $row)->getFont()->setSize(14);
+        $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $row++;
+        
+        $sheet->mergeCells('A' . $row . ':M' . $row);
+        $sheet->setCellValue('A' . $row, 'Professional Fuel Management System');
+        $sheet->getStyle('A' . $row)->getFont()->setSize(10);
+        $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $row++;
+        
+        // Report ID and Time
+        $sheet->setCellValue('A' . $row, 'Report ID: SHIFT-' . $shift->id);
+        $sheet->mergeCells('A' . $row . ':D' . $row);
+        $sheet->getStyle('A' . $row)->getFont()->setSize(9);
+        
+        $sheet->setCellValue('J' . $row, 'Generated: ' . now()->format('M d, Y H:i'));
+        $sheet->mergeCells('J' . $row . ':M' . $row);
+        $sheet->getStyle('J' . $row)->getFont()->setSize(9);
+        $sheet->getStyle('J' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $row += 2;
+        
+        // ========================================
+        // SHIFT OVERVIEW CARD
+        // ========================================
+        $sheet->setCellValue('A' . $row, 'Shift Overview');
+        $sheet->mergeCells('A' . $row . ':M' . $row);
+        $sheet->getStyle('A' . $row)->getFont()->setSize(12)->setBold(true);
+        $sheet->getStyle('A' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF0F0F0');
+        $sheet->getStyle('A' . $row)->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
+        $row++;
+        
+        // Shift info in rows (as in your design)
+        $infoData = [
+            ['Station:', $shift->station->name ?? 'N/A'],
+            ['Shift Type:', $shift->shift_no == 1 ? 'Day Shift' : 'Night Shift'],
+            ['Shift Incharge:', $shift->shiftIncharger->user->full_name ?? 'N/A'],
+            ['Opening Balance:', 'Rs. ' . number_format($shift->cash_handover ?? 0, 2)],
+            ['Status:', ucfirst($shift->status ?? 'Closed')]
+        ];
+        
+        foreach ($infoData as $index => $data) {
+            $col = 65 + ($index * 2); // A, C, E, G, I
+            $labelCell = chr($col) . $row;
+            $valueCell = chr($col + 1) . $row;
+            
+            $sheet->setCellValue($labelCell, $data[0]);
+            $sheet->getStyle($labelCell)->getFont()->setBold(true);
+            $sheet->getStyle($labelCell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            
+            $sheet->setCellValue($valueCell, $data[1]);
+            $sheet->getStyle($valueCell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+        }
+        $row++;
+        
+        // Time row
+        $sheet->setCellValue('A' . $row, 'Start Time:');
+        $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+        $sheet->setCellValue('B' . $row, \Carbon\Carbon::parse($shift->start_time)->format('M d, Y H:i'));
+        
+        $sheet->setCellValue('C' . $row, 'End Time:');
+        $sheet->getStyle('C' . $row)->getFont()->setBold(true);
+        $sheet->setCellValue('D' . $row, $shift->end_time ? \Carbon\Carbon::parse($shift->end_time)->format('M d, Y H:i') : 'Not Ended');
+        $row += 2;
+        
+        // ========================================
+        // PROFESSIONAL STOCK ANALYSIS TABLE
+        // ========================================
+        $sheet->setCellValue('A' . $row, 'Professional Stock Analysis');
+        $sheet->mergeCells('A' . $row . ':M' . $row);
+        $sheet->getStyle('A' . $row)->getFont()->setSize(12)->setBold(true);
+        $sheet->getStyle('A' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF0F0F0');
+        $sheet->getStyle('A' . $row)->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
+        $row++;
+        
+        // Table Headers (exactly as in your design)
+        $headers = ['Tank', 'Product', 'Opening (L)', 'Closing (L)', 'Oil Received (L)', 'Nozzle Sales (L)', 'Variance (L)', 'Variance %', 'Status'];
+        foreach ($headers as $col => $header) {
+            $cell = chr(65 + $col) . $row;
+            $sheet->setCellValue($cell, $header);
+            $sheet->getStyle($cell)->getFont()->setBold(true);
+            $sheet->getStyle($cell)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF2c3e50');
+            $sheet->getStyle($cell)->getFont()->getColor()->setARGB('FFFFFFFF');
+            $sheet->getStyle($cell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle($cell)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        }
+        $row++;
+        
+        // Table Data
+        foreach ($tankCalculations as $calc) {
+            $sheet->setCellValue('A' . $row, $calc['tank_name']);
+            $sheet->setCellValue('B' . $row, $calc['product_name']);
+            $sheet->setCellValue('C' . $row, number_format($calc['opening_stock'], 2));
+            $sheet->setCellValue('D' . $row, number_format($calc['closing_stock'], 2));
+            $sheet->setCellValue('E' . $row, number_format($calc['oil_purchased'], 2));
+            $sheet->setCellValue('F' . $row, number_format($calc['total_nozzle_sales'], 2));
+            $sheet->setCellValue('G' . $row, ($calc['variance'] > 0 ? '+' : '') . number_format($calc['variance'], 2));
+            $sheet->setCellValue('H' . $row, $calc['total_nozzle_sales'] > 0 ? number_format($calc['variance_percent'], 2) . '%' : 'N/A');
+            $sheet->setCellValue('I' . $row, $calc['status']);
+            
+            // Style variance
+            if ($calc['variance'] > 0) {
+                $sheet->getStyle('G' . $row)->getFont()->getColor()->setARGB('FF28a745');
+                $sheet->getStyle('G' . $row)->getFont()->setBold(true);
+            } elseif ($calc['variance'] < 0) {
+                $sheet->getStyle('G' . $row)->getFont()->getColor()->setARGB('FFdc3545');
+                $sheet->getStyle('G' . $row)->getFont()->setBold(true);
+            }
+            
+            // Style status
+            if ($calc['status'] == 'Gain') {
+                $sheet->getStyle('I' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFd4edda');
+            } elseif ($calc['status'] == 'Loss') {
+                $sheet->getStyle('I' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFf8d7da');
+            }
+            
+            // Apply borders
+            for ($col = 0; $col <= 8; $col++) {
+                $cell = chr(65 + $col) . $row;
+                $sheet->getStyle($cell)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            }
+            $row++;
+        }
+        $row += 2;
+        
+        // ========================================
+        // TANK-WISE DETAILED ANALYSIS
+        // ========================================
+        $sheet->setCellValue('A' . $row, 'Tank-wise Detailed Analysis');
+        $sheet->mergeCells('A' . $row . ':M' . $row);
+        $sheet->getStyle('A' . $row)->getFont()->setSize(12)->setBold(true);
+        $sheet->getStyle('A' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF0F0F0');
+        $sheet->getStyle('A' . $row)->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
+        $row++;
+        
+        foreach ($tankCalculations as $tankId => $calc) {
+            // Tank Title
+            $sheet->setCellValue('A' . $row, $calc['tank_name'] . ' - ' . $calc['product_name']);
+            $sheet->mergeCells('A' . $row . ':M' . $row);
+            $sheet->getStyle('A' . $row)->getFont()->setSize(11)->setBold(true);
+            $sheet->getStyle('A' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF34495e');
+            $sheet->getStyle('A' . $row)->getFont()->getColor()->setARGB('FFFFFFFF');
+            $row++;
+            
+            // Two column layout - Left: Stock Movement, Right: Sales & Variance
+            // Stock Movement Header
+            $sheet->setCellValue('A' . $row, 'Stock Movement (Liters)');
+            $sheet->mergeCells('A' . $row . ':F' . $row);
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $sheet->getStyle('A' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE8E8E8');
+            $row++;
+            
+            // Stock Movement Data
+            $movementData = [
+                ['Opening Stock:', number_format($calc['opening_stock'], 2)],
+                ['Closing Stock:', number_format($calc['closing_stock'], 2)],
+                ['Physical Usage:', number_format($calc['physical_usage'], 2)],
+            ];
+            
+            if ($calc['oil_purchased'] > 0) {
+                $movementData[] = ['Oil Purchased:', '+' . number_format($calc['oil_purchased'], 2)];
+            }
+            
+            $movementData[] = ['Adjusted Usage:', number_format($calc['adjusted_physical_usage'], 2)];
+            
+            foreach ($movementData as $data) {
+                $sheet->setCellValue('A' . $row, $data[0]);
+                $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+                $sheet->setCellValue('B' . $row, $data[1]);
+                if ($data[0] == 'Adjusted Usage:') {
+                    $sheet->getStyle('B' . $row)->getFont()->setBold(true);
+                }
+                $row++;
+            }
+            
+            // Move to right column for Sales & Variance
+            $tempRow = $row - count($movementData);
+            
+            // Sales & Variance Header
+            $sheet->setCellValue('H' . $tempRow, 'Sales & Variance Analysis');
+            $sheet->mergeCells('H' . $tempRow . ':M' . $tempRow);
+            $sheet->getStyle('H' . $tempRow)->getFont()->setBold(true);
+            $sheet->getStyle('H' . $tempRow)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE8E8E8');
+            $tempRow++;
+            
+            // Sales & Variance Data
+            $salesData = [
+                ['Nozzle Sales (Litres):', number_format($calc['nozzle_sales_liters'], 2) . ' L'],
+                ['Reset Sales (Litres):', number_format($calc['reset_sales_liters'], 2) . ' L'],
+                ['Total Nozzle Sales:', number_format($calc['total_nozzle_sales'], 2) . ' L'],
+                ['Variance Analysis:', number_format($calc['variance'], 2) . ' L (' . number_format($calc['variance_percent'], 2) . '%)'],
+            ];
+            
+            foreach ($salesData as $data) {
+                $sheet->setCellValue('H' . $tempRow, $data[0]);
+                $sheet->getStyle('H' . $tempRow)->getFont()->setBold(true);
+                $sheet->setCellValue('I' . $tempRow, $data[1]);
+                
+                if ($data[0] == 'Variance Analysis:') {
+                    if ($calc['variance'] > 0) {
+                        $sheet->getStyle('I' . $tempRow)->getFont()->getColor()->setARGB('FF28a745');
+                        $sheet->getStyle('I' . $tempRow)->getFont()->setBold(true);
+                    } elseif ($calc['variance'] < 0) {
+                        $sheet->getStyle('I' . $tempRow)->getFont()->getColor()->setARGB('FFdc3545');
+                        $sheet->getStyle('I' . $tempRow)->getFont()->setBold(true);
+                    }
+                }
+                
+                if ($data[0] == 'Total Nozzle Sales:') {
+                    $sheet->getStyle('I' . $tempRow)->getFont()->setBold(true);
+                }
+                $tempRow++;
+            }
+            
+            $row = max($row, $tempRow) + 1;
+            
+            // Nozzle Transactions Table
+            $tankNozzles = $nozzleReadings->where('nozzle.tank_id', $tankId);
+            if (count($tankNozzles) > 0) {
+                $sheet->setCellValue('A' . $row, 'Nozzle Transactions');
+                $sheet->mergeCells('A' . $row . ':M' . $row);
+                $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+                $row++;
+                
+                // Nozzle Headers
+                $nozzleHeaders = ['Nozzle', 'Dispenser', 'Opening', 'Closing', 'Dispensed', 'Rate (Rs.)', 'Amount (Rs.)'];
+                foreach ($nozzleHeaders as $col => $header) {
+                    $cell = chr(65 + $col) . $row;
+                    $sheet->setCellValue($cell, $header);
+                    $sheet->getStyle($cell)->getFont()->setBold(true);
+                    $sheet->getStyle($cell)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF2c3e50');
+                    $sheet->getStyle($cell)->getFont()->getColor()->setARGB('FFFFFFFF');
+                    $sheet->getStyle($cell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                    $sheet->getStyle($cell)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                }
+                $row++;
+                
+                foreach ($tankNozzles as $reading) {
+                    $sheet->setCellValue('A' . $row, $reading->nozzle->name ?? 'N/A');
+                    $sheet->setCellValue('B' . $row, $reading->nozzle->dispenser->name ?? 'N/A');
+                    $sheet->setCellValue('C' . $row, number_format($reading->opening_reading, 2));
+                    $sheet->setCellValue('D' . $row, number_format($reading->closing_reading, 2));
+                    $sheet->setCellValue('E' . $row, number_format($reading->total_dispensed, 2));
+                    $sheet->setCellValue('F' . $row, number_format($reading->rate, 2));
+                    $sheet->setCellValue('G' . $row, number_format($reading->total_amount, 2));
+                    
+                    for ($col = 0; $col <= 6; $col++) {
+                        $cell = chr(65 + $col) . $row;
+                        $sheet->getStyle($cell)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                    }
+                    $row++;
+                }
+            }
+            $row += 2;
+        }
+        
+        // ========================================
+        // COMPLETE FINANCIAL SUMMARY
+        // ========================================
+        $sheet->setCellValue('A' . $row, 'Complete Financial Summary');
+        $sheet->mergeCells('A' . $row . ':M' . $row);
+        $sheet->getStyle('A' . $row)->getFont()->setSize(12)->setBold(true);
+        $sheet->getStyle('A' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF0F0F0');
+        $sheet->getStyle('A' . $row)->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
+        $row++;
+        
+        // Financial Summary - 3 column layout
+        $financialCards = [
+            ['Total Revenue', 'Rs. ' . number_format($financialSummary['total_revenue'] ?? 0, 2), '28a745'],
+            ['Total Expenses', 'Rs. ' . number_format($financialSummary['total_expenses'] ?? 0, 2), 'dc3545'],
+            ['Net Income', 'Rs. ' . number_format($financialSummary['net_income'] ?? 0, 2), ($financialSummary['net_income'] ?? 0) > 0 ? '28a745' : 'dc3545']
+        ];
+        
+        foreach ($financialCards as $index => $card) {
+            $col = 65 + ($index * 4); // A, E, I
+            $cell = chr($col) . $row;
+            $valueCell = chr($col + 1) . $row;
+            
+            $sheet->setCellValue($cell, $card[0]);
+            $sheet->getStyle($cell)->getFont()->setSize(11)->setBold(true);
+            $sheet->getStyle($cell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            
+            $sheet->setCellValue($valueCell, $card[1]);
+            $sheet->getStyle($valueCell)->getFont()->setSize(11)->setBold(true);
+            $sheet->getStyle($valueCell)->getFont()->getColor()->setARGB('FF' . $card[2]);
+            $sheet->getStyle($valueCell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            
+            $sheet->mergeCells($cell . ':' . $valueCell);
+            $sheet->getStyle($cell)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        }
+        $row++;
+        
+        // Sub-text for revenue
+        $sheet->setCellValue('A' . $row, 'Fuel: Rs. ' . number_format($financialSummary['fuel_sales'] ?? 0, 2));
+        $sheet->getStyle('A' . $row)->getFont()->setSize(8);
+        $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->mergeCells('A' . $row . ':B' . $row);
+        
+        $sheet->setCellValue('E' . $row, 'Oil Purchase: Rs. ' . number_format($financialSummary['oil_purchase'] ?? 0, 2));
+        $sheet->getStyle('E' . $row)->getFont()->setSize(8);
+        $sheet->getStyle('E' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->mergeCells('E' . $row . ':F' . $row);
+        
+        $sheet->setCellValue('I' . $row, 'Fuel Card: Rs. ' . number_format($cashFlow->fuelcard ?? 0, 2));
+        $sheet->getStyle('I' . $row)->getFont()->setSize(8);
+        $sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->mergeCells('I' . $row . ':J' . $row);
+        $row += 2;
+        
+        // Cash position cards
+        $cashCards = [
+            ['Opening Balance', 'Rs. ' . number_format($financialSummary['cash_handover'] ?? 0, 2)],
+            ['Closing Balance', 'Rs. ' . number_format($financialSummary['cash_in_hand'] ?? 0, 2)],
+            ['Cash in Bank', 'Rs. ' . number_format($financialSummary['cash_in_bank'] ?? 0, 2)],
+            ['Total Cash Balance', 'Rs. ' . number_format($financialSummary['total_cash_balance'] ?? 0, 2)]
+        ];
+        
+        foreach ($cashCards as $index => $card) {
+            $col = 65 + ($index * 3); // A, D, G, J
+            $cell = chr($col) . $row;
+            $valueCell = chr($col + 1) . $row;
+            
+            $sheet->setCellValue($cell, $card[0]);
+            $sheet->getStyle($cell)->getFont()->setBold(true);
+            $sheet->getStyle($cell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle($cell)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF8F9FA');
+            
+            $sheet->setCellValue($valueCell, $card[1]);
+            $sheet->getStyle($valueCell)->getFont()->setBold(true);
+            $sheet->getStyle($valueCell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            
+            $sheet->mergeCells($cell . ':' . $valueCell);
+            $sheet->getStyle($cell)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        }
+        $row += 2;
+        
+        // ========================================
+        // FOOTER
+        // ========================================
+        $sheet->mergeCells('A' . $row . ':M' . $row);
+        $sheet->setCellValue('A' . $row, 'Generated by Pump360 • ' . now()->format('M d, Y \a\t H:i'));
+        $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A' . $row)->getFont()->setSize(8);
+        
+        // Auto-size all columns
+        foreach (range('A', 'M') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        // Create file
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'Shift_Stock_Report_' . $shift->id . '_' . date('Ymd_His') . '.xlsx';
+        // ========================================
+// COMPLETE FINANCIAL SUMMARY (FIXED LAYOUT)
+// ========================================
+$sheet->setCellValue('A' . $row, 'Complete Financial Summary');
+$sheet->mergeCells('A' . $row . ':P' . $row);
+$sheet->getStyle('A' . $row)->getFont()->setSize(12)->setBold(true);
+$sheet->getStyle('A' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF1a3a5c');
+$sheet->getStyle('A' . $row)->getFont()->getColor()->setARGB('FFFFFFFF');
+$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$row++;
+
+// First Row - Three Main Cards (Revenue, Expenses, Net Income)
+// Revenue Card
+$sheet->setCellValue('A' . $row, 'Total Revenue');
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getFont()->setSize(10)->setBold(true);
+$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('A' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE8E8E8');
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('A' . $row, 'Rs. ' . number_format($financialSummary['total_revenue'] ?? 0, 2));
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getFont()->setSize(14)->setBold(true);
+$sheet->getStyle('A' . $row)->getFont()->getColor()->setARGB('FF28a745');
+$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('A' . $row, 'Fuel Sales: Rs. ' . number_format($financialSummary['fuel_sales'] ?? 0, 2));
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getFont()->setSize(9);
+$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('A' . $row, 'Lube Sales: Rs. ' . number_format($financialSummary['lube_sales'] ?? 0, 2));
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getFont()->setSize(9);
+$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('A' . $row, 'Other Income: Rs. ' . number_format($financialSummary['other_income'] ?? 0, 2));
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getFont()->setSize(9);
+$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+// Expenses Card
+$expenseStartRow = $row - 5;
+$sheet->setCellValue('E' . $expenseStartRow, 'Total Expenses');
+$sheet->mergeCells('E' . $expenseStartRow . ':H' . $expenseStartRow);
+$sheet->getStyle('E' . $expenseStartRow)->getFont()->setSize(10)->setBold(true);
+$sheet->getStyle('E' . $expenseStartRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('E' . $expenseStartRow)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE8E8E8');
+$sheet->getStyle('E' . $expenseStartRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+$sheet->setCellValue('E' . ($expenseStartRow + 1), 'Rs. ' . number_format($financialSummary['total_expenses'] ?? 0, 2));
+$sheet->mergeCells('E' . ($expenseStartRow + 1) . ':H' . ($expenseStartRow + 1));
+$sheet->getStyle('E' . ($expenseStartRow + 1))->getFont()->setSize(14)->setBold(true);
+$sheet->getStyle('E' . ($expenseStartRow + 1))->getFont()->getColor()->setARGB('FFdc3545');
+$sheet->getStyle('E' . ($expenseStartRow + 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('E' . ($expenseStartRow + 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+$sheet->setCellValue('E' . ($expenseStartRow + 2), 'Oil Purchase: Rs. ' . number_format($financialSummary['oil_purchase'] ?? 0, 2));
+$sheet->mergeCells('E' . ($expenseStartRow + 2) . ':H' . ($expenseStartRow + 2));
+$sheet->getStyle('E' . ($expenseStartRow + 2))->getFont()->setSize(9);
+$sheet->getStyle('E' . ($expenseStartRow + 2))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('E' . ($expenseStartRow + 2))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+$sheet->setCellValue('E' . ($expenseStartRow + 3), 'Lube Purchase: Rs. ' . number_format($financialSummary['lube_purchase'] ?? 0, 2));
+$sheet->mergeCells('E' . ($expenseStartRow + 3) . ':H' . ($expenseStartRow + 3));
+$sheet->getStyle('E' . ($expenseStartRow + 3))->getFont()->setSize(9);
+$sheet->getStyle('E' . ($expenseStartRow + 3))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('E' . ($expenseStartRow + 3))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+$sheet->setCellValue('E' . ($expenseStartRow + 4), 'Other Expenses: Rs. ' . number_format($financialSummary['other_expenses'] ?? 0, 2));
+$sheet->mergeCells('E' . ($expenseStartRow + 4) . ':H' . ($expenseStartRow + 4));
+$sheet->getStyle('E' . ($expenseStartRow + 4))->getFont()->setSize(9);
+$sheet->getStyle('E' . ($expenseStartRow + 4))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('E' . ($expenseStartRow + 4))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+// Net Income Card
+$netStartRow = $row - 5;
+$sheet->setCellValue('I' . $netStartRow, 'Net Income');
+$sheet->mergeCells('I' . $netStartRow . ':L' . $netStartRow);
+$sheet->getStyle('I' . $netStartRow)->getFont()->setSize(10)->setBold(true);
+$sheet->getStyle('I' . $netStartRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('I' . $netStartRow)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE8E8E8');
+$sheet->getStyle('I' . $netStartRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+$sheet->setCellValue('I' . ($netStartRow + 1), 'Rs. ' . number_format($financialSummary['net_income'] ?? 0, 2));
+$sheet->mergeCells('I' . ($netStartRow + 1) . ':L' . ($netStartRow + 1));
+$sheet->getStyle('I' . ($netStartRow + 1))->getFont()->setSize(14)->setBold(true);
+if (($financialSummary['net_income'] ?? 0) > 0) {
+    $sheet->getStyle('I' . ($netStartRow + 1))->getFont()->getColor()->setARGB('FF28a745');
+} else {
+    $sheet->getStyle('I' . ($netStartRow + 1))->getFont()->getColor()->setARGB('FFdc3545');
+}
+$sheet->getStyle('I' . ($netStartRow + 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('I' . ($netStartRow + 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+// Blank space in Net Income card
+$sheet->setCellValue('I' . ($netStartRow + 2), '');
+$sheet->mergeCells('I' . ($netStartRow + 2) . ':L' . ($netStartRow + 2));
+$sheet->getStyle('I' . ($netStartRow + 2))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+$sheet->setCellValue('I' . ($netStartRow + 3), '');
+$sheet->mergeCells('I' . ($netStartRow + 3) . ':L' . ($netStartRow + 3));
+$sheet->getStyle('I' . ($netStartRow + 3))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+$sheet->setCellValue('I' . ($netStartRow + 4), '');
+$sheet->mergeCells('I' . ($netStartRow + 4) . ':L' . ($netStartRow + 4));
+$sheet->getStyle('I' . ($netStartRow + 4))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+$row += 2;
+
+// Second Row - Cash Position Cards
+$sheet->setCellValue('A' . $row, 'Opening Balance');
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getFont()->setSize(10)->setBold(true);
+$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('A' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE8E8E8');
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('A' . $row, 'Rs. ' . number_format($financialSummary['cash_handover'] ?? 0, 2));
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getFont()->setSize(12)->setBold(true);
+$sheet->getStyle('A' . $row)->getFont()->getColor()->setARGB('FF17a2b8');
+$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('A' . $row, '');
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('A' . $row, '');
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('A' . $row, '');
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row = $row - 4;
+
+// Closing Balance Card
+$sheet->setCellValue('E' . $row, 'Closing Balance');
+$sheet->mergeCells('E' . $row . ':H' . $row);
+$sheet->getStyle('E' . $row)->getFont()->setSize(10)->setBold(true);
+$sheet->getStyle('E' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('E' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE8E8E8');
+$sheet->getStyle('E' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('E' . $row, 'Rs. ' . number_format($financialSummary['cash_in_hand'] ?? 0, 2));
+$sheet->mergeCells('E' . $row . ':H' . $row);
+$sheet->getStyle('E' . $row)->getFont()->setSize(12)->setBold(true);
+$sheet->getStyle('E' . $row)->getFont()->getColor()->setARGB('FF17a2b8');
+$sheet->getStyle('E' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('E' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('E' . $row, '');
+$sheet->mergeCells('E' . $row . ':H' . $row);
+$sheet->getStyle('E' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('E' . $row, '');
+$sheet->mergeCells('E' . $row . ':H' . $row);
+$sheet->getStyle('E' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('E' . $row, '');
+$sheet->mergeCells('E' . $row . ':H' . $row);
+$sheet->getStyle('E' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row = $row - 4;
+
+// Cash in Bank Card
+$sheet->setCellValue('I' . $row, 'Cash in Bank');
+$sheet->mergeCells('I' . $row . ':L' . $row);
+$sheet->getStyle('I' . $row)->getFont()->setSize(10)->setBold(true);
+$sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('I' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE8E8E8');
+$sheet->getStyle('I' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('I' . $row, 'Rs. ' . number_format($financialSummary['cash_in_bank'] ?? 0, 2));
+$sheet->mergeCells('I' . $row . ':L' . $row);
+$sheet->getStyle('I' . $row)->getFont()->setSize(12)->setBold(true);
+$sheet->getStyle('I' . $row)->getFont()->getColor()->setARGB('FF17a2b8');
+$sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('I' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('I' . $row, '');
+$sheet->mergeCells('I' . $row . ':L' . $row);
+$sheet->getStyle('I' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('I' . $row, '');
+$sheet->mergeCells('I' . $row . ':L' . $row);
+$sheet->getStyle('I' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('I' . $row, '');
+$sheet->mergeCells('I' . $row . ':L' . $row);
+$sheet->getStyle('I' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row = $row - 4;
+
+// Total Cash Balance Card
+$sheet->setCellValue('M' . $row, 'Total Cash Balance');
+$sheet->mergeCells('M' . $row . ':P' . $row);
+$sheet->getStyle('M' . $row)->getFont()->setSize(10)->setBold(true);
+$sheet->getStyle('M' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('M' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE8E8E8');
+$sheet->getStyle('M' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('M' . $row, 'Rs. ' . number_format($financialSummary['total_cash_balance'] ?? 0, 2));
+$sheet->mergeCells('M' . $row . ':P' . $row);
+$sheet->getStyle('M' . $row)->getFont()->setSize(12)->setBold(true);
+$sheet->getStyle('M' . $row)->getFont()->getColor()->setARGB('FF28a745');
+$sheet->getStyle('M' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('M' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('M' . $row, '');
+$sheet->mergeCells('M' . $row . ':P' . $row);
+$sheet->getStyle('M' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('M' . $row, '');
+$sheet->mergeCells('M' . $row . ':P' . $row);
+$sheet->getStyle('M' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('M' . $row, '');
+$sheet->mergeCells('M' . $row . ':P' . $row);
+$sheet->getStyle('M' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row += 2;
+
+// Third Row - Additional Cards (Credit Card, etc.)
+$sheet->setCellValue('A' . $row, 'Credit Card');
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getFont()->setSize(10)->setBold(true);
+$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('A' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE8E8E8');
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('A' . $row, 'Rs. ' . number_format($cashFlow->credit_card ?? 0, 2));
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getFont()->setSize(12)->setBold(true);
+$sheet->getStyle('A' . $row)->getFont()->getColor()->setARGB('FF17a2b8');
+$sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('A' . $row, '');
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('A' . $row, '');
+$sheet->mergeCells('A' . $row . ':D' . $row);
+$sheet->getStyle('A' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row = $row - 3;
+
+// Fuel Card
+$sheet->setCellValue('E' . $row, 'Fuel Card');
+$sheet->mergeCells('E' . $row . ':H' . $row);
+$sheet->getStyle('E' . $row)->getFont()->setSize(10)->setBold(true);
+$sheet->getStyle('E' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('E' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE8E8E8');
+$sheet->getStyle('E' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('E' . $row, 'Rs. ' . number_format($cashFlow->fuelcard ?? 0, 2));
+$sheet->mergeCells('E' . $row . ':H' . $row);
+$sheet->getStyle('E' . $row)->getFont()->setSize(12)->setBold(true);
+$sheet->getStyle('E' . $row)->getFont()->getColor()->setARGB('FF17a2b8');
+$sheet->getStyle('E' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+$sheet->getStyle('E' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('E' . $row, '');
+$sheet->mergeCells('E' . $row . ':H' . $row);
+$sheet->getStyle('E' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row++;
+
+$sheet->setCellValue('E' . $row, '');
+$sheet->mergeCells('E' . $row . ':H' . $row);
+$sheet->getStyle('E' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+$row = $row - 3;
+
+$row += 4;
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        
+        $writer->save('php://output');
+        exit;
+    }
+
+
 
 }

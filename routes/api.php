@@ -285,7 +285,9 @@ Route::post('/site-total-amounts', [ShiftController::class, 'storeSiteTotalAmoun
 Route::get('/shift-reports', [ShiftReportController::class, 'index']);
 Route::get('/shift-reports/{shift_id}', [ShiftReportController::class, 'show']);
 Route::post('/shift-reports/generate', [ShiftReportController::class, 'generateReport']);
-
+Route::get('/shift/{id}/download-pdf', [ShiftReportController::class, 'downloadPDF'])->name('shift.download.pdf');
+// In routes/web.php
+Route::get('/shift/{shiftId}/export-excel', [ShiftReportController::class, 'exportToExcel'])->name('shift.export.excel');
 // Site Total Amount Routes
 Route::get('/site-total-amount', [SiteTotalAmountController::class, 'index']);
 Route::get('/site-total-amount/user/{userId}', [SiteTotalAmountController::class, 'getByUser']);

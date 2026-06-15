@@ -58,7 +58,7 @@ Route::get('/station-audit/{stationId?}', function ($stationId = null) {
     Route::get('/shift-reports/{shift_id}', [ShiftReportController::class, 'show']);
     Route::post('/shift-reports/generate', [ShiftReportController::class, 'generateReport']);
 	Route::get('/edit-close-shift/{shift_id}', [EditCloseShiftController::class, 'index'])->name('edit-close-shift');
-
+Route::get('/shift/{id}/download-pdf', [ShiftReportController::class, 'downloadPDF'])->name('shift.download.pdf');
 	
     // Catch-all route for your dashboard pages
    Route::get('/{any}', [DashboardController::class, 'index'])->where('any', '.*');
