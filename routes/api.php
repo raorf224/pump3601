@@ -41,8 +41,14 @@ use App\Http\Controllers\DashController;
 use App\Http\Controllers\FuelConsumptionReportController;
 use App\Http\Controllers\EditCloseShiftController;
 use App\Http\Controllers\ShiftCashFlow;
+use App\Http\Controllers\AuthController;
+
 
 use App\Http\Controllers\ReceivedAmountController;
+
+
+	Route::post('/applogin', [AuthController::class, 'applogin']);
+
 
 // ✅ Received Amount Routes - Separate for each role (following accounts pattern)
 // Route::middleware('auth:web')->group(function () {
