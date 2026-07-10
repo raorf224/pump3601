@@ -179,6 +179,8 @@ class ShiftNozzleReadingsController extends Controller
                 'closing_reading' => 'nullable|numeric',
                 'collected_from' => 'required|integer',
                 'testing' => 'integer',
+                'image' => 'nullable|string|max:5242880' // Max 5MB base64
+
             ]);
 
             // ==============================
@@ -277,6 +279,32 @@ class ShiftNozzleReadingsController extends Controller
             }
 
             // ==============================
+            // HANDLE IMAGE UPLOAD
+            // ==============================
+            $imagePath = null;
+
+            if (!empty($validatedData['image'])) {
+                // Decode base64 image
+                $imageData = $validatedData['image'];
+                $imageData = str_replace('data:image/png;base64,', '', $imageData);
+                $imageData = str_replace('data:image/jpeg;base64,', '', $imageData);
+                $imageData = str_replace(' ', '+', $imageData);
+
+                $imageName = 'nozzle_' . $validatedData['nozzle_id'] . '_' . time() . '.png';
+                $imagePath = 'uploads/nozzle_readings/' . $imageName;
+                $fullPath = public_path($imagePath);
+
+                // Create directory if not exists
+                if (!file_exists(public_path('uploads/nozzle_readings'))) {
+                    mkdir(public_path('uploads/nozzle_readings'), 0777, true);
+                }
+
+                // Save image
+                file_put_contents($fullPath, base64_decode($imageData));
+            }
+
+
+            // ==============================
             // INSERT SALE FIRST (to get ID)
             // ==============================
             $saleId = DB::table('shift_nozzle_readings')->insertGetId([
@@ -289,6 +317,8 @@ class ShiftNozzleReadingsController extends Controller
                 'profit' => 0,
                 'collected_from' => $validatedData['collected_from'],
                 'testing_reading' => $validatedData['testing'],
+                'nozzel_reading_image' => $imagePath, // ✅ Save image path
+
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
