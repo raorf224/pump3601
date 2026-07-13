@@ -4406,7 +4406,7 @@
 
                                 // ✅ REDIRECT BACK TO SHIFTS PAGE AFTER 2 SECONDS
                                 setTimeout(() => {
-                                    // window.location.href = "/shifts";
+                                     window.location.href = "/shifts";
                                 }, 2000);
                             })
                             .catch(error => {
