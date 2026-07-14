@@ -4261,6 +4261,7 @@
                                 showToast(`Shift closed! (Cash flow not saved)`, "warning");
                                 setTimeout(() => {
                                     window.location.href = "/shifts";
+                                    // redirect
                                 }, 2000);
                             })
                             .catch(error => {
