@@ -85,8 +85,8 @@
                         <div class="card-body py-12 px-8">
                             <!-- Orange-themed Logo with Filter -->
                             <div class="mb-4 mx-auto d-block text-center">
-                                <img src="{{ asset('https://pump360.pk/wp/wp-content/uploads/2025/01/logo-sized-1.png') }}"
-                                    alt="Logo" height="40" class="logo-orange-filter">
+                                <img  src="{{ asset('pump360.png') }}"
+                                    alt="Logo" height="200" class="logo-orange-filter">
                             </div>
 
                             <h6 class="mb-3 mb-8 fw-semibold text-center" style="color: #f97316;">Login to Your Account</h6>

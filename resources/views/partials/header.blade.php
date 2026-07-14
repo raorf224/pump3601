@@ -4,11 +4,12 @@
         <div class="d-flex align-items-center">
             <div class="me-auto">
                 <div class="d-inline-flex align-items-center gap-5">
-                    <a href="station-sites" class="fs-18 fw-semibold">
-                        <!-- Pump 360 Logo with orange filter and larger size -->
-                        <img height="40" class="header-sidebar-logo-default" alt="Pump 360 Logo"
-                            src="https://pump360.pk/wp/wp-content/uploads/2025/01/logo-sized-1.png"
+                    <a href="station-sites"
+                        class="fs-18 fw-semibold text-decoration-none d-flex align-items-center gap-2">
+                        <img height="100" class="header-sidebar-logo-default" alt="Pump 360 Logo"
+                            src="{{ asset('pump360.png') }}"
                             style="filter: brightness(0) saturate(100%) invert(51%) sepia(93%) saturate(745%) hue-rotate(350deg) brightness(95%) contrast(92%);">
+                        <span style="color: #FF6B00; font-size: 24px; font-weight: 700;">Pump360</span>
                     </a>
                     <button type="button"
                         class="vertical-toggle btn btn-light-light text-muted icon-btn fs-5 rounded-pill"
@@ -47,9 +48,13 @@
                         <div class="p-3">
                             <div class="noti-item">
                                 <!-- Notification logo -->
-                                <img src="https://pump360.pk/wp/wp-content/uploads/2025/01/logo-sized-1.png"
-                                    alt="Pump 360 Logo" class="avatar-md"
-                                    style="filter: brightness(0) saturate(100%) invert(51%) sepia(93%) saturate(745%) hue-rotate(350deg) brightness(95%) contrast(92%);">
+                                <!-- <img src="{{ asset('pump360.png') }}" alt="Pump 360 Logo" height="100"
+                                    style="filter: brightness(0) saturate(100%) invert(51%) sepia(93%) saturate(745%) hue-rotate(350deg) brightness(95%) contrast(92%);"> -->
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="{{ asset('pump360.png') }}" alt="Pump 360 Logo" height="80"
+                                        style="filter: brightness(0) saturate(100%) invert(51%) sepia(93%) saturate(745%) hue-rotate(350deg) brightness(95%) contrast(92%);">
+                                    <span style="color: #FF6B00; font-size: 20px; font-weight: 700;">Pump360</span>
+                                </div>
                                 <div>
                                     <a href="javascript:void(0)" class="stretched-link">
                                         <h6 class="mb-1">Item Back in Stock</h6>
@@ -118,7 +123,8 @@
                                     <a href="javascript:void(0)" class="stretched-link">
                                         <h6 class="mb-1 text-muted"><strong
                                                 class="fw-semibold text-body">Daniel</strong> invited you to join
-                                            <strong class="fw-semibold text-body">Website Redesign</strong></h6>
+                                            <strong class="fw-semibold text-body">Website Redesign</strong>
+                                        </h6>
                                     </a>
                                     <p class="text-muted mb-2">Thursday, 5:10 PM</p>
                                     <div class="d-flex align-items-center gap-1 flex-wrap position-relative z-1">
