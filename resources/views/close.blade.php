@@ -4548,7 +4548,7 @@
                         saveBtn.html(originalText).prop('disabled', false);
                         showToast(`Shift closed successfully!`, "success");
                         setTimeout(() => {
-                            window.location.href = "/shifts";
+                            // window.location.href = "/shifts";
                         }, 2000);
                     })
                     .catch(error => {
