@@ -2000,49 +2000,53 @@
 
             //AUTO CALCULATE IN HAND WHEN TOTAL SALES CHANGES
             function autoCalculateDistribution(grandTotalFromCashFlow) {
-                // ✅ SAFE DEFAULT
-                grandTotalFromCashFlow = parseFloat(grandTotalFromCashFlow) || 0;
+    grandTotalFromCashFlow = parseFloat(grandTotalFromCashFlow) || 0;
 
-                const isBankTransfer = $("#transfer_to_bank_checkbox").is(":checked");
-                const transferAmount = parseFloat($("#transfer_amount").val()) || 0;
-                const fuelCardAmount = parseFloat($("#fuelcard_amount").val()) || 0;
-                const creditCardAmount = parseFloat($("#creditcard_amount").val()) || 0;
+    const isBankTransfer = $("#transfer_to_bank_checkbox").is(":checked");
+    
+    // ✅ SIRF TAB SET KARO JAB BANK TRANSFER CHECKED HO AUR TRANSFER_AMOUNT VALID HO
+    let transferAmount = 0;
+    if (isBankTransfer) {
+        transferAmount = parseFloat($("#transfer_amount").val()) || 0;
+    }
+    
+    const fuelCardAmount = parseFloat($("#fuelcard_amount").val()) || 0;
+    const creditCardAmount = parseFloat($("#creditcard_amount").val()) || 0;
+    const pageExpensesTotal = getExpensesTotal() || 0;
 
-                // ✅ Page expenses
-                const pageExpensesTotal = getExpensesTotal() || 0;
+    let driverCreditAmount = 0;
+    if ($("#credit_to_driver_checkbox").is(":checked")) {
+        $(".driver-credit-form").each(function () {
+            driverCreditAmount += parseFloat($(this).find('.credit-amount').val()) || 0;
+        });
+    }
 
-                // ✅ Calculate driver credit amount
-                let driverCreditAmount = 0;
-                if ($("#credit_to_driver_checkbox").is(":checked")) {
-                    $(".driver-credit-form").each(function () {
-                        driverCreditAmount += parseFloat($(this).find('.credit-amount').val()) || 0;
-                    });
-                }
+    const totalPayments = transferAmount + fuelCardAmount + creditCardAmount + driverCreditAmount;
+    const inHand = grandTotalFromCashFlow - pageExpensesTotal - totalPayments;
 
-                // ✅ In Hand = Grand Total - Page Expenses - Payments
-                const totalPayments = transferAmount + fuelCardAmount + creditCardAmount + driverCreditAmount;
-                const inHand = grandTotalFromCashFlow - pageExpensesTotal - totalPayments;
+    if (inHand < 0) {
+        showToast(`Total payments exceed available amount!`, "error");
+        $("#in_hand").val(0);
+        return;
+    }
 
-                if (inHand < 0) {
-                    showToast(`Total payments exceed available amount!`, "error");
-                    $("#in_hand").val(0);
-                    return;
-                }
+    // ✅ SIRF TAB SET KARO JAB BANK TRANSFER CHECKED HO
+    if (isBankTransfer && transferAmount > 0) {
+        // ✅ PEHLE SE VALUE HAI TOH OVERWRITE MAT KARO
+        // Sirf display fields update karo
+        $("#new_in_bank_total").val(transferAmount.toFixed(2));
+    }
+    
+    // ✅ YEH HAMESHA SET HOGA (in_hand, cash_return, fuel_card, credit_card)
+    $("#in_hand").val(inHand.toFixed(2));
+    $("#cash_return").val(inHand.toFixed(2));
+    $("#fuel_card").val(fuelCardAmount.toFixed(2));
+    $("#credit_card").val(creditCardAmount.toFixed(2));
 
-                $("#in_bank").val(transferAmount.toFixed(2));
-                $("#in_hand").val(inHand.toFixed(2));
-                $("#cash_return").val(inHand.toFixed(2));
-                $("#fuel_card").val(fuelCardAmount.toFixed(2));
-                $("#credit_card").val(creditCardAmount.toFixed(2));
+    validateCashDistribution(grandTotalFromCashFlow, inHand, transferAmount, fuelCardAmount, creditCardAmount, driverCreditAmount, pageExpensesTotal);
+    updateCreditSales();
+}
 
-                if (isBankTransfer) {
-                    $("#new_in_bank_total").val(transferAmount.toFixed(2));
-                }
-
-                // ✅ Validation call with safe values
-                validateCashDistribution(grandTotalFromCashFlow, inHand, transferAmount, fuelCardAmount, creditCardAmount, driverCreditAmount, pageExpensesTotal);
-                updateCreditSales();
-            }
 
             // ✅ Calculate Cash Flow Summary - UPDATED WITH LUBRICANTS AND DRIVER CREDIT CASH
             function calculateCashFlowSummary() {
@@ -4548,7 +4552,7 @@
                         saveBtn.html(originalText).prop('disabled', false);
                         showToast(`Shift closed successfully!`, "success");
                         setTimeout(() => {
-                            // window.location.href = "/shifts";
+                            window.location.href = "/shifts";
                         }, 2000);
                     })
                     .catch(error => {
@@ -4780,7 +4784,7 @@
 
                 $("#bank_transfer_total_amount").val(totalAmount.toFixed(2));
                 $("#transfer_amount").val(totalAmount.toFixed(2));
-                $("#in_bank").val(totalAmount.toFixed(2));
+                // $("#in_bank").val(totalAmount.toFixed(2));
                 $("#new_in_bank_total").val(totalAmount.toFixed(2));
 
                 const grandTotal = parseFloat($("#grand_total_amount").text()) || 0;
