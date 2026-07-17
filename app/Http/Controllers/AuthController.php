@@ -70,7 +70,9 @@ class AuthController extends Controller
                 updated_at,
                 stationrow_id,
                 station_id
+                
             FROM users
+            LEFT JOIN stations s ON u.id = s.user_id 
             WHERE (username = ? OR email = ?)
             LIMIT 1
         ", [

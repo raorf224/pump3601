@@ -281,27 +281,39 @@ class ShiftNozzleReadingsController extends Controller
             // ==============================
             // HANDLE IMAGE UPLOAD
             // ==============================
-            $imagePath = null;
+        $imagePath = null;
 
-            if (!empty($validatedData['image'])) {
+        // ✅ ONLY process image if it exists AND is not empty
+        if (!empty($validatedData['image']) && $validatedData['image'] !== 'null' && $validatedData['image'] !== '') {
+            try {
                 // Decode base64 image
                 $imageData = $validatedData['image'];
-                $imageData = str_replace('data:image/png;base64,', '', $imageData);
-                $imageData = str_replace('data:image/jpeg;base64,', '', $imageData);
+                
+                // Remove data URL prefix if present
+                $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
                 $imageData = str_replace(' ', '+', $imageData);
 
-                $imageName = 'nozzle_' . $validatedData['nozzle_id'] . '_' . time() . '.png';
-                $imagePath = 'uploads/nozzle_readings/' . $imageName;
-                $fullPath = public_path($imagePath);
+                // Verify it's valid base64
+                if (base64_decode($imageData, true) !== false) {
+                    $imageName = 'nozzle_' . $validatedData['nozzle_id'] . '_' . time() . '.png';
+                    $imagePath = 'uploads/nozzle_readings/' . $imageName;
+                    $fullPath = public_path($imagePath);
 
-                // Create directory if not exists
-                if (!file_exists(public_path('uploads/nozzle_readings'))) {
-                    mkdir(public_path('uploads/nozzle_readings'), 0777, true);
+                    // Create directory if not exists
+                    if (!file_exists(public_path('uploads/nozzle_readings'))) {
+                        mkdir(public_path('uploads/nozzle_readings'), 0777, true);
+                    }
+
+                    // Save image
+                    file_put_contents($fullPath, base64_decode($imageData));
                 }
-
-                // Save image
-                file_put_contents($fullPath, base64_decode($imageData));
+            } catch (\Exception $e) {
+                // Log error but continue - image is optional
+                \Log::warning('Failed to save nozzle image: ' . $e->getMessage());
+                $imagePath = null;
             }
+        }
+
 
 
             // ==============================
@@ -326,16 +338,16 @@ class ShiftNozzleReadingsController extends Controller
             if ($validatedData['testing'] > 0) {
                 $stationsid = DB::select(
                     "SELECT s.id 
-     FROM shifts sf
-     JOIN stations s ON sf.station_id = s.id
-     WHERE sf.id = ?",
+                    FROM shifts sf
+                    JOIN stations s ON sf.station_id = s.id
+                    WHERE sf.id = ?",
                     [$validatedData['shift_id']]
                 );
 
                 DB::insert(
                     "INSERT INTO transactions
-    (station_id, account_id, shift_id, type, debit, note,is_testing)
-    VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (station_id, account_id, shift_id, type, debit, note,is_testing)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)",
                     [
                         $stationsid[0]->id,
                         "0",

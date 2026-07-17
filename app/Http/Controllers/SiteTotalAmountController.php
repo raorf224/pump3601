@@ -243,4 +243,91 @@ public function getByEmployee($userId)
 
         return response()->json($accounts);
     }
+
+    // ✅ Store payment details (individual rows)
+public function storePaymentDetails(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'station_id' => 'required|integer|exists:stations,id',
+        'account_id' => 'required|integer|exists:accounts,id',
+        'amount' => 'required|numeric|min:0.01',
+        'previous_amount' => 'nullable|numeric|min:0',
+        'date' => 'nullable|date',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    DB::beginTransaction();
+    try {
+        // ✅ SAHI: Latest record ki 'amount' column lo (current balance)
+        $latestRecord = DB::selectOne(
+            'SELECT amount as current_balance 
+             FROM site_total_ammount 
+             WHERE station_id = ? AND account_id = ? 
+             ORDER BY created_at DESC 
+             LIMIT 1',
+            [$request->station_id, $request->account_id]
+        );
+
+        // ✅ PREVIOUS AMOUNT = LATEST RECORD KI AMOUNT
+        $previousAmount = $latestRecord ? floatval($latestRecord->current_balance) : 0;
+        
+        // ✅ TOTAL = PREVIOUS + NEW TRANSFER
+        $totalAmount = $previousAmount + $request->amount;
+
+        DB::insert(
+            'INSERT INTO site_total_ammount (
+                station_id, account_id, amount, previous_amount, date, created_at
+            ) VALUES (?, ?, ?, ?, ?, NOW())',
+            [
+                $request->station_id,
+                $request->account_id,
+                $totalAmount,           // ✅ NEW TOTAL
+                $previousAmount,         // ✅ PREVIOUS BALANCE (latest amount)
+                $request->date ?? now()
+            ]
+        );
+
+        DB::commit();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment recorded successfully',
+            'total_amount' => $totalAmount,
+            'previous_amount' => $previousAmount,
+            'added_amount' => $request->amount
+        ], 201);
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Failed to save payment: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to save payment',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+// ✅ Get current amount for station-account
+public function CurrentAmount($stationId, $accountId)
+{
+    $latest = DB::table('site_total_ammount')
+        ->where('station_id', $stationId)
+        ->where('account_id', $accountId)
+        ->orderBy('id', 'desc')
+        ->first();
+    
+    return response()->json([
+        'current_balance' => $latest ? floatval($latest->amount) : 0,
+        'previous_amount' => $latest ? floatval($latest->previous_amount) : 0,
+        'last_record_id' => $latest ? $latest->id : null
+    ]);
+}
+
 }

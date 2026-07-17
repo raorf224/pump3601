@@ -46,7 +46,9 @@ use App\Http\Controllers\ReceivedAmountController;
 
 
 	Route::post('/applogin', [AuthController::class, 'applogin']);
-
+// ✅ Payment Details Routes
+Route::post('/site-total-amount/payment', [SiteTotalAmountController::class, 'storePaymentDetails']);
+Route::get('/site-total-amount/current/amount/{stationId}/{accountId}', [SiteTotalAmountController::class, 'CurrentAmount']);
 
 // ✅ Received Amount Routes - Separate for each role (following accounts pattern)
 // Route::middleware('auth:web')->group(function () {

@@ -67,11 +67,11 @@
                                                 <input type="hidden" name="shift_incharger" id="shift_incharger">
                                             </div>
 
-<div class="col-md-2">
-    <label class="form-label fw-semibold">Cash Handover</label>
-    <input type="number" name="cash_handover" id="cash_handover"
-        class="form-control" step="0.01" required>  
-</div>
+                                            <div class="col-md-2">
+                                                <label class="form-label fw-semibold">Cash Handover</label>
+                                                <input type="number" name="cash_handover" id="cash_handover"
+                                                    class="form-control" step="0.01" required>
+                                            </div>
 
                                             <div class="col-md-3">
                                                 <label class="form-label required-label">Start Time</label>
@@ -168,13 +168,13 @@
                 const bgClass = type === "success" ? "bg-success text-white" : "bg-danger text-white";
 
                 const toastHtml = `
-                    <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="d-flex">
-                            <div class="toast-body">${message}</div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body">${message}</div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
 
                 $("#toastContainer").append(toastHtml);
                 const toastElement = document.getElementById(toastId);
@@ -221,154 +221,154 @@
 
             // ✅ NEW: Load last shift cash return for cash handover
             function loadLastShiftCashReturn(stationId) {
-    if (!stationId) {
-        $('#cash_handover').prop('readonly', false).val('');
-        return;
-    }
+                if (!stationId) {
+                    $('#cash_handover').prop('readonly', false).val('');
+                    return;
+                }
 
-    console.log("💰 Fetching last shift cash return for station:", stationId);
-    
-    $.ajax({
-        url: getApiUrl(`last-shift-cash-return/${stationId}`),
-        method: "GET",
-        success: function (response) {
-            console.log("💰 Cash Handover API Response:", response);
-            
-            if (response && response.last_cash_return !== null && response.last_cash_return !== undefined && parseFloat(response.last_cash_return) > 0) {
-                // ✅ Format with 2 decimal places
-                const formattedValue = parseFloat(response.last_cash_return).toFixed(2);
-                $('#cash_handover').val(formattedValue)
-                    .prop('readonly', true)
-                    .css('background-color', '#f8f9fa')
-                    .attr('title', 'Auto-filled from last shift cash return');
-                
-                console.log("✅ Cash handover auto-filled:", formattedValue);
-            } else {
-                $('#cash_handover').prop('readonly', false)
-                    .val('')
-                    .css('background-color', '')
-                    .attr('title', 'Enter cash handover amount (First shift)');
-                
-                console.log("ℹ️ No previous cash return found or amount is 0");
+                console.log("💰 Fetching last shift cash return for station:", stationId);
+
+                $.ajax({
+                    url: getApiUrl(`last-shift-cash-return/${stationId}`),
+                    method: "GET",
+                    success: function (response) {
+                        console.log("💰 Cash Handover API Response:", response);
+
+                        if (response && response.last_cash_return !== null && response.last_cash_return !== undefined && parseFloat(response.last_cash_return) > 0) {
+                            // ✅ Format with 2 decimal places
+                            const formattedValue = parseFloat(response.last_cash_return).toFixed(2);
+                            $('#cash_handover').val(formattedValue)
+                                .prop('readonly', true)
+                                .css('background-color', '#f8f9fa')
+                                .attr('title', 'Auto-filled from last shift cash return');
+
+                            console.log("✅ Cash handover auto-filled:", formattedValue);
+                        } else {
+                            $('#cash_handover').prop('readonly', false)
+                                .val('')
+                                .css('background-color', '')
+                                .attr('title', 'Enter cash handover amount (First shift)');
+
+                            console.log("ℹ️ No previous cash return found or amount is 0");
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error("❌ Error loading last shift cash return:", xhr.responseText);
+                        $('#cash_handover').prop('readonly', false)
+                            .val('')
+                            .css('background-color', '');
+
+                        if (xhr.status === 404) {
+                            console.log("ℹ️ No previous shifts found for this station");
+                            showToast("This appears to be the first shift for this station. Please enter cash handover amount.", "info");
+                        }
+                    }
+                });
             }
-        },
-        error: function (xhr) {
-            console.error("❌ Error loading last shift cash return:", xhr.responseText);
-            $('#cash_handover').prop('readonly', false)
-                .val('')
-                .css('background-color', '');
-            
-            if (xhr.status === 404) {
-                console.log("ℹ️ No previous shifts found for this station");
-                showToast("This appears to be the first shift for this station. Please enter cash handover amount.", "info");
-            }
-        }
-    });
-}
 
             // Load Stations
             let stationsCache = [];
 
             // Load Stations function ko update karo
-function loadStations() {
-    let endpoint;
-    if (AUTH_ROLE === 'admin') {
-        endpoint = 'stations';
-    } else if (AUTH_ROLE === 'employee') {
-        endpoint = `stations_emp/${AUTH_USER_ID}`;
-    } else {
-        endpoint = `stations/${AUTH_USER_ID}`;
-    }
-
-    return $.ajax({
-        url: getApiUrl(endpoint),
-        method: "GET",
-        success: function (res) {
-            const stations = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
-            stationsCache = stations;
-
-            try {
-                stationSelect.clearChoices();
-                stationSelect.setChoices(
-                    stations.map(st => ({
-                        value: st.id.toString(),
-                        label: st.name
-                    })),
-                    'value', 'label', false
-                );
-
-                // ✅ NEW: Auto-select aur disable station for employees
-                if (AUTH_ROLE === 'employee' && stations.length === 1) {
-                    const stationId = stations[0].id.toString();
-                    stationSelect.setChoiceByValue(stationId);
-                    $("#station_id").val(stationId);
-
-                    // ✅ Station dropdown ko disable karo
-                    stationSelect.disable();
-
-                    // ✅ IMPORTANT: Load employees, last shift end time, aur CASH HANDOVER
-                    loadLastShiftEndTime(stationId);
-                    loadEmployeesByStation(stationId);
-                    loadLastShiftCashReturn(stationId); // ✅ YE LINE ADD KARO
+            function loadStations() {
+                let endpoint;
+                if (AUTH_ROLE === 'admin') {
+                    endpoint = 'stations';
+                } else if (AUTH_ROLE === 'employee') {
+                    endpoint = `stations_emp/${AUTH_USER_ID}`;
+                } else {
+                    endpoint = `stations/${AUTH_USER_ID}`;
                 }
-            } catch (e) {
-                console.error('Error updating station choices', e);
-            }
-        },
-        error: function (xhr) {
-            console.error("Error loading stations:", xhr.responseText || xhr);
-            showToast("Error loading stations!", "error");
-        }
-    });
-}
 
-			// ✅ NEW: Load last shift cash return for cash handover (Update this function)
-function loadLastShiftCashReturn(stationId) {
-    if (!stationId) {
-        $('#cash_handover').prop('readonly', false).val('');
-        return;
-    }
+                return $.ajax({
+                    url: getApiUrl(endpoint),
+                    method: "GET",
+                    success: function (res) {
+                        const stations = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
+                        stationsCache = stations;
 
-    console.log("💰 Fetching last shift cash return for station:", stationId);
-    
-    $.ajax({
-        url: getApiUrl(`last-shift-cash-return/${stationId}`),
-        method: "GET",
-        success: function (response) {
-            console.log("💰 Cash Handover API Response:", response);
-            
-            if (response && response.last_cash_return !== null && response.last_cash_return !== undefined && response.last_cash_return > 0) {
-                // Previous shift ka cash return hai
-                $('#cash_handover').val(response.last_cash_return)
-                    .prop('readonly', true)
-                    .css('background-color', '#f8f9fa')
-                    .attr('title', 'Auto-filled from last shift cash return');
-                
-                console.log("✅ Cash handover auto-filled:", response.last_cash_return);
-            } else {
-                // Pehli shift hai, user input de sakta hai
-                $('#cash_handover').prop('readonly', false)
-                    .val('')
-                    .css('background-color', '')
-                    .attr('title', 'Enter cash handover amount (First shift)');
-                
-                console.log("ℹ️ No previous cash return found or amount is 0");
+                        try {
+                            stationSelect.clearChoices();
+                            stationSelect.setChoices(
+                                stations.map(st => ({
+                                    value: st.id.toString(),
+                                    label: st.name
+                                })),
+                                'value', 'label', false
+                            );
+
+                            // ✅ NEW: Auto-select aur disable station for employees
+                            if (AUTH_ROLE === 'employee' && stations.length === 1) {
+                                const stationId = stations[0].id.toString();
+                                stationSelect.setChoiceByValue(stationId);
+                                $("#station_id").val(stationId);
+
+                                // ✅ Station dropdown ko disable karo
+                                stationSelect.disable();
+
+                                // ✅ IMPORTANT: Load employees, last shift end time, aur CASH HANDOVER
+                                loadLastShiftEndTime(stationId);
+                                loadEmployeesByStation(stationId);
+                                loadLastShiftCashReturn(stationId); // ✅ YE LINE ADD KARO
+                            }
+                        } catch (e) {
+                            console.error('Error updating station choices', e);
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error("Error loading stations:", xhr.responseText || xhr);
+                        showToast("Error loading stations!", "error");
+                    }
+                });
             }
-        },
-        error: function (xhr) {
-            console.error("❌ Error loading last shift cash return:", xhr.responseText);
-            // Agar error aaye to user input de sakta hai
-            $('#cash_handover').prop('readonly', false)
-                .val('')
-                .css('background-color', '');
-            
-            if (xhr.status === 404) {
-                console.log("ℹ️ No previous shifts found for this station");
-                showToast("This appears to be the first shift for this station. Please enter cash handover amount.", "info");
+
+            // ✅ NEW: Load last shift cash return for cash handover (Update this function)
+            function loadLastShiftCashReturn(stationId) {
+                if (!stationId) {
+                    $('#cash_handover').prop('readonly', false).val('');
+                    return;
+                }
+
+                console.log("💰 Fetching last shift cash return for station:", stationId);
+
+                $.ajax({
+                    url: getApiUrl(`last-shift-cash-return/${stationId}`),
+                    method: "GET",
+                    success: function (response) {
+                        console.log("💰 Cash Handover API Response:", response);
+
+                        if (response && response.last_cash_return !== null && response.last_cash_return !== undefined && response.last_cash_return > 0) {
+                            // Previous shift ka cash return hai
+                            $('#cash_handover').val(response.last_cash_return)
+                                .prop('readonly', true)
+                                .css('background-color', '#f8f9fa')
+                                .attr('title', 'Auto-filled from last shift cash return');
+
+                            console.log("✅ Cash handover auto-filled:", response.last_cash_return);
+                        } else {
+                            // Pehli shift hai, user input de sakta hai
+                            $('#cash_handover').prop('readonly', false)
+                                .val('')
+                                .css('background-color', '')
+                                .attr('title', 'Enter cash handover amount (First shift)');
+
+                            console.log("ℹ️ No previous cash return found or amount is 0");
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error("❌ Error loading last shift cash return:", xhr.responseText);
+                        // Agar error aaye to user input de sakta hai
+                        $('#cash_handover').prop('readonly', false)
+                            .val('')
+                            .css('background-color', '');
+
+                        if (xhr.status === 404) {
+                            console.log("ℹ️ No previous shifts found for this station");
+                            showToast("This appears to be the first shift for this station. Please enter cash handover amount.", "info");
+                        }
+                    }
+                });
             }
-        }
-    });
-}
 
 
             // Load employees by station
@@ -445,82 +445,82 @@ function loadLastShiftCashReturn(stationId) {
             });
 
             // ✅ UPDATED: Render rows helper - FIXED THE ERROR
-function renderShiftRows(shifts) {
-    tableBody.html("");
+            function renderShiftRows(shifts) {
+                tableBody.html("");
 
-    if (!Array.isArray(shifts) || shifts.length === 0) return;
+                if (!Array.isArray(shifts) || shifts.length === 0) return;
 
-    shifts.forEach(function (shift, index) {
-        const stationName = shift.station_name || shift.station?.name || '';
-        const shiftType = shift.shift_type || shift.shift_no || '';
-        const start = shift.start_time || '';
-        const end = shift.end_time
-            ? `<span class="badge bg-success">${shift.end_time}</span>`
-            : `<span class="badge bg-danger">Not Ended</span>`;
-        const status = shift.status || '';
-        const created = shift.created_at || '';
-        const id = shift.id || '';
-        const shiftIncharger = shift.shift_incharger_name || 'Not Assigned';
-        
-        // ✅ Format decimal values with 2 decimal places
-        const cash_handover = shift.cash_handover ? parseFloat(shift.cash_handover).toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }) : '0.00';
-        
-        const cash_return = shift.cash_return ? parseFloat(shift.cash_return).toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }) : '0.00';
+                shifts.forEach(function (shift, index) {
+                    const stationName = shift.station_name || shift.station?.name || '';
+                    const shiftType = shift.shift_type || shift.shift_no || '';
+                    const start = shift.start_time || '';
+                    const end = shift.end_time
+                        ? `<span class="badge bg-success">${shift.end_time}</span>`
+                        : `<span class="badge bg-danger">Not Ended</span>`;
+                    const status = shift.status || '';
+                    const created = shift.created_at || '';
+                    const id = shift.id || '';
+                    const shiftIncharger = shift.shift_incharger_name || 'Not Assigned';
 
-        // ✅ Build action buttons based on permissions
-        let actionButtons = '';
-        
-        // ✅ REPORT BUTTON - Only show if shift is closed
-        const reportButton = status === 'closed'
-            ? `<a href="/shift-reports/${id}" class="btn btn-sm btn-success me-1" target="_blank">View Report</a>`
-            : '';
+                    // ✅ Format decimal values with 2 decimal places
+                    const cash_handover = shift.cash_handover ? parseFloat(shift.cash_handover).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }) : '0.00';
 
-        if (status === 'open') {
-            // Open shift actions
-            if (hasPermission('shifts', 'update')) {
-                actionButtons += `<button class="btn btn-sm btn-info edit-btn me-1" data-id="${id}">Edit</button>`;
+                    const cash_return = shift.cash_return ? parseFloat(shift.cash_return).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }) : '0.00';
+
+                    // ✅ Build action buttons based on permissions
+                    let actionButtons = '';
+
+                    // ✅ REPORT BUTTON - Only show if shift is closed
+                    const reportButton = status === 'closed'
+                        ? `<a href="/shift-reports/${id}" class="btn btn-sm btn-success me-1" target="_blank">View Report</a>`
+                        : '';
+
+                    if (status === 'open') {
+                        // Open shift actions
+                        if (hasPermission('shifts', 'update')) {
+                            actionButtons += `<button class="btn btn-sm btn-info edit-btn me-1" data-id="${id}">Edit</button>`;
+                        }
+                        if (hasPermission('shifts', 'delete')) {
+                            actionButtons += `<button class="btn btn-sm btn-warning close-shift-btn me-1" data-id="${id}">Close Shift</button>`;
+                        }
+                        actionButtons += reportButton;
+                    } else {
+                        // Closed shift actions
+                        if (hasPermission('shifts', 'update')) {
+                            actionButtons += `<a href="edit-close-shift/${id}" class="btn btn-sm btn-warning me-1">Edit Shift</a>`;
+                        }
+                        actionButtons += reportButton;
+                        actionButtons += `<span class="badge bg-secondary ms-1">Closed</span>`;
+                    }
+
+                    // If no actions allowed
+                    if (!actionButtons) {
+                        actionButtons = `<span class="text-muted small">No actions</span>`;
+                    }
+
+                    tableBody.append(`
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${stationName}</td>
+                    <td>${shiftType}</td>
+                    <td>${shiftIncharger}</td>
+                    <td>${cash_handover}</td>
+                    <td>${cash_return}</td>
+                    <td>${start}</td>
+                    <td>${end}</td>
+                    <td><span class="badge bg-${status === 'open' ? 'success' : 'secondary'}">${status}</span></td>
+                    <td>${created}</td>
+                    <td class="text-center">${actionButtons}</td>
+                </tr>
+            `);
+                });
             }
-            if (hasPermission('shifts', 'delete')) {
-                actionButtons += `<button class="btn btn-sm btn-warning close-shift-btn me-1" data-id="${id}">Close Shift</button>`;
-            }
-            actionButtons += reportButton;
-        } else {
-            // Closed shift actions
-            if (hasPermission('shifts', 'update')) {
-                actionButtons += `<a href="edit-close-shift/${id}" class="btn btn-sm btn-warning me-1">Edit Shift</a>`;
-            }
-            actionButtons += reportButton;
-            actionButtons += `<span class="badge bg-secondary ms-1">Closed</span>`;
-        }
-
-        // If no actions allowed
-        if (!actionButtons) {
-            actionButtons = `<span class="text-muted small">No actions</span>`;
-        }
-
-        tableBody.append(`
-            <tr>
-                <td>${index + 1}</td>
-                <td>${stationName}</td>
-                <td>${shiftType}</td>
-                <td>${shiftIncharger}</td>
-                <td>${cash_handover}</td>
-                <td>${cash_return}</td>
-                <td>${start}</td>
-                <td>${end}</td>
-                <td><span class="badge bg-${status === 'open' ? 'success' : 'secondary'}">${status}</span></td>
-                <td>${created}</td>
-                <td class="text-center">${actionButtons}</td>
-            </tr>
-        `);
-    });
-}
             // ✅ Load All Shifts (role-aware)
             function loadShifts() {
                 tableBody.html("");
@@ -639,66 +639,66 @@ function renderShiftRows(shifts) {
 
             // ✅ NEW: Separate function for saving shift data
             function saveShiftData(shiftId, shiftIncharger, cashHandover, startTime, stationId) {
-    // ✅ Ensure cash_handover is sent with proper decimal format
-    const formattedCashHandover = parseFloat(cashHandover).toFixed(2);
-    
-    const payload = {
-        station_id: parseInt(stationId, 10),
-        shift_no: parseInt($("#shift_no").val(), 10),
-        shift_incharger: parseInt(shiftIncharger, 10),
-        cash_handover: formattedCashHandover,  // ✅ Send as string with 2 decimals
-        start_time: startTime,
-        status: "open",
-    };
+                // ✅ Ensure cash_handover is sent with proper decimal format
+                const formattedCashHandover = parseFloat(cashHandover).toFixed(2);
 
-    let url = getApiUrl("shifts");
-    let method = "POST";
+                const payload = {
+                    station_id: parseInt(stationId, 10),
+                    shift_no: parseInt($("#shift_no").val(), 10),
+                    shift_incharger: parseInt(shiftIncharger, 10),
+                    cash_handover: formattedCashHandover,  // ✅ Send as string with 2 decimals
+                    start_time: startTime,
+                    status: "open",
+                };
 
-    if (shiftId) {
-        url = getApiUrl(`shifts/${shiftId}`);
-        method = "PUT";
-    }
+                let url = getApiUrl("shifts");
+                let method = "POST";
 
-    $.ajax({
-        url: url,
-        method: method,
-        contentType: "application/json",
-        data: JSON.stringify(payload),
-        success: function () {
-            form[0].reset();
-            $("#station_id, #shift_incharger, #shift_id").val("");
-            stationSelect.removeActiveItems();
-            employeeSelect.removeActiveItems();
-            $('#start_time').prop('readonly', false).attr('min', '');
-
-            if (AUTH_ROLE === 'employee' && stationsCache.length === 1) {
-                const stationId = stationsCache[0].id.toString();
-                stationSelect.setChoiceByValue(stationId);
-                $("#station_id").val(stationId);
-                loadLastShiftEndTime(stationId);
-                loadEmployeesByStation(stationId);
-            }
-
-            loadShifts();
-            showToast("Shift saved successfully!", "success");
-        },
-        error: function (xhr) {
-            if (xhr.status === 422) {
-                const errorData = xhr.responseJSON;
-                showToast(errorData.message, "error");
-                if (errorData.min_start_time) {
-                    $('#start_time').val(errorData.min_start_time)
-                        .attr('min', errorData.min_start_time)
-                        .prop('readonly', true);
-                    showToast(`Start time auto-set to required minimum time`, "info");
+                if (shiftId) {
+                    url = getApiUrl(`shifts/${shiftId}`);
+                    method = "PUT";
                 }
-            } else {
-                console.error("Error saving shift:", xhr.responseText);
-                showToast("Failed to save shift!", "error");
+
+                $.ajax({
+                    url: url,
+                    method: method,
+                    contentType: "application/json",
+                    data: JSON.stringify(payload),
+                    success: function () {
+                        form[0].reset();
+                        $("#station_id, #shift_incharger, #shift_id").val("");
+                        stationSelect.removeActiveItems();
+                        employeeSelect.removeActiveItems();
+                        $('#start_time').prop('readonly', false).attr('min', '');
+
+                        if (AUTH_ROLE === 'employee' && stationsCache.length === 1) {
+                            const stationId = stationsCache[0].id.toString();
+                            stationSelect.setChoiceByValue(stationId);
+                            $("#station_id").val(stationId);
+                            loadLastShiftEndTime(stationId);
+                            loadEmployeesByStation(stationId);
+                        }
+
+                        loadShifts();
+                        showToast("Shift saved successfully!", "success");
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 422) {
+                            const errorData = xhr.responseJSON;
+                            showToast(errorData.message, "error");
+                            if (errorData.min_start_time) {
+                                $('#start_time').val(errorData.min_start_time)
+                                    .attr('min', errorData.min_start_time)
+                                    .prop('readonly', true);
+                                showToast(`Start time auto-set to required minimum time`, "info");
+                            }
+                        } else {
+                            console.error("Error saving shift:", xhr.responseText);
+                            showToast("Failed to save shift!", "error");
+                        }
+                    }
+                });
             }
-        }
-    });
-}
 
             // Edit Shift
             tableBody.on("click", ".edit-btn", function () {

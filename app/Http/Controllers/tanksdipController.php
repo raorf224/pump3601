@@ -29,7 +29,9 @@ class tanksdipController extends Controller
             'tank_data.*.to_date' => 'required|date',
             'tank_data.*.shift_id' => 'nullable|integer|exists:shifts,id',
             'tank_data.*.remarks' => 'nullable|string|max:255',
-            'tank_data.*.created_by' => 'required|integer'
+            'tank_data.*.created_by' => 'required|integer',
+            'tank_data.*.tanks_dip_image' => 'nullable|string|max:5242880' 
+
         ]);
 
         $savedReadings = [];
@@ -94,6 +96,33 @@ class tanksdipController extends Controller
                 $oldDipMm = $previousReading->dip_mm ?? 0;
             }
 
+            // ✅ ========== HANDLE IMAGE ==========
+            $imagePath = null;
+            if (!empty($tankReading['tanks_dip_image']) && $tankReading['tanks_dip_image'] !== 'null' && $tankReading['tanks_dip_image'] !== '') {
+                try {
+                    $imageData = $tankReading['tanks_dip_image'];
+                    $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+                    $imageData = str_replace(' ', '+', $imageData);
+
+                    $decoded = base64_decode($imageData, true);
+                    if ($decoded !== false && strlen($decoded) > 0) {
+                        $imageName = 'tank_dip_' . $tankReading['tank_id'] . '_' . time() . '.png';
+                        $imagePath = 'uploads/tank_dips/' . $imageName;
+                        $fullPath = public_path($imagePath);
+
+                        if (!file_exists(public_path('uploads/tank_dips'))) {
+                            mkdir(public_path('uploads/tank_dips'), 0777, true);
+                        }
+
+                        file_put_contents($fullPath, $decoded);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to save tank dip image: ' . $e->getMessage());
+                    $imagePath = null;
+                }
+            }
+
+
             $fromDate = $tankReading['from_date'];
             $toDate = $tankReading['to_date'];
 
@@ -117,6 +146,8 @@ class tanksdipController extends Controller
                 'to_date' => $toDate,
                 
                 'remarks' => $tankReading['remarks'] ?? null,
+                'tanks_dip_image' => $imagePath, 
+
                 'created_by' => $tankReading['created_by'],
                 'created_at' => now()
             ];
