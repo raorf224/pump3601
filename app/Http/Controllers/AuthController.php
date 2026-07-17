@@ -113,8 +113,6 @@ public function applogin(Request $request)
         ], 401);
     }
 
-    // Generate API Token
-    $token = Str::random(80);
 
     // Save token in database if needed
     // DB::table('users')->where('id', $user['id'])->update(['api_token' => $token]);
@@ -124,8 +122,7 @@ public function applogin(Request $request)
     return response()->json([
         'success' => true,
         'message' => 'Login successful.',
-        'data' => $user,
-        'token' => $token // optional
+        'data' => $user
     ]);
 }
     public function logout(Request $request)
