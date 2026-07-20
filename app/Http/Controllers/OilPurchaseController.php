@@ -813,7 +813,7 @@ END as shortage_paid
     {
         $validated = $request->validate([
             'receive_date' => 'required|date',
-                    'shift_id' => 'required|integer|exists:shifts,id',  // ✅ ADD SHIFT VALIDATION
+            'shift_id' => 'required|integer|exists:shifts,id',  // ✅ ADD SHIFT VALIDATION
 
             'this_receive_qty' => 'required|numeric|min:0.01',
             'this_shortage_qty' => 'required|numeric|min:0',
@@ -1057,12 +1057,12 @@ END as shortage_paid
                         $tank['tank_id'],
                         $quantity,
                         $validated['receive_date'],
-                                            $shiftId,  
+                        $shiftId,
 
                         $invoiceNumber,
                         $referenceNumber,
                         $vehicleNumber,
-                        $invoiceImagePath,  
+                        $invoiceImagePath,
                         $shortage
                     ]
                 );
@@ -1092,7 +1092,7 @@ END as shortage_paid
                 'message' => 'Order received successfully',
                 'receive_id' => $lastReceiveId,
                 'id' => $id,  // oil_purchase_id
-                            'shift_id' => $shiftId,  // ✅ RETURN SHIFT ID
+                'shift_id' => $shiftId,  // ✅ RETURN SHIFT ID
 
                 'ordered_quantity' => $orderedQty,
                 'already_received_before' => $alreadyReceived,
@@ -1402,12 +1402,12 @@ END as shortage_paid
     }
 
 
-    // ✅ 2. NEW: Get oil purchases by shift_id
-public function getByShift($shiftId)
-{
-    $oilPurchases = DB::select(
-        'SELECT 
+    public function getByShift($shiftId)
+    {
+        $oilPurchases = DB::select(
+            'SELECT 
             op.id, 
+            op.shift_id,
             op.order_date, 
             op.recieving_date, 
             op.payment_status, 
@@ -1422,55 +1422,35 @@ public function getByShift($shiftId)
             op.updated_at,
             op.supplier_id, 
             op.station_id, 
-            op.shift_id, 
             op.product_id,
             a.name AS supplier_name,
             s.name AS station_name,
-            sh.shift_no,
             p.name AS product_name,
-            COALESCE(
-                (SELECT SUM(ap.ammount) 
-                 FROM ammount_paid ap 
-                 WHERE ap.oil_purchase_id = op.id 
-                 AND ap.method = "cash"
-                 AND ap.shift_id = ?),
-                0
-            ) as total_cash_paid,
+            SUM(ap.ammount) as total_cash_paid,
+            COUNT(ap.id) as cash_payment_count,
             CASE 
-                WHEN EXISTS (
-                    SELECT 1 FROM ammount_paid ap 
-                    WHERE ap.oil_purchase_id = op.id 
-                    AND ap.method = "cash"
-                    AND ap.shift_id = ?
-                ) THEN "cash"
+                WHEN COUNT(ap.id) > 0 THEN "cash"
                 ELSE "no_cash"
-            END as has_cash_payment,
-            COALESCE(
-                (SELECT COUNT(*) 
-                 FROM ammount_paid ap 
-                 WHERE ap.oil_purchase_id = op.id 
-                 AND ap.method = "cash"
-                 AND ap.shift_id = ?),
-                0
-            ) as cash_payment_count
-         FROM oil_purchase op
-         LEFT JOIN accounts a ON op.supplier_id = a.id OR op.supplier_id = a.stationrow_id
+            END as has_cash_payment
+         FROM ammount_paid ap
+         LEFT JOIN oil_purchase op ON ap.oil_purchase_id = op.id
+         LEFT JOIN accounts a ON op.supplier_id = a.id
          LEFT JOIN stations s ON op.station_id = s.id 
-         LEFT JOIN shifts sh ON op.shift_id = sh.id OR op.shift_id = sh.stationrow_id
          LEFT JOIN products p ON op.product_id = p.id
-         WHERE op.shift_id = ?
-         AND EXISTS (
-            SELECT 1 FROM ammount_paid ap 
-            WHERE ap.oil_purchase_id = op.id 
-            AND ap.method = "cash"
-            AND ap.shift_id = ?
-         )
+         WHERE ap.shift_id = ?
+         AND ap.method = "cash"
+         AND ap.type = "debit"
+         AND ap.oil_purchase_id IS NOT NULL
+         GROUP BY op.id, op.shift_id, op.order_date, op.recieving_date, op.payment_status, 
+                  op.recieved_qty, op.recive_status, op.rate, op.qty, op.invoice_no, 
+                  op.ref_num, op.stock_update, op.created_at, op.updated_at, op.supplier_id, 
+                  op.station_id, op.product_id, a.name, s.name, p.name
          ORDER BY op.created_at DESC',
-        [$shiftId, $shiftId, $shiftId, $shiftId, $shiftId]
-    );
+            [$shiftId]
+        );
 
-    return response()->json($oilPurchases);
-}
+        return response()->json($oilPurchases);
+    }
 
     // ✅ Get shortage payments by shift_id
     public function getShortagePaymentsByShift($shiftId)
