@@ -4254,7 +4254,7 @@
                 const totalPayments = inBank + fuelcard + creditcard + driverCreditAmount;
                 inHand = totalSales - totalPayments;
                 
-                let cash_return = inHand;
+                 cash_return = inHand;
 
                 if (inHand < 0) {
                     showToast("Total payments exceed total sales!", "error");
@@ -4802,7 +4802,7 @@
             //     }
             // }
 
-            function calculateBankTransferTotal() {
+function calculateBankTransferTotal() {
     let totalAmount = 0;
     let lastAccountId = null;
     let lastAccountSelect = null;
@@ -4832,13 +4832,15 @@
     // Update totals
     $("#bank_transfer_total_amount").val(totalAmount.toFixed(2));
     $("#transfer_amount").val(totalAmount.toFixed(2));
-    // ❌ YEH LINE HATAAO
+    // ❌ YEH LINE HATAAO - DUPLICATE BANK ROWS KA KARAN
     // $("#in_bank").val(totalAmount.toFixed(2));
     $("#new_in_bank_total").val(totalAmount.toFixed(2));
 
     // Update cash flow distribution
     const grandTotal = parseFloat($("#grand_total_amount").text()) || 0;
-    autoCalculateDistribution(grandTotal);
+    if (typeof autoCalculateDistribution === 'function') {
+        autoCalculateDistribution(grandTotal);
+    }
 }
 
 
@@ -5542,45 +5544,6 @@
                 calculateBankTransferTotal();
             }
 
-            // Calculate Bank Transfer Total (All Rows)
-            function calculateBankTransferTotal() {
-                let totalAmount = 0;
-                let lastAccountId = null;
-                let lastAccountSelect = null;
-
-                $('.bank-transfer-row').each(function () {
-                    const row = $(this);
-                    const entryType = row.find('.bank-entry-type').val();
-                    const accountSelect = row.find('.bank-account-select');
-                    const accountId = accountSelect.val();
-                    let rowAmount = 0;
-
-                    if (entryType === 'manual') {
-                        rowAmount = parseFloat(row.find('.bank-manual-amount').val()) || 0;
-                    } else {
-                        // Product-wise: sum all product amounts
-                        row.find('.bank-product-amount').each(function () {
-                            rowAmount += parseFloat($(this).val()) || 0;
-                        });
-                    }
-
-                    if (accountId && rowAmount > 0) {
-                        totalAmount += rowAmount;
-                        lastAccountId = accountId;
-                        lastAccountSelect = accountSelect;
-                    }
-                });
-
-                // Update totals
-                $("#bank_transfer_total_amount").val(totalAmount.toFixed(2));
-                $("#transfer_amount").val(totalAmount.toFixed(2));
-                $("#in_bank").val(totalAmount.toFixed(2));
-                $("#new_in_bank_total").val(totalAmount.toFixed(2));
-
-                // Update cash flow distribution
-                const grandTotal = parseFloat($("#grand_total_amount").text()) || 0;
-                autoCalculateDistribution(grandTotal);
-            }
 
             // Collect Bank Transfer Data for Saving
             function collectBankTransferData(shiftId) {
