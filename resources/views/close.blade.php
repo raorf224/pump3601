@@ -4151,10 +4151,10 @@
                 const promises = [];
                 const savedItems = [];
 
-                let inHand = parseFloat($("#in_hand").val()) || 0;
+                // let inHand = parseFloat($("#in_hand").val()) || 0;
                 let inBank = parseFloat($("#in_bank").val()) || 0;
                 // const cash_return = inHand;
-                let cash_return = inHand;
+                // let cash_return = inHand;
 
 
 
