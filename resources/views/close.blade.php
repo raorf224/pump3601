@@ -4346,7 +4346,8 @@
 
 
 
-                const distributed = inHand + inBank + fuelcard + creditcard + driverCreditAmount;
+                // const distributed = inHand + inBank + fuelcard + creditcard + driverCreditAmount;
+                const distributed = inHand + pageExpensesTotal + inBank + fuelcard + creditcard + driverCreditAmount;
                 const difference = Math.abs(distributed - totalSales);
 
                 if (difference > 0.01) {
