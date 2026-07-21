@@ -4156,8 +4156,6 @@
                 // const cash_return = inHand;
                 let cash_return = inHand;
 
-                // ✅ PAGE EXPENSES TOTAL GET KARO
-                const pageExpensesTotal = getExpensesTotal() || 0;
 
 
                 const totalSales = parseFloat($("#total_cash").val()) || 0;
@@ -4332,13 +4330,15 @@
                 inHand = totalSales - totalPayments;
 
                 cash_return = inHand;
+                $("#in_hand").val(inHand.toFixed(2));
+                $("#cash_return").val(inHand.toFixed(2)); // ✅ YAHAN SET KARO
+                console.log("💰 inHand before save:", inHand);  // 677464.34 hona chahiye
+
 
                 if (inHand < 0) {
                     showToast("Total payments exceed total sales!", "error");
                     return;
                 }
-                $("#in_hand").val(inHand.toFixed(2));
-                $("#cash_return").val(inHand.toFixed(2)); // ✅ YAHAN SET KARO
 
 
 
@@ -4618,6 +4618,8 @@
                         });
                     }
                 }
+
+                const pageExpensesTotal = getExpensesTotal() || 0;
 
                 // 8. SAVE CASH FLOW DATA (TOTALS)
                 promises.push(
