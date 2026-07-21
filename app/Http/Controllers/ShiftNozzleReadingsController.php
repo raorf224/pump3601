@@ -328,6 +328,8 @@ class ShiftNozzleReadingsController extends Controller
                 'nozzle_id' => $validatedData['nozzle_id'],
                 'opening_reading' => $validatedData['opening_reading'],
                 'closing_reading' => $validatedData['closing_reading'],
+                'total_dispensed' => $qty,  // ✅ YEH ADD KARO - TESTING MINUS WALI VALUE
+
                 'rate' => $saleRate,
                 'cost_amount' => 0,
                 'profit' => 0,
