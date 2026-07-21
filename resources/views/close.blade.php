@@ -1770,42 +1770,105 @@
                 });
             }
 
+            // // ✅ Auto-calculate nozzle total dispensed when closing reading changes
+            // $(document).on("input", ".nozzle-closing", function () {
+            //     const opening = parseFloat($(this).data('opening')) || 0;
+            //     const closing = parseFloat($(this).val()) || 0;
+            //     const totalField = $(this).closest('.nozzle-reading-row').find('.nozzle-total');
+            //     const validationMsg = $(this).closest('.nozzle-reading-row').find('.validation-message');
+
+            //     if (closing < opening) {
+            //         validationMsg.text('Closing reading cannot be less than opening reading').show();
+            //         totalField.val('');
+            //         $(this).addClass('is-invalid');
+            //     } else {
+            //         validationMsg.hide();
+            //         const totalDispensed = closing - opening;
+            //         totalField.val(totalDispensed.toFixed(2));
+            //         $(this).removeClass('is-invalid');
+            //     }
+            // });
+
+            // $(document).on("input", ".nozzle-testing", function () {
+            //     const opening = parseFloat($(this).data('opening')) || 0;
+            //     const closing = parseFloat($(this).val()) || 0;
+            //     const totalField = $(this).closest('.nozzle-reading-row').find('.nozzle-total');
+            //     const validationMsg = $(this).closest('.nozzle-reading-row').find('.validation-message');
+
+            //     if (closing < opening) {
+            //         validationMsg.text('Closing reading cannot be less than opening reading').show();
+            //         totalField.val('');
+            //         $(this).addClass('is-invalid');
+            //     } else {
+            //         validationMsg.hide();
+            //         const totalDispensed = closing - opening;
+            //         totalField.val(totalDispensed.toFixed(2));
+            //         $(this).removeClass('is-invalid');
+            //     }
+            // });
+
             // ✅ Auto-calculate nozzle total dispensed when closing reading changes
-            $(document).on("input", ".nozzle-closing", function () {
-                const opening = parseFloat($(this).data('opening')) || 0;
-                const closing = parseFloat($(this).val()) || 0;
-                const totalField = $(this).closest('.nozzle-reading-row').find('.nozzle-total');
-                const validationMsg = $(this).closest('.nozzle-reading-row').find('.validation-message');
+$(document).on("input", ".nozzle-closing", function () {
+    const row = $(this).closest('.nozzle-reading-row');
+    const opening = parseFloat($(this).data('opening')) || 0;
+    const closing = parseFloat($(this).val()) || 0;
+    const testingValue = parseFloat(row.find('.nozzle-testing').val()) || 0;
+    const totalField = row.find('.nozzle-total');
+    const validationMsg = row.find('.validation-message');
 
-                if (closing < opening) {
-                    validationMsg.text('Closing reading cannot be less than opening reading').show();
-                    totalField.val('');
-                    $(this).addClass('is-invalid');
-                } else {
-                    validationMsg.hide();
-                    const totalDispensed = closing - opening;
-                    totalField.val(totalDispensed.toFixed(2));
-                    $(this).removeClass('is-invalid');
-                }
-            });
+    if (closing < opening) {
+        validationMsg.text('Closing reading cannot be less than opening reading').show();
+        totalField.val('');
+        $(this).addClass('is-invalid');
+    } else {
+        validationMsg.hide();
+        const originalTotal = closing - opening;
+        // ✅ TESTING LITERS MINUS KARO
+        const finalTotal = Math.max(0, originalTotal - testingValue);
+        totalField.val(finalTotal.toFixed(2));
+        $(this).removeClass('is-invalid');
+    }
+    
+    // ✅ CASH FLOW RECALCULATE
+    setTimeout(() => {
+        calculateCashFlowSummary();
+    }, 300);
+});
 
-            $(document).on("input", ".nozzle-testing", function () {
-                const opening = parseFloat($(this).data('opening')) || 0;
-                const closing = parseFloat($(this).val()) || 0;
-                const totalField = $(this).closest('.nozzle-reading-row').find('.nozzle-total');
-                const validationMsg = $(this).closest('.nozzle-reading-row').find('.validation-message');
-
-                if (closing < opening) {
-                    validationMsg.text('Closing reading cannot be less than opening reading').show();
-                    totalField.val('');
-                    $(this).addClass('is-invalid');
-                } else {
-                    validationMsg.hide();
-                    const totalDispensed = closing - opening;
-                    totalField.val(totalDispensed.toFixed(2));
-                    $(this).removeClass('is-invalid');
-                }
-            });
+// ✅ Testing liters input - TOTAL DISPENSED SE MINUS KARO
+$(document).on("input", ".nozzle-testing", function () {
+    const row = $(this).closest('.nozzle-reading-row');
+    const closingInput = row.find('.nozzle-closing');
+    const opening = parseFloat(closingInput.data('opening')) || 0;
+    const closing = parseFloat(closingInput.val()) || 0;
+    const testingValue = parseFloat($(this).val()) || 0;
+    const totalField = row.find('.nozzle-total');
+    const validationMsg = row.find('.validation-message');
+    
+    if (testingValue < 0) {
+        validationMsg.text('Testing liters cannot be negative').show();
+        $(this).addClass('is-invalid');
+        return;
+    }
+    
+    validationMsg.hide();
+    $(this).removeClass('is-invalid');
+    
+    // ✅ ORIGINAL TOTAL DISPENSED (BINA TESTING KE)
+    let originalTotal = 0;
+    if (closing >= opening) {
+        originalTotal = closing - opening;
+    }
+    
+    // ✅ FINAL TOTAL = ORIGINAL - TESTING
+    const finalTotal = Math.max(0, originalTotal - testingValue);
+    totalField.val(finalTotal.toFixed(2));
+    
+    // ✅ CASH FLOW RECALCULATE
+    setTimeout(() => {
+        calculateCashFlowSummary();
+    }, 300);
+});
 
             // ✅ Auto-fill Cash Return with In Hand value
             $(document).on("input", "#in_hand", function () {
@@ -2405,6 +2468,7 @@
                                                 }); // oilPurchaseData close
                                             }); // lubricantsData close
                                         }); // Promise.all close
+                                  
                                     }, // transactions success close
                                     error: function (xhr) {
                                         console.error("Error fetching transactions:", xhr.responseText);
@@ -2440,7 +2504,8 @@
                 grandTotal,
                 totalTestingAmount,
                 totalTestingLiters,
-                expenseTransactions, cashExpensesTotal   // ✅ NEW PARAMETER
+                expenseTransactions,
+                cashExpensesTotal   // ✅ NEW PARAMETER
             ) {
                 const container = $("#product_summary_body");
                 container.empty();
@@ -2466,8 +2531,7 @@
                         const testingLiters = product.testing_liters ? product.testing_liters.toFixed(2) : '0.00';
                         const testingAmount = product.testing_amount ? product.testing_amount.toFixed(2) : '0.00';
                         const amountDisplay = product.nozzle_amount ? product.nozzle_amount.toFixed(2) : '0.00';
-
-                        container.append(`
+                                                        container.append(`
                                                             <tr>
                                                                 <td>${displayText}</td>
                                                                 <td>${product.rate.toFixed(2)}</td>
