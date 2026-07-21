@@ -263,6 +263,8 @@ class ShiftNozzleReadingsController extends Controller
                 }
             }
 
+            // ✅ total_amount calculate karo
+            $totalAmount = $qty * $saleRate;
             // ==============================
             // FIFO CALCULATION
             // ==============================
@@ -318,8 +320,6 @@ class ShiftNozzleReadingsController extends Controller
             }
         }
 
-
-
             // ==============================
             // INSERT SALE FIRST (to get ID)
             // ==============================
@@ -329,8 +329,8 @@ class ShiftNozzleReadingsController extends Controller
                 'opening_reading' => $validatedData['opening_reading'],
                 'closing_reading' => $validatedData['closing_reading'],
                 'total_dispensed' => $qty,  // ✅ YEH ADD KARO - TESTING MINUS WALI VALUE
-
                 'rate' => $saleRate,
+                'total_amount' => $totalAmount,  // ✅ YEH ADD KARO
                 'cost_amount' => 0,
                 'profit' => 0,
                 'collected_from' => $validatedData['collected_from'],
