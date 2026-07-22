@@ -291,6 +291,8 @@ class ShiftReportController extends Controller
                 'status' => $status,
                 'status_class' => $statusClass,
                 'variance_text' => $varianceText,
+                'tank_dip_image' => $shiftDip ? $shiftDip->tanks_dip_image : null, // ✅ NEW
+
             ];
 
         }

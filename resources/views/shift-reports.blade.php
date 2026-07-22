@@ -186,6 +186,8 @@
                                         <th class="text-end">Variance (L)</th>
                                         <th class="text-end">Variance %</th>
                                         <th>Status</th>
+                                        <th class="text-center">Image</th>  <!-- ✅ NEW COLUMN -->
+
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -236,6 +238,30 @@
                                                         {{ $calculation['status'] }}
                                                     </span>
                                                 </td>
+                                                <td class="text-center">
+                                                    @if(!empty($calculation['tank_dip_image']))
+                                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#imageModal{{ $loop->index }}">
+                                                            👁️ Preview
+                                                        </button>
+                                                        <!-- Modal -->
+                                                        <div class="modal fade" id="imageModal{{ $loop->index }}" tabindex="-1" aria-hidden="true">
+                                                            <div class="modal-dialog modal-lg">
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header">
+                                                                        <h5 class="modal-title">{{ $calculation['tank_name'] }} - Dip Image</h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                    </div>
+                                                                    <div class="modal-body text-center">
+                                                                        <img src="{{ asset($calculation['tank_dip_image']) }}" class="img-fluid" alt="Tank Dip Image">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-muted">—</span>
+                                                    @endif
+                                                </td>
+
                                             </tr>
                                     @endforeach
                                 </tbody>
@@ -364,6 +390,8 @@
                                                     <th class="text-end">Dispensed</th>
                                                     <th class="text-end">Rate (Rs.)</th>
                                                     <th class="text-end">Amount (Rs.)</th>
+                                                    <th class="text-center">Image</th>  <!-- ✅ NEW COLUMN -->
+
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -376,6 +404,30 @@
                                                         <td class="text-end">{{ number_format($reading->total_dispensed, 2) }}</td>
                                                         <td class="text-end">{{ number_format($reading->rate, 2) }}</td>
                                                         <td class="text-end">{{ number_format($reading->total_amount, 2) }}</td>
+                                                        <td class="text-center">
+                                                                @if(!empty($reading->nozzel_reading_image))
+                                                                    <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#nozzleModal{{ $reading->id }}">
+                                                                        👁️ Preview
+                                                                    </button>
+                                                                    <!-- Modal -->
+                                                                    <div class="modal fade" id="nozzleModal{{ $reading->id }}" tabindex="-1" aria-hidden="true">
+                                                                        <div class="modal-dialog modal-lg">
+                                                                            <div class="modal-content">
+                                                                                <div class="modal-header">
+                                                                                    <h5 class="modal-title">{{ $reading->nozzle->name ?? 'Nozzle' }} - Reading Image</h5>
+                                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                                </div>
+                                                                                <div class="modal-body text-center">
+                                                                                    <img src="{{ asset($reading->nozzel_reading_image) }}" class="img-fluid" alt="Nozzle Reading Image">
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                @else
+                                                                    <span class="text-muted">—</span>
+                                                                @endif
+                                                        </td>
+
                                                     </tr>
                                                 @endforeach
                                             </tbody>
