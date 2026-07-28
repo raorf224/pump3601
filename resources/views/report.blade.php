@@ -363,12 +363,12 @@
                                 <th>Station</th>
                                 <th>Tank</th>
                                 <th>Product</th>
-                                <th>Sales Count</th>
+                                <!-- <th>Sales Count</th> -->
                                 <th>Qty Sold (L)</th>
-                                <th>Avg Cost Rate</th>
-                                <th>Avg Sale Rate</th>
+                                <!-- <th>Avg Cost Rate</th> -->
+                                <!-- <th>Avg Sale Rate</th> -->
                                 <th>Total Cost</th>
-                                <th>Total Revenue</th>
+                                <!-- <th>Total Revenue</th> -->
                                 <th>Gain / Loss</th>
                             </tr>
                         </thead>
@@ -378,12 +378,12 @@
                                     <td>{{ $row->station_name }}</td>
                                     <td>{{ $row->tank_name }}</td>
                                     <td>{{ $row->product_name }}</td>
-                                    <td>{{ $row->total_sales }}</td>
+                                    <!-- <td>{{ $row->total_sales }}</td> -->
                                     <td>{{ number_format($row->total_qty_sold, 2) }}</td>
-                                    <td>{{ number_format($row->avg_cost_rate, 2) }}</td>
-                                    <td>{{ number_format($row->avg_sale_rate, 2) }}</td>
+                                    <!-- <td>{{ number_format($row->avg_cost_rate, 2) }}</td> -->
+                                    <!-- <td>{{ number_format($row->avg_sale_rate, 2) }}</td> -->
                                     <td>Rs. {{ number_format($row->total_cost, 2) }}</td>
-                                    <td>Rs. {{ number_format($row->total_revenue, 2) }}</td>
+                                    <!-- <td>Rs. {{ number_format($row->total_revenue, 2) }}</td> -->
                                     <td>
                                         <span class="badge-{{ $row->total_profit >= 0 ? 'profit' : 'loss' }}">
                                             {{ $row->total_profit >= 0 ? 'Profit' : 'Loss' }}
