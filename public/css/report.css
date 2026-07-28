@@ -1,0 +1,316 @@
+/* Professional Dashboard Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
+
+:root {
+    --primary: #1a237e;
+    --primary-light: #0d47a1;
+    --primary-dark: #0d1b4a;
+    --success: #00c853;
+    --danger: #d50000;
+    --warning: #ff6d00;
+    --info: #0091ea;
+    --dark: #1a1a2e;
+    --light: #f5f7fa;
+    --gray: #6c757d;
+    --border: #e9ecef;
+    
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-heading: 'Poppins', var(--font-primary);
+}
+
+* {
+    font-family: var(--font-primary);
+}
+
+body {
+    background: var(--light);
+    color: var(--dark);
+}
+
+/* Dashboard Cards */
+.dashboard-stat-card {
+    background: white;
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(26, 35, 126, 0.12);
+}
+
+.dashboard-stat-card .card-body {
+    padding: 20px 24px;
+}
+
+/* Stat Values */
+.stat-value {
+    font-family: var(--font-heading);
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--dark);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.stat-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+/* Progress Bar */
+.progress {
+    background: #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 8px;
+}
+
+.progress-bar {
+    border-radius: 8px;
+    transition: width 0.6s ease;
+}
+
+/* Table Styles */
+.table-dashboard {
+    font-size: 13px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-dashboard thead th {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 14px 16px;
+    border: none;
+    white-space: nowrap;
+}
+
+.table-dashboard tbody td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border);
+    color: var(--dark);
+}
+
+.table-dashboard tbody tr {
+    transition: background 0.2s ease;
+}
+
+.table-dashboard tbody tr:hover {
+    background: #f8f9fa;
+}
+
+/* Badges */
+.badge-profit {
+    background: var(--success);
+    color: white;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-loss {
+    background: var(--danger);
+    color: white;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-pending {
+    background: var(--warning);
+    color: white;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-received {
+    background: var(--info);
+    color: white;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Filter Section */
+.filter-section {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 28px;
+}
+
+.filter-section .form-label {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--gray);
+    margin-bottom: 6px;
+}
+
+.filter-section .form-control,
+.filter-section .form-select {
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    padding: 10px 16px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.filter-section .form-control:focus,
+.filter-section .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+}
+
+.btn-filter {
+    padding: 10px 32px;
+    border-radius: 10px;
+    font-weight: 600;
+    background: var(--primary);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-filter:hover {
+    background: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);
+}
+
+/* Chart Containers */
+.chart-container {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    height: 100%;
+}
+
+.chart-title {
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 16px;
+}
+
+/* Layer Cards */
+.layer-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    border-left: 4px solid var(--primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: all 0.3s ease;
+}
+
+.layer-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transform: translateX(4px);
+}
+
+.layer-product {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--dark);
+}
+
+.layer-detail {
+    font-size: 13px;
+    color: var(--gray);
+    margin-top: 2px;
+}
+
+.layer-profit {
+    font-weight: 700;
+    color: var(--success);
+    font-size: 16px;
+}
+
+.layer-loss {
+    font-weight: 700;
+    color: var(--danger);
+    font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stat-value {
+        font-size: 24px;
+    }
+    
+    .dashboard-stat-card .card-body {
+        padding: 16px;
+    }
+    
+    .filter-section {
+        padding: 16px;
+    }
+    
+    .filter-section .row > div {
+        margin-bottom: 12px;
+    }
+    
+    .chart-container {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .table-dashboard {
+        font-size: 12px;
+    }
+    
+    .table-dashboard thead th,
+    .table-dashboard tbody td {
+        padding: 8px 10px;
+    }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-light);
+}

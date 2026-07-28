@@ -8,6 +8,8 @@ use App\Http\Controllers\ShiftReportController;
 use App\Http\Controllers\ShiftController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\EditCloseShiftController;
+use App\Http\Controllers\reportController;
+
 
 
 
@@ -21,19 +23,21 @@ Route::middleware('guest')->group(function () {
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 Route::get('/shifts/{id}/edit-closed', [ShiftController::class, 'editClosedShift'])->name('shifts.edit-closed');
 
+// Dashboard Routes
+Route::get('/report', [reportController::class, 'index'])->name('report.index');
+Route::get('/report/fetch-unlimited', [reportController::class, 'fetchUnlimitedData'])->name('report.fetchUnlimitedData');
 
-// Protected routes (need authentication)
 // Protected routes (need authentication)
 Route::middleware('auth')->group(function () {
 
     Route::get('/', function () {
         return view('index');
     });
-   Route::get('/sale-report', function () {
+    Route::get('/sale-report', function () {
         return view('sale-report');
     })->middleware('permission:sale-report');
-	
-	   Route::get('/received-amount', function () {
+
+    Route::get('/received-amount', function () {
         return view('received-amount');
     })->middleware('permission:received-amount');
 
@@ -46,21 +50,21 @@ Route::middleware('auth')->group(function () {
     Route::get('view-overview1/{id}', function () {
         return view('view-overview1');
     });
- Route::get('audit-reports/{id}', function () {
+    Route::get('audit-reports/{id}', function () {
         return view('audit-report');
     });
-	
-Route::get('/station-audit/{stationId?}', function ($stationId = null) {
-    return view('station-audit', compact('stationId'));
-})->name('station.audit')->middleware('auth');
 
-	Route::get('/shift-reports', [ShiftReportController::class, 'index']);
+    Route::get('/station-audit/{stationId?}', function ($stationId = null) {
+        return view('station-audit', compact('stationId'));
+    })->name('station.audit')->middleware('auth');
+
+    Route::get('/shift-reports', [ShiftReportController::class, 'index']);
     Route::get('/shift-reports/{shift_id}', [ShiftReportController::class, 'show']);
     Route::post('/shift-reports/generate', [ShiftReportController::class, 'generateReport']);
-	Route::get('/edit-close-shift/{shift_id}', [EditCloseShiftController::class, 'index'])->name('edit-close-shift');
-Route::get('/shift/{id}/download-pdf', [ShiftReportController::class, 'downloadPDF'])->name('shift.download.pdf');
-	
+    Route::get('/edit-close-shift/{shift_id}', [EditCloseShiftController::class, 'index'])->name('edit-close-shift');
+    Route::get('/shift/{id}/download-pdf', [ShiftReportController::class, 'downloadPDF'])->name('shift.download.pdf');
+
     // Catch-all route for your dashboard pages
-   Route::get('/{any}', [DashboardController::class, 'index'])->where('any', '.*');
+    Route::get('/{any}', [DashboardController::class, 'index'])->where('any', '.*');
 
 });
