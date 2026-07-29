@@ -602,10 +602,26 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="summary-card p-4 border rounded bg-white text-center h-100">
+                                    <h4 class="text-info fw-bold">
+                                        Rs. {{ number_format($financialSummary['fuelcard'] ?? 0, 2) }}
+                                    </h4>
+                                    <p class="mb-0 text-muted fw-semibold">Fuel Card</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-card p-4 border rounded bg-white text-center h-100">
+                                    <h4 class="text-info fw-bold">
+                                        Rs. {{ number_format($financialSummary['creditcard'] ?? 0, 2) }}
+                                    </h4>
+                                    <p class="mb-0 text-muted fw-semibold">Credit Card</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-card p-4 border rounded bg-white text-center h-100">
                                     <h4 class="text-dark fw-bold">
                                         Rs. {{ number_format($financialSummary['total_cash_balance'] ?? 0, 2) }}
                                     </h4>
-                                    <p class="mb-0 text-muted fw-semibold">Total Cash Balance</p>
+                                    <p class="mb-0 text-muted fw-semibold">Total  Balance</p>
                                 </div>
                             </div>
                         </div>
