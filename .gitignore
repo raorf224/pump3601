@@ -9,6 +9,8 @@
 .env
 composer.json
 composer.lock  
+resources/views/reports.blade.php
+app/Http/Controllers/reportController.php
 .env.backup
 .env.production
 .phpactor.json

@@ -12,8 +12,22 @@ class ShiftCashFlow extends Model
     protected $table = 'shift_cash_flow';
     
     protected $fillable = [
-        'shift_id', 'shift_incharge', 'total_cash', 'in_hand',
-        'in_bank', 'from_date', 'to_date'
+        'shift_id', 
+        'shift_incharge', 
+        'total_cash', 
+        'in_hand',
+        'in_bank', 
+        'from_date', 
+        'to_date',
+        'stationrow_id',
+        'station_id',
+        'fuelcard',
+        'creditcard',
+        'faccountid',
+        'caccountid',
+        'baccountid',
+        'fuel_card_paid',
+        'credit_card_paid'
     ];
     
     public function shift()

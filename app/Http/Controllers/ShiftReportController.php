@@ -510,12 +510,15 @@ class ShiftReportController extends Controller
         // ✅ UPDATED: Total Expenses (Lube Purchase(paid only) + Transaction Expense(paid only) + Oil Purchase(paid only))
         $totalExpenses = $lubeSummary['purchase']['total_amount'] + $transactionExpense + $oilPurchaseTotal;
 
+        
         // ✅ UPDATED: Net Income (Revenue - Expenses)
         $netIncome = $totalRevenue - $totalExpenses;
 
         // Cash Position from cash flow
         $cashInHand = $cashFlow ? $cashFlow->in_hand : 0;
         $cashInBank = $cashFlow ? $cashFlow->in_bank : 0;
+        $fuelcard = $cashFlow ? $cashFlow->fuelcard : 0;
+        $creditcard = $cashFlow ? $cashFlow->creditcard : 0;
 
         // ✅ CASH HANDOVER from shift (opening cash)
         $cashHandover = $shift ? $shift->cash_handover : 0;
@@ -545,8 +548,10 @@ class ShiftReportController extends Controller
             'cash_handover' => $cashHandover,
             'cash_in_hand' => $cashInHand,
             'cash_in_bank' => $cashInBank,
+            'fuelcard' => $fuelcard,
+            'creditcard' => $creditcard,
             // ✅ FIXED: Total Cash Balance should NOT include cash handover twice
-            'total_cash_balance' => $cashInHand + $cashInBank // NOT + $cashHandover
+            'total_cash_balance' => $cashInHand + $cashInBank + $fuelcard  + $creditcard// NOT + $cashHandover
         ];
     }
 
