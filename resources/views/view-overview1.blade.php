@@ -305,7 +305,7 @@
                                                         <th>Tank Name</th>
                                                         <th>Capacity</th>
                                                         <th>Current Level</th>
-														  <th>Product</th>
+                                                        <th>Product</th>
                                                         <th>Status</th>
                                                         <th>Actions</th>
                                                     </tr>
@@ -376,9 +376,9 @@
                                                 <h6 class="mt-1">Daily Nozzle Reading</h6>
                                                 <div>
                                                     <!-- <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
-                                                        data-bs-target="#changeNozzleResetModal">
-                                                        <i class="bi bi-plus-circle"></i> Change Nozzle Reset
-                                                    </button> -->
+                                                                data-bs-target="#changeNozzleResetModal">
+                                                                <i class="bi bi-plus-circle"></i> Change Nozzle Reset
+                                                            </button> -->
                                                     <button class="btn btn-sm btn-info" onclick="loadNozzleResetLogs()">
                                                         <i class="bi bi-clock-history"></i>Nozzle Reset Log
                                                     </button>
@@ -531,104 +531,109 @@
     </div>
 
     <!-- Add Tank Modal -->
-  <div class="modal fade" id="addTankModal" tabindex="-1" aria-labelledby="addTankLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="addTankForm">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addTankLabel">Add Tank</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body">
-
-                    <!-- Station -->
-                    <div class="mb-3">
-                        <label class="form-label">Station</label>
-                        <select name="station_id" class="form-select" required>
-                            <option value="">Select Station</option>
-                        </select>
+    <div class="modal fade" id="addTankModal" tabindex="-1" aria-labelledby="addTankLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="addTankForm">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addTankLabel">Add Tank</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
-                    <!-- Product -->
-                    <div class="mb-3">
-                        <label class="form-label">Product</label>
-                        <select name="product_id" id="tankproduct" class="form-select" required>
-                            <option value="">Select Product</option>
-                        </select>
+                    <div class="modal-body">
+
+                        <!-- Station -->
+                        <div class="mb-3">
+                            <label class="form-label">Station</label>
+                            <select name="station_id" class="form-select" required>
+                                <option value="">Select Station</option>
+                            </select>
+                        </div>
+
+                        <!-- Product -->
+                        <div class="mb-3">
+                            <label class="form-label">Product</label>
+                            <select name="product_id" id="tankproduct" class="form-select" required>
+                                <option value="">Select Product</option>
+                            </select>
+                        </div>
+
+                        <!-- Tank Name -->
+                        <div class="mb-3">
+                            <label class="form-label">Tank Name</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+
+                        <!-- Capacity -->
+                        <div class="mb-3">
+                            <label class="form-label">Capacity</label>
+                            <input type="number" id="capacity" name="capacity" class="form-control" required min="0"
+                                step="0.01">
+                        </div>
+
+                        <!-- Current Level -->
+                        <div class="mb-3">
+                            <label class="form-label">Current Level</label>
+                            <input type="number" id="current_level" name="current_level" class="form-control" required
+                                min="0" step="0.01" value="0">
+                            <small class="text-danger d-none" id="levelError">
+                                Current level cannot be greater than capacity
+                            </small>
+                        </div>
+
+                        <!-- Current Level MM -->
+                        <div class="mb-3">
+                            <label class="form-label">Current Level MM</label>
+                            <input type="number" name="current_level_mm" class="form-control" required min="0" step="0.01"
+                                value="0">
+                        </div>
+
+                        <!-- Dry Limit -->
+                        <div class="mb-3">
+                            <label class="form-label">Dry Limit</label>
+                            <input type="number" name="dry_limit" class="form-control" required min="0" step="0.01"
+                                value="0">
+                        </div>
+
+                        <!-- Initial Date -->
+                        <div class="mb-3">
+                            <label class="form-label">Initial Date & Time</label>
+                            <input type="datetime-local" name="intial_date" id="tank_initial_date" class="form-control"
+                                required>
+                        </div>
+
+                        <!-- ✅ Initial Setup -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="initial_setup">
+                            <label class="form-check-label">Initial Setup</label>
+                        </div>
+
+                        <!-- ✅ Buying Price (hidden) -->
+                        <div class="mb-3 d-none" id="buyingPriceField">
+                            <label class="form-label">Buying Price</label>
+                            <input type="number" name="buying_price" class="form-control" step="0.01" min="0">
+                        </div>
+
+                        <!-- Status -->
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select" required>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+
                     </div>
 
-                    <!-- Tank Name -->
-                    <div class="mb-3">
-                        <label class="form-label">Tank Name</label>
-                        <input type="text" name="name" class="form-control" required>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Tank</button>
                     </div>
-
-                    <!-- Capacity -->
-                    <div class="mb-3">
-                        <label class="form-label">Capacity</label>
-                        <input type="number" id="capacity" name="capacity" class="form-control" required min="0" step="0.01">
-                    </div>
-
-                    <!-- Current Level -->
-                    <div class="mb-3">
-                        <label class="form-label">Current Level</label>
-                        <input type="number" id="current_level" name="current_level" class="form-control" required min="0" step="0.01" value="0">
-                        <small class="text-danger d-none" id="levelError">
-                            Current level cannot be greater than capacity
-                        </small>
-                    </div>
-
-                    <!-- Current Level MM -->
-                    <div class="mb-3">
-                        <label class="form-label">Current Level MM</label>
-                        <input type="number" name="current_level_mm" class="form-control" required min="0" step="0.01" value="0">
-                    </div>
-
-                    <!-- Dry Limit -->
-                    <div class="mb-3">
-                        <label class="form-label">Dry Limit</label>
-                        <input type="number" name="dry_limit" class="form-control" required min="0" step="0.01" value="0">
-                    </div>
-
-                    <!-- Initial Date -->
-                    <div class="mb-3">
-                        <label class="form-label">Initial Date & Time</label>
-                        <input type="datetime-local" name="intial_date" id="tank_initial_date" class="form-control" required>
-                    </div>
-
-                    <!-- ✅ Initial Setup -->
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="initial_setup">
-                        <label class="form-check-label">Initial Setup</label>
-                    </div>
-
-                    <!-- ✅ Buying Price (hidden) -->
-                    <div class="mb-3 d-none" id="buyingPriceField">
-                        <label class="form-label">Buying Price</label>
-                        <input type="number" name="buying_price" class="form-control" step="0.01" min="0">
-                    </div>
-
-                    <!-- Status -->
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select name="status" class="form-select" required>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </div>
-
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Tank</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
-</div>
     <!-- Add Dispenser Modal -->
     <div class="modal fade" id="addDispenserModal" tabindex="-1" aria-labelledby="addDispenserModalLabel"
         aria-hidden="true">
@@ -874,7 +879,7 @@
             allProducts = [],
             stations = [];
         let sntable;
-		var local=0;
+        var local = 0;
         let oilPurchases = [];
 
 
@@ -906,7 +911,7 @@
                 }
 
                 stations = Array.isArray(res) ? res : [res];
-				 local=stations[0]['local'];
+                local = stations[0]['local'];
                 console.log('Processed stations array:', stations, local);
 
                 if (stations.length > 0) {
@@ -991,20 +996,20 @@
             const tbody = $('#tanksTable tbody').empty();
             tanks.forEach((t, i) => {
                 tbody.append(`
-                            <tr>
-                                <td>${i + 1}</td>
-                                <td>${t.name}</td>
-                                <td>${t.capacity}</td>
-                                <td>${t.current_level}</td>
-                                <td>${t.product_name}</td>
-								
-                                <td><span class="badge bg-${getStatusBadgeClass(t.status)}">${t.status}</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="editTank(${t.id})">Edit</button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteTank(${t.id})">Delete</button>
-                                </td>
-                            </tr>
-                        `);
+                                    <tr>
+                                        <td>${i + 1}</td>
+                                        <td>${t.name}</td>
+                                        <td>${t.capacity}</td>
+                                        <td>${t.current_level}</td>
+                                        <td>${t.product_name}</td>
+
+                                        <td><span class="badge bg-${getStatusBadgeClass(t.status)}">${t.status}</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editTank(${t.id})">Edit</button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTank(${t.id})">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
             });
         }
 
@@ -1118,97 +1123,97 @@
         });
 
         $('#addTankForm').off('submit').on('submit', function (e) {
-    e.preventDefault();
+            e.preventDefault();
 
-    let id = $('#addTankModal').data('edit-id');
+            let id = $('#addTankModal').data('edit-id');
 
-    let station_id = $('#addTankModal').find('select[name="station_id"]').val();
-    let product_id = $('#addTankModal').find('select[name="product_id"]').val();
+            let station_id = $('#addTankModal').find('select[name="station_id"]').val();
+            let product_id = $('#addTankModal').find('select[name="product_id"]').val();
 
-    // Choices fallback
-    try {
-        const tankProductEl = document.querySelector('#tankproduct');
-        if ((!product_id || product_id === '') && tankProductEl?.choicesInstance) {
-            product_id = tankProductEl.choicesInstance.getValue(true);
-        }
+            // Choices fallback
+            try {
+                const tankProductEl = document.querySelector('#tankproduct');
+                if ((!product_id || product_id === '') && tankProductEl?.choicesInstance) {
+                    product_id = tankProductEl.choicesInstance.getValue(true);
+                }
 
-        const stationEl = document.querySelector('#addTankModal select[name="station_id"]');
-        if ((!station_id || station_id === '') && stationEl?.choicesInstance) {
-            station_id = stationEl.choicesInstance.getValue(true);
-        }
-    } catch (err) {
-        console.warn('Choices fallback failed', err);
-    }
-
-    // ✅ BASIC VALIDATION
-    if (!station_id || !product_id) {
-        showToast('Please select both station and product', 'error');
-        return;
-    }
-
-    // ✅ CHECK INITIAL SETUP
-    let isInitial = $('#initial_setup').is(':checked');
-
-    let data = {
-        station_id: station_id,
-        product_id: product_id,
-        name: $('#addTankModal').find('input[name="name"]').val(),
-        capacity: $('#addTankModal').find('input[name="capacity"]').val(),
-        current_level: $('#addTankModal').find('input[name="current_level"]').val(),
-        current_level_mm: $('#addTankModal').find('input[name="current_level_mm"]').val(),
-        dry_limit: $('#addTankModal').find('input[name="dry_limit"]').val(),
-        intial_date: $('#addTankModal').find('input[name="intial_date"]').val(),
-        status: $('#addTankModal').find('select[name="status"]').val(),
-
-        // ✅ NEW FIELDS
-        initial: isInitial ? 1 : 0,
-        buying_price: isInitial 
-            ? $('#addTankModal').find('input[name="buying_price"]').val()
-            : null
-    };
-
-    // ✅ EXTRA VALIDATION
-    if (isInitial && (!data.buying_price || data.buying_price <= 0)) {
-        showToast('Buying price is required for initial setup', 'error');
-        return;
-    }
-
-    // ✅ CAPACITY CHECK
-    if (parseFloat(data.current_level) > parseFloat(data.capacity)) {
-        showToast('Current level cannot exceed capacity', 'error');
-        return;
-    }
-
-    let url = id
-        ? `{{ route('tanks.update', ':id') }}`.replace(':id', id)
-        : `{{ route('tanks.store') }}`;
-
-    let method = id ? 'PUT' : 'POST';
-
-    $.ajax({
-        url,
-        method,
-        contentType: 'application/json',
-        data: JSON.stringify(data),
-
-        success: function () {
-            showToast(id ? 'Tank updated' : 'Tank added', 'success');
-            $('#addTankModal').modal('hide');
-            loadTanks();
-        },
-
-        error: function (xhr) {
-            let errors = xhr.responseJSON?.errors;
-
-            if (errors) {
-                let errorMsg = Object.values(errors).flat().join(', ');
-                showToast(errorMsg, 'error');
-            } else {
-                showToast('Error saving tank', 'error');
+                const stationEl = document.querySelector('#addTankModal select[name="station_id"]');
+                if ((!station_id || station_id === '') && stationEl?.choicesInstance) {
+                    station_id = stationEl.choicesInstance.getValue(true);
+                }
+            } catch (err) {
+                console.warn('Choices fallback failed', err);
             }
-        }
-    });
-});
+
+            // ✅ BASIC VALIDATION
+            if (!station_id || !product_id) {
+                showToast('Please select both station and product', 'error');
+                return;
+            }
+
+            // ✅ CHECK INITIAL SETUP
+            let isInitial = $('#initial_setup').is(':checked');
+
+            let data = {
+                station_id: station_id,
+                product_id: product_id,
+                name: $('#addTankModal').find('input[name="name"]').val(),
+                capacity: $('#addTankModal').find('input[name="capacity"]').val(),
+                current_level: $('#addTankModal').find('input[name="current_level"]').val(),
+                current_level_mm: $('#addTankModal').find('input[name="current_level_mm"]').val(),
+                dry_limit: $('#addTankModal').find('input[name="dry_limit"]').val(),
+                intial_date: $('#addTankModal').find('input[name="intial_date"]').val(),
+                status: $('#addTankModal').find('select[name="status"]').val(),
+
+                // ✅ NEW FIELDS
+                initial: isInitial ? 1 : 0,
+                buying_price: isInitial
+                    ? $('#addTankModal').find('input[name="buying_price"]').val()
+                    : null
+            };
+
+            // ✅ EXTRA VALIDATION
+            if (isInitial && (!data.buying_price || data.buying_price <= 0)) {
+                showToast('Buying price is required for initial setup', 'error');
+                return;
+            }
+
+            // ✅ CAPACITY CHECK
+            if (parseFloat(data.current_level) > parseFloat(data.capacity)) {
+                showToast('Current level cannot exceed capacity', 'error');
+                return;
+            }
+
+            let url = id
+                ? `{{ route('tanks.update', ':id') }}`.replace(':id', id)
+                : `{{ route('tanks.store') }}`;
+
+            let method = id ? 'PUT' : 'POST';
+
+            $.ajax({
+                url,
+                method,
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+
+                success: function () {
+                    showToast(id ? 'Tank updated' : 'Tank added', 'success');
+                    $('#addTankModal').modal('hide');
+                    loadTanks();
+                },
+
+                error: function (xhr) {
+                    let errors = xhr.responseJSON?.errors;
+
+                    if (errors) {
+                        let errorMsg = Object.values(errors).flat().join(', ');
+                        showToast(errorMsg, 'error');
+                    } else {
+                        showToast('Error saving tank', 'error');
+                    }
+                }
+            });
+        });
         function deleteTank(id) {
             if (!confirm("Delete this tank?")) return;
             $.ajax({
@@ -1238,17 +1243,17 @@
             const tbody = $('#dispensersTable tbody').empty();
             dispensers.forEach((d, i) => {
                 tbody.append(`
-                            <tr>
-                                <td>${i + 1}</td>
-                                <td>${d.name}</td>
-                                <td>${d.tank_name}</td>
-                                <td><span class="badge bg-${getStatusBadgeClass(d.status)}">${d.status}</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="editDispenser(${d.id})">Edit</button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteDispenser(${d.id})">Delete</button>
-                                </td>
-                            </tr>
-                        `);
+                                    <tr>
+                                        <td>${i + 1}</td>
+                                        <td>${d.name}</td>
+                                        <td>${d.tank_name}</td>
+                                        <td><span class="badge bg-${getStatusBadgeClass(d.status)}">${d.status}</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editDispenser(${d.id})">Edit</button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteDispenser(${d.id})">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
             });
         }
 
@@ -1262,32 +1267,32 @@
 
                 for (let i = 1; i <= count; i++) {
                     const nozzleHtml = `
-                            <div class="nozzle-field-group border-bottom pb-3 mb-3">
-                                <h6 class="text-secondary">Nozzle ${i}</h6>
-                                <div class="row">
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label">Nozzle Name</label>
-                                        <input type="text" class="form-control nozzle-name" name="nozzles[${i}][name]" placeholder="Enter nozzle name" required>
+                                    <div class="nozzle-field-group border-bottom pb-3 mb-3">
+                                        <h6 class="text-secondary">Nozzle ${i}</h6>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-2">
+                                                <label class="form-label">Nozzle Name</label>
+                                                <input type="text" class="form-control nozzle-name" name="nozzles[${i}][name]" placeholder="Enter nozzle name" required>
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label class="form-label">Product</label>
+                                                <select class="form-select nozzle-product" name="nozzles[${i}][product_id]" required>
+                                                    <option value="">Select Product</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label class="form-label">Current Reading</label>
+                                                <input type="number" class="form-control nozzle-reading" name="nozzles[${i}][current_reading]" min="0" step="0.01" placeholder="0.00" required>
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label class="form-label">Tank</label>
+                                                <select class="form-select nozzle-tank" name="nozzles[${i}][tank_id]" required>
+                                                    <option value="">Select Tank</option>
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label">Product</label>
-                                        <select class="form-select nozzle-product" name="nozzles[${i}][product_id]" required>
-                                            <option value="">Select Product</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label">Current Reading</label>
-                                        <input type="number" class="form-control nozzle-reading" name="nozzles[${i}][current_reading]" min="0" step="0.01" placeholder="0.00" required>
-                                    </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label">Tank</label>
-                                        <select class="form-select nozzle-tank" name="nozzles[${i}][tank_id]" required>
-                                            <option value="">Select Tank</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                                `;
                     container.append(nozzleHtml);
                 }
 
@@ -1653,21 +1658,21 @@
                 const statusText = isActive ? 'Active' : 'Inactive';
 
                 tbody.append(`
-                                                                                                            <tr>
-                                                                                                                <td>${i + 1}</td>
-                                                                                                                <td>${n.name}</td>
-                                                                                                                <td>${n.dispenser_name}</td>
-                                                                                                                <td>${n.nozzle_reading}</td>
-                                                                                                                <td>${n.tank_reading || 0}</td>
-                                                                                                                <td>
-                                                                                                                    <span class="badge bg-${statusClass}">${statusText}</span>
-                                                                                                                </td>
-                                                                                                                <td>
-                                                                                                                    <button class="btn btn-sm btn-outline-primary" onclick="editNozzle(${n.id})">Edit</button>
-                                                                                                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteNozzle(${n.id})">Delete</button>
-                                                                                                                </td>
-                                                                                                            </tr>
-                                                                                                        `);
+                                                                                                                    <tr>
+                                                                                                                        <td>${i + 1}</td>
+                                                                                                                        <td>${n.name}</td>
+                                                                                                                        <td>${n.dispenser_name}</td>
+                                                                                                                        <td>${n.nozzle_reading}</td>
+                                                                                                                        <td>${n.tank_reading || 0}</td>
+                                                                                                                        <td>
+                                                                                                                            <span class="badge bg-${statusClass}">${statusText}</span>
+                                                                                                                        </td>
+                                                                                                                        <td>
+                                                                                                                            <button class="btn btn-sm btn-outline-primary" onclick="editNozzle(${n.id})">Edit</button>
+                                                                                                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteNozzle(${n.id})">Delete</button>
+                                                                                                                        </td>
+                                                                                                                    </tr>
+                                                                                                                `);
             });
         }
 
@@ -1886,19 +1891,19 @@
             const tbody = $('#productsTable tbody').empty();
             products.forEach((p, i) => {
                 tbody.append(`
-                            <tr>
-                                <td>${i + 1}</td>
-                                <td>${p.category || '-'}</td>
-                                <td>${p.product || '-'}</td>
-                                <td>${p.price || '-'}</td>
-                                <td>${p.effective_from || '-'}</td>
-                                <td>${p.effective_to || '-'}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${p.station_product_id})">Edit</button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${p.id})">Delete</button>
-                                </td>
-                            </tr>
-                        `);
+                                    <tr>
+                                        <td>${i + 1}</td>
+                                        <td>${p.category || '-'}</td>
+                                        <td>${p.product || '-'}</td>
+                                        <td>${p.price || '-'}</td>
+                                        <td>${p.effective_from || '-'}</td>
+                                        <td>${p.effective_to || '-'}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${p.station_product_id})">Edit</button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${p.id})">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
             });
         }
 
@@ -2169,18 +2174,18 @@
 
                 $.each(res, function (i, row) {
                     tbody.append(`
-                                                                                                                                                        <tr>
-                                                                                                                                                            <td>${i + 1}</td>
-                                                                                                                                                            <td>${row.station_name || '-'}</td>
-                                                                                                                                                            <td>${row.dispenser_name || '-'}</td>
-                                                                                                                                                            <td>${row.nozzle_name || '-'}</td>
-                                                                                                                                                            <td>${row.old_reading}</td>
-                                                                                                                                                            <td>${row.new_reading}</td>
-                                                                                                                                                            <td>${row.reason || '-'}</td>
-                                                                                                                                                            <td>${row.reset_date}</td>
-                                                                                                                                                            <td>${row.username || '-'}</td>
-                                                                                                                                                        </tr>
-                                                                                                                                                    `);
+                                                                                                                                                                <tr>
+                                                                                                                                                                    <td>${i + 1}</td>
+                                                                                                                                                                    <td>${row.station_name || '-'}</td>
+                                                                                                                                                                    <td>${row.dispenser_name || '-'}</td>
+                                                                                                                                                                    <td>${row.nozzle_name || '-'}</td>
+                                                                                                                                                                    <td>${row.old_reading}</td>
+                                                                                                                                                                    <td>${row.new_reading}</td>
+                                                                                                                                                                    <td>${row.reason || '-'}</td>
+                                                                                                                                                                    <td>${row.reset_date}</td>
+                                                                                                                                                                    <td>${row.username || '-'}</td>
+                                                                                                                                                                </tr>
+                                                                                                                                                            `);
                 });
 
                 $('#nozzleResetLogModal').modal('show');
@@ -2253,10 +2258,13 @@
         function loadOrders() {
             let stationId = `{{ request()->segment(2) }}`;
             $.get(`/api/oil-purchases/station/${stationId}`, function (res) {
-                oilPurchases = res;
-                populateOrdersList(res);
+                // Sort by ID descending and take first 5
+                const sortedOrders = res.sort((a, b) => b.id - a.id);
+                oilPurchases = sortedOrders.slice(0, 7); // Store only 5 for search
+                populateOrdersList(oilPurchases);
             }).fail(() => showToast('Error loading orders', 'error'));
         }
+
 
         // Populate orders list
         function populateOrdersList(orders) {
@@ -2264,16 +2272,17 @@
 
             if (orders.length === 0) {
                 ordersList.html(`
-                                                                                                                                    <div class="text-center py-4">
-                                                                                                                                        <i class="bi bi-inbox display-4 text-muted"></i>
-                                                                                                                                        <p class="mt-2 text-muted">No orders found</p>
-                                                                                                                                    </div>
-                                                                                                                                `);
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox display-4 text-muted"></i>
+                    <p class="mt-2 text-muted">No orders found</p>
+                </div>
+            `);
                 return;
             }
 
             let ordersHtml = '';
 
+            // Show only first 5 orders (already limited)
             orders.forEach(order => {
                 // Format dates
                 const orderDate = new Date(order.order_date).toLocaleDateString();
@@ -2284,19 +2293,28 @@
                 const statusText = getOrderStatusText(order.payment_status);
 
                 ordersHtml += `
-                                                                                                                                    <div class="d-flex justify-content-between align-items-center border-bottom border-dashed py-3">
-                                                                                                                                        <div class="flex-grow-1">
-                                                                                                                                            <h6 class="mb-1"><span class="fw-normal me-2">Invoice:</span>${order.invoice_no || 'N/A'}</h6>
-                                                                                                                                            <p class="mb-1 fs-12 text-muted">Order: ${orderDate} | Receive: ${receivingDate}</p>
-                                                                                                                                            <p class="mb-0 fs-12 text-muted">Qty: ${order.recieved_qty} | Rate: ${order.rate}</p>
-                                                                                                                                            <p class="mb-0 fs-12 text-muted">Supplier: ${order.supplier_name || 'N/A'}</p>
-                                                                                                                                        </div>
-                                                                                                                                        <div class="text-end">
-                                                                                                                                            <span class="badge ${statusClass}">${statusText}</span>
-                                                                                                                                        </div>
-                                                                                                                                    </div>
-                                                                                                                                `;
+                <div class="d-flex justify-content-between align-items-center border-bottom border-dashed py-3">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1"><span class="fw-normal me-2">Product:</span>${order.product_name || 'N/A'}</h6>
+                        <p class="mb-1 fs-12 text-muted">Order: ${orderDate} | Receive: ${receivingDate}</p>
+                        <p class="mb-0 fs-12 text-muted">Qty: ${order.recieved_qty} | Rate: ${order.rate}</p>
+                        <p class="mb-0 fs-12 text-muted">Supplier: ${order.supplier_name || 'N/A'}</p>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge ${statusClass}">${statusText}</span>
+                    </div>
+                </div>
+            `;
             });
+
+            // ✅ ADD "View More" link at the end
+            ordersHtml += `
+            <div class="text-center mt-3">
+                <a href="{{ url('/oil-purchase') }}" target="_blank" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="bi bi-eye me-1"></i> View More Orders
+                </a>
+            </div>
+        `;
 
             ordersList.html(ordersHtml);
         }
@@ -2332,6 +2350,7 @@
                     return status;
             }
         }
+
 
         // Search functionality for orders
         $('#ordersSearch').on('input', function () {
@@ -2385,11 +2404,11 @@
 
                 if (recentOrders.length === 0) {
                     $('#recentOrders').html(`
-                                                                                                                                    <div class="text-center text-muted">
-                                                                                                                                        <i class="bi bi-inbox display-6"></i>
-                                                                                                                                        <p class="mt-2 fs-12">No recent orders</p>
-                                                                                                                                    </div>
-                                                                                                                                `);
+                                            <div class="text-center text-muted">
+                                                <i class="bi bi-inbox display-6"></i>
+                                                <p class="mt-2 fs-12">No recent orders</p>
+                                            </div>
+                                        `);
                     return;
                 }
 
@@ -2402,34 +2421,36 @@
                     const statusText = getOrderStatusText(order.payment_status);
 
                     ordersHtml += `
-                                                                                                                                    <div class="order-item">
-                                                                                                                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                                                                                                                            <div>
-                                                                                                                                                <strong class="fs-14">${order.invoice_no || 'N/A'}</strong>
-                                                                                                                                                <p class="mb-1 fs-12 text-muted">Order: ${orderDate}</p>
-                                                                                                                                            </div>
-                                                                                                                                            <span class="badge ${statusClass} status-badge">${statusText}</span>
-                                                                                                                                        </div>
-                                                                                                                                        <div class="fs-12">
-                                                                                                                                            <span class="text-muted">Qty:</span> ${order.recieved_qty} | 
-                                                                                                                                            <span class="text-muted">Rate:</span> ${order.rate}
-                                                                                                                                        </div>
-                                                                                                                                        <div class="fs-12 text-muted">
-                                                                                                                                            Receive: ${receivingDate}
-                                                                                                                                        </div>
-                                                                                                                                    </div>
-                                                                                                                                `;
+                        <div class="order-item">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <strong class="fs-14">${order.product_name || 'N/A'}</strong>
+                                    <p class="mb-1 fs-12 text-muted">Order: ${orderDate}</p>
+                                </div>
+                                <span class="badge ${statusClass} status-badge">${statusText}</span>
+                            </div>
+                            <div class="fs-12">
+                                <span class="text-muted">Qty:</span> ${order.recieved_qty} | 
+                                <span class="text-muted">Rate:</span> ${order.rate}
+                            </div>
+                            <div class="fs-12 text-muted">
+                                Receive: ${receivingDate}
+                            </div>
+                        </div>
+                    `;
                 });
 
                 $('#recentOrders').html(ordersHtml);
             }).fail(() => {
                 $('#recentOrders').html(`
-                                                                                                                                <div class="text-center text-danger">
-                                                                                                                                    <i class="bi bi-exclamation-triangle"></i>
-                                                                                                                                    <p class="mt-2 fs-12">Failed to load orders</p>
-                                                                                                                                </div>
-                                                                                                                            `);
+                <div class="text-center text-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <p class="mt-2 fs-12">Failed to load orders</p>
+                </div>
+            `);
             });
+            loadOrders();
+
         }
 
         // Helper functions for order status
@@ -2515,13 +2536,13 @@
 
             if (readings.length === 0) {
                 tbody.append(`
-                                            <tr>
-                                                <td colspan="8" class="text-center text-muted py-4">
-                                                    <i class="bi bi-inbox display-6"></i>
-                                                    <p class="mt-2">No tank dip readings found</p>
-                                                </td>
-                                            </tr>
-                                        `);
+                                                    <tr>
+                                                        <td colspan="8" class="text-center text-muted py-4">
+                                                            <i class="bi bi-inbox display-6"></i>
+                                                            <p class="mt-2">No tank dip readings found</p>
+                                                        </td>
+                                                    </tr>
+                                                `);
                 return;
             }
 
@@ -2529,20 +2550,20 @@
                 const readingDate = new Date(reading.Reading_date_Time).toLocaleString();
 
                 tbody.append(`
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td>${reading.tank_name || `Tank ${reading.tank_id}`}</td>
-                                <td>${reading.dip_mm ?? '-'}</td>
-                                <td>${reading.dip_in_liters ? parseFloat(reading.dip_in_liters).toFixed(2) : '-'}</td>
-                                <td>${reading.created_at}</td>
-                                <td>${reading.created_by_name ?? '-'}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteTankDipReading(${reading.id})">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `);
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${reading.tank_name || `Tank ${reading.tank_id}`}</td>
+                                        <td>${reading.dip_mm ?? '-'}</td>
+                                        <td>${reading.dip_in_liters ? parseFloat(reading.dip_in_liters).toFixed(2) : '-'}</td>
+                                        <td>${reading.created_at}</td>
+                                        <td>${reading.created_by_name ?? '-'}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTankDipReading(${reading.id})">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `);
             });
         }
 
@@ -2596,7 +2617,7 @@
                 return;
             }
 
-				console.log("element",element);
+            console.log("element", element);
             if (!element) {
                 console.warn('Dropdown element not found:', selector);
                 return;
@@ -2604,7 +2625,7 @@
 
             if (!items) items = [];
             if (!Array.isArray(items)) items = [items];
-			console.log("items",items);
+            console.log("items", items);
             console.log(`Populating dropdown with ${items.length} items:`, items);
 
             // Check if this is a station dropdown
@@ -2615,7 +2636,7 @@
             if (element.choicesInstance) {
                 try {
                     element.choicesInstance.destroy();
-					console.log("element destroyed")
+                    console.log("element destroyed")
                 } catch (e) {
                     console.warn('Error destroying Choices instance:', e);
                 }
@@ -2794,47 +2815,47 @@
                 populateDropdown('#shiftSelect', Array.isArray(res) ? res : [], 'id', 'shift_type');
             }).fail(() => showToast('Error loading shifts', 'error'));
         }
-// ✅ Validate Current Level <= Capacity (LIVE)
-$(document).on("input", "#current_level, #capacity", function () {
+        // ✅ Validate Current Level <= Capacity (LIVE)
+        $(document).on("input", "#current_level, #capacity", function () {
 
-    const capacity = parseFloat($("#capacity").val()) || 0;
-    const currentLevel = parseFloat($("#current_level").val()) || 0;
+            const capacity = parseFloat($("#capacity").val()) || 0;
+            const currentLevel = parseFloat($("#current_level").val()) || 0;
 
-    if (currentLevel > capacity) {
-        $("#levelError").removeClass("d-none");
-        $("#current_level").addClass("is-invalid");
-    } else {
-        $("#levelError").addClass("d-none");
-        $("#current_level").removeClass("is-invalid");
-    }
-});
-
-
-// ✅ Show / Hide Buying Price
-$(document).on("change", "#initial_setup", function () {
-    if ($(this).is(":checked")) {
-        $("#buyingPriceField").removeClass("d-none");
-    } else {
-        $("#buyingPriceField").addClass("d-none");
-        $("input[name='buying_price']").val("");
-    }
-});
+            if (currentLevel > capacity) {
+                $("#levelError").removeClass("d-none");
+                $("#current_level").addClass("is-invalid");
+            } else {
+                $("#levelError").addClass("d-none");
+                $("#current_level").removeClass("is-invalid");
+            }
+        });
 
 
-// ✅ Prevent submit if invalid
-$("#addTankForm").on("submit", function (e) {
+        // ✅ Show / Hide Buying Price
+        $(document).on("change", "#initial_setup", function () {
+            if ($(this).is(":checked")) {
+                $("#buyingPriceField").removeClass("d-none");
+            } else {
+                $("#buyingPriceField").addClass("d-none");
+                $("input[name='buying_price']").val("");
+            }
+        });
 
-    const capacity = parseFloat($("#capacity").val()) || 0;
-    const currentLevel = parseFloat($("#current_level").val()) || 0;
 
-    if (currentLevel > capacity) {
-        e.preventDefault();
-        $("#levelError").removeClass("d-none");
-        $("#current_level").addClass("is-invalid");
-        return false;
-    }
+        // ✅ Prevent submit if invalid
+        $("#addTankForm").on("submit", function (e) {
 
-});
+            const capacity = parseFloat($("#capacity").val()) || 0;
+            const currentLevel = parseFloat($("#current_level").val()) || 0;
+
+            if (currentLevel > capacity) {
+                e.preventDefault();
+                $("#levelError").removeClass("d-none");
+                $("#current_level").addClass("is-invalid");
+                return false;
+            }
+
+        });
     </script>
 
 @endsection

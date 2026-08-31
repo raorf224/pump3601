@@ -12,6 +12,8 @@ use App\Http\Controllers\reportController;
 
 
 
+use App\Http\Controllers\ShiftComprehensiveReportController;
+
 
 // Guest routes (accessible without login)
 Route::middleware('guest')->group(function () {
@@ -26,6 +28,11 @@ Route::get('/shifts/{id}/edit-closed', [ShiftController::class, 'editClosedShift
 // Dashboard Routes
 Route::get('/report', [reportController::class, 'index'])->name('report.index');
 Route::get('/report/fetch-unlimited', [reportController::class, 'fetchUnlimitedData'])->name('report.fetchUnlimitedData');
+
+// Comprehensive Shift Reports
+Route::get('/comprehensive', [App\Http\Controllers\ShiftComprehensiveReportController::class, 'index']);
+Route::get('/comprehensive-report/{shiftId}', [App\Http\Controllers\ShiftComprehensiveReportController::class, 'show']);
+Route::get('/comprehensive-export/{shiftId}', [App\Http\Controllers\ShiftComprehensiveReportController::class, 'exportExcel']);
 
 // Protected routes (need authentication)
 Route::middleware('auth')->group(function () {
