@@ -9,7 +9,7 @@ use App\Http\Controllers\ShiftController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\EditCloseShiftController;
 use App\Http\Controllers\reportController;
-
+use App\Http\Controllers\NozzleSalesDashboardController;
 
 
 use App\Http\Controllers\ShiftComprehensiveReportController;
@@ -33,6 +33,14 @@ Route::get('/report/fetch-unlimited', [reportController::class, 'fetchUnlimitedD
 Route::get('/comprehensive', [App\Http\Controllers\ShiftComprehensiveReportController::class, 'index']);
 Route::get('/comprehensive-report/{shiftId}', [App\Http\Controllers\ShiftComprehensiveReportController::class, 'show']);
 Route::get('/comprehensive-export/{shiftId}', [App\Http\Controllers\ShiftComprehensiveReportController::class, 'exportExcel']);
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/nozzle-sales-dashboard', [NozzleSalesDashboardController::class, 'index'])->name('nozzle-sales.index');
+    
+    // Move AJAX endpoints here
+    Route::get('/nozzle-sales/filters', [NozzleSalesDashboardController::class, 'getFilterOptions']);
+    Route::get('/nozzle-sales/dashboard-data', [NozzleSalesDashboardController::class, 'getDashboardData']);
+});
 
 // Protected routes (need authentication)
 Route::middleware('auth')->group(function () {
@@ -64,6 +72,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/station-audit/{stationId?}', function ($stationId = null) {
         return view('station-audit', compact('stationId'));
     })->name('station.audit')->middleware('auth');
+
+
 
     Route::get('/shift-reports', [ShiftReportController::class, 'index']);
     Route::get('/shift-reports/{shift_id}', [ShiftReportController::class, 'show']);

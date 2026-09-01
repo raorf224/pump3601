@@ -247,7 +247,7 @@
                 </ul>
             </li>
 
-            <li class="pe-menu-title">Reports</li>
+<li class="pe-menu-title">Reports</li>
             <li class="pe-slide pe-has-sub">
                 <a href="#collapseReports" class="pe-nav-link" data-bs-toggle="collapse" aria-expanded="false"
                     aria-controls="collapseReports">
@@ -268,11 +268,15 @@
                             <span class="pe-nav-content">Expense Sheet</span>
                         </a>
                     </li>
-
-
+                    <li class="pe-slide">
+                        <a href="{{url('nozzle-sales')}}" data-page="nozzle_sales" class="pe-nav-link">
+                            <i class="bi bi-fuel-pump pe-nav-icon"></i>
+                            <span class="pe-nav-content">Nozzle Sales</span>
+                        </a>
+                    </li>
                 </ul>
             </li>
-
+            
             <li class="pe-menu-title">Store</li>
             <li class="pe-slide pe-has-sub">
                 <a href="#collapseStore" class="pe-nav-link" data-bs-toggle="collapse" aria-expanded="false"

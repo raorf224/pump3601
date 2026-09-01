@@ -43,23 +43,28 @@ use App\Http\Controllers\EditCloseShiftController;
 use App\Http\Controllers\ShiftCashFlow;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ReceivedAmountController;
+use App\Http\Controllers\NozzleSalesDashboardController;
 
+Route::middleware('auth')->group(function () {
+    Route::get('/nozzle-sales/filters', [NozzleSalesDashboardController::class, 'getFilterOptions']);
+    Route::get('/nozzle-sales/dashboard-data', [NozzleSalesDashboardController::class, 'getDashboardData']);
+});
 
-	Route::post('/applogin', [AuthController::class, 'applogin']);
+Route::post('/applogin', [AuthController::class, 'applogin']);
 // ✅ Payment Details Routes
 Route::post('/site-total-amount/payment', [SiteTotalAmountController::class, 'storePaymentDetails']);
 Route::get('/site-total-amount/current/amount/{stationId}/{accountId}', [SiteTotalAmountController::class, 'CurrentAmount']);
 
 // ✅ Received Amount Routes - Separate for each role (following accounts pattern)
 // Route::middleware('auth:web')->group(function () {
-    Route::get('/received-amount', [ReceivedAmountController::class, 'index'])->name('received-amount');
-    Route::post('/received-amount/receive', [ReceivedAmountController::class, 'receivePayment']);
-    Route::get('/shifts/station/{stationId}/open', [ReceivedAmountController::class, 'getOpenShifts']);
-    
-    // Role-specific data routes - NO GROUPING, INDIVIDUAL ROWS
-    Route::get('/received-amount/data/admin', [ReceivedAmountController::class, 'getDataAdmin']);
-    Route::get('/received-amount/data/owner/{user_id}', [ReceivedAmountController::class, 'getDataOwner']);
-    Route::get('/received-amount/data/employee/{user_id}', [ReceivedAmountController::class, 'getDataEmployee']);
+Route::get('/received-amount', [ReceivedAmountController::class, 'index'])->name('received-amount');
+Route::post('/received-amount/receive', [ReceivedAmountController::class, 'receivePayment']);
+Route::get('/shifts/station/{stationId}/open', [ReceivedAmountController::class, 'getOpenShifts']);
+
+// Role-specific data routes - NO GROUPING, INDIVIDUAL ROWS
+Route::get('/received-amount/data/admin', [ReceivedAmountController::class, 'getDataAdmin']);
+Route::get('/received-amount/data/owner/{user_id}', [ReceivedAmountController::class, 'getDataOwner']);
+Route::get('/received-amount/data/employee/{user_id}', [ReceivedAmountController::class, 'getDataEmployee']);
 // });
 
 ///////////////////////////////// USER //////////////////////////
@@ -168,8 +173,8 @@ Route::put('/oil-purchases/{id}', [OilPurchaseController::class, 'update']);
 Route::get('/oil-purchasess/{id}', [OilPurchaseController::class, 'getbyId']);
 Route::get('/oil-purchases/{id}/payment-history', [OilPurchaseController::class, 'getPaymentHistory']);
 Route::post('/oil-purchases/{id}/partial-payment', [OilPurchaseController::class, 'processPartialPayment']);
-    Route::get('/oil-purchases/{id}/receive-history', [OilPurchaseController::class, 'getReceiveHistory']);
-    Route::get('/oil-purchases/{id}/can-receive', [OilPurchaseController::class, 'canReceiveMore']);
+Route::get('/oil-purchases/{id}/receive-history', [OilPurchaseController::class, 'getReceiveHistory']);
+Route::get('/oil-purchases/{id}/can-receive', [OilPurchaseController::class, 'canReceiveMore']);
 
 Route::get('/oil-purchases/{id}/payment-history', [OilPurchaseController::class, 'getPaymentHistory']);
 Route::post('/oil-purchases/{id}/partial-payment', [OilPurchaseController::class, 'processPartialPayment']);
@@ -200,14 +205,14 @@ Route::prefix('lubes')->group(function () {
     Route::put('/{id}/payment-status', [LubeController::class, 'updatePaymentStatus']);
     Route::post('/{id}/partial-payment', [LubeController::class, 'processPartialPayment']);
     Route::get('/{id}/payment-history', [LubeController::class, 'getPaymentHistory']);
-    
+
     // CRUD routes
     Route::post('/', [LubeController::class, 'store']);
     Route::get('/', [LubeController::class, 'index']);
     Route::get('/{id}', [LubeController::class, 'show']);
     Route::delete('/{id}', [LubeController::class, 'destroy']);
-	
-	        // ✅ NEW ROUTES
+
+    // ✅ NEW ROUTES
     Route::post('/inventory/setup', [LubeController::class, 'setupInventory']);
     Route::get('/inventory/logs/{product_id?}', [LubeController::class, 'getInventoryLogs']);
 
@@ -424,14 +429,14 @@ Route::get('/payroll-management/{user_id}', [PayrollManagementController::class,
 Route::post('/payroll-management/store', [PayrollManagementController::class, 'store']);
 Route::delete('/payroll-management/delete/{mutli_employes_id}', [PayrollManagementController::class, 'destroy']);
 Route::get('/payroll-management/summary', [PayrollManagementController::class, 'getSummary']);
- // Attendance Deduction Calculation
+// Attendance Deduction Calculation
 Route::post('/calculate-attendance-deduction', [PayrollManagementController::class, 'calculateAttendanceDeductionApi']);
 
 // Payslip Routes
 Route::get('/payslips', [PayslipController::class, 'index']);
 Route::get('/payslips/{id}', [PayslipController::class, 'show']);
 
- 
+
 
 
 // Chart of Accounts
@@ -455,24 +460,24 @@ Route::post('/journal-entry-lines', [JournalEntryLinesController::class, 'store'
 Route::put('/journal-entry-lines/{id}', [JournalEntryLinesController::class, 'update']);
 Route::delete('/journal-entry-lines/{id}', [JournalEntryLinesController::class, 'destroy']);
 
-    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
-    Route::get('/getroles', [RoleController::class, 'get'])->name('roles.index');
-    Route::post('/roles', [RoleController::class, 'store']);
-    Route::get('/roles/{id}/edit', [RoleController::class, 'edit']);
-    Route::put('/roles/{id}', [RoleController::class, 'update']);
-    Route::delete('/roles/{id}', [RoleController::class, 'destroy']);
+Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+Route::get('/getroles', [RoleController::class, 'get'])->name('roles.index');
+Route::post('/roles', [RoleController::class, 'store']);
+Route::get('/roles/{id}/edit', [RoleController::class, 'edit']);
+Route::put('/roles/{id}', [RoleController::class, 'update']);
+Route::delete('/roles/{id}', [RoleController::class, 'destroy']);
 
-    Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
-    Route::post('/assignPermissions/{roleId}', [PermissionController::class, 'assignPermissions']);
+Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
+Route::post('/assignPermissions/{roleId}', [PermissionController::class, 'assignPermissions']);
 
-    Route::get('/permissions/{id}/edit', [PermissionController::class, 'edit']);
-    Route::get('/getpermissions', [PermissionController::class, 'get']);
-    Route::put('/permissions/{id}', [PermissionController::class, 'update']);
-    Route::delete('/permissions/{id}', [PermissionController::class, 'destroy']);
-    Route::get('/sidebar/{userId}', [SidebarController::class, 'getSidebar']);
+Route::get('/permissions/{id}/edit', [PermissionController::class, 'edit']);
+Route::get('/getpermissions', [PermissionController::class, 'get']);
+Route::put('/permissions/{id}', [PermissionController::class, 'update']);
+Route::delete('/permissions/{id}', [PermissionController::class, 'destroy']);
+Route::get('/sidebar/{userId}', [SidebarController::class, 'getSidebar']);
 
-    Route::get('/get_rolespermission/{id}', [PermissionController::class, 'getrolespermission']);
-    Route::get('/getpermissionbyuserid/{id}/{role}', [PermissionController::class, 'getpermissionbyuserid']);
+Route::get('/get_rolespermission/{id}', [PermissionController::class, 'getrolespermission']);
+Route::get('/getpermissionbyuserid/{id}/{role}', [PermissionController::class, 'getpermissionbyuserid']);
 Route::get('/fuel-consumption-report', [FuelConsumptionReportController::class, 'index'])->name('fuel.consumption.report');
 Route::get('/fuel-consumption-data', [FuelConsumptionReportController::class, 'getData'])->name('fuel.consumption.data');
 Route::get('/dashboard', [DashController::class, 'index'])->name('api.dashboard');
@@ -493,12 +498,12 @@ Route::put('/edit-shift/{shiftId}/update', [EditCloseShiftController::class, 'up
 // Add/Update these routes
 Route::get('/edit-shift/{shift_id}/bank-transfer', [EditCloseShiftController::class, 'getBankTransferDetails']);
 Route::get('/edit-shift/{shift_id}/fuel-card', [EditCloseShiftController::class, 'getFuelCardDetails']);
-    Route::get('/edit-shift/{shift_id}/credit-card', [EditCloseShiftController::class, 'getCreditCardDetails']);
+Route::get('/edit-shift/{shift_id}/credit-card', [EditCloseShiftController::class, 'getCreditCardDetails']);
 Route::get('/credit-driver/shift/{shiftId}', [DriverCreditController::class, 'getByShiftId']);
 Route::get('/currentstatus/{id}', [StationController::class, 'currentstatus'])->name('currentstatus');
 Route::get('/station/{stationId}/audit-pdf', [StationController::class, 'downloadAuditReport']);
 Route::get('/audit-pdf/{stationId}', [StationController::class, 'generateAuditPdf']);
- Route::get('/driver-credit/admin', [DriverCreditController::class, 'getAdminData']);
+Route::get('/driver-credit/admin', [DriverCreditController::class, 'getAdminData']);
 Route::get('/driver-credit/owner/{userId}', [DriverCreditController::class, 'getOwnerData']);
 Route::get('/driver-credit/employee/{userId}', [DriverCreditController::class, 'getEmployeeData']);
 Route::post('/driver-credit/receive', [DriverCreditController::class, 'receivePayment']);
