@@ -1005,13 +1005,13 @@
 
                                         <td><span class="badge bg-${getStatusBadgeClass(t.status)}">${t.status}</span></td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-primary" onclick="editTank(${t.id})">Edit</button>
                                             <button class="btn btn-sm btn-outline-danger" onclick="deleteTank(${t.id})">Delete</button>
                                         </td>
                                     </tr>
                                 `);
             });
         }
+                                            // <button class="btn btn-sm btn-outline-primary" onclick="editTank(${t.id})">Edit</button>
 
         function editTank(id) {
             $.get(`/api/tanks/${id}`, function (res) {
