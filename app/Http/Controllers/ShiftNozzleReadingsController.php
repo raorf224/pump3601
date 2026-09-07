@@ -275,7 +275,7 @@ class ShiftNozzleReadingsController extends Controller
                 ->where('tank_id', $tankId)
                 ->where('product_id', $productId)
                 ->where('remaining_qty', '>', 0)
-                ->orderBy('created_at', 'asc')
+                ->orderBy('id', 'asc')
                 ->lockForUpdate()
                 ->get();
 
