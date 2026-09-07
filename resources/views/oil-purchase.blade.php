@@ -2266,7 +2266,7 @@
                         // Consider dry limit
                         if (dryLimit > 0) {
                             const minLevel = dryLimit;
-                            availableSpace = Math.max(0, capacity - currentLevel - minLevel);
+                            availableSpace = Math.max(0, capacity - currentLevel);
                         }
 
                         availableSpace = Math.max(0, availableSpace);
