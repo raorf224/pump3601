@@ -97,12 +97,19 @@
                         </div>
 
                         <!-- Station Filter -->
+                        <!-- <div class="col-md-2">
+                                <label class="form-label fw-semibold fs-12 text-secondary">STATION</label>
+                                <select id="filter_station" class="form-select form-select-sm">
+                                    <option value="">All Stations</option>
+                                </select>
+                            </div> -->
                         <div class="col-md-2">
                             <label class="form-label fw-semibold fs-12 text-secondary">STATION</label>
                             <select id="filter_station" class="form-select form-select-sm">
                                 <option value="">All Stations</option>
                             </select>
                         </div>
+
 
                         <!-- Dispensers Filter -->
                         <div class="col-md-2">
@@ -280,34 +287,35 @@
                     <div class="card-body">
                         <div class="table-box table-responsive">
                             <table id="nozzleSalesTable" class="table table-hover align-middle mb-0 w-100">
-    <thead>
-        <tr>
-            <th>Sr. No.</th>
-            <th>Reading Date</th>
-            <th>Tank</th>
-            <th>Dispenser</th>
-            <th>Product</th>
-            <th>Nozzle Name</th>
-            <th>Opening</th>
-            <th>Closing</th>
-            <th>Dispensed (L)</th>
-            <th>Testing (L)</th>
-            <th>Rate (PKR)</th>
-            <th>Total Amount (PKR)</th>
-            <th>Collected By</th>
-        </tr>
-    </thead>
-    <tbody></tbody>
-    <tfoot>
-        <tr class="fw-bold bg-light">
-            <td colspan="8" class="text-end">Summary Total:</td>
-            <td id="total_dispensed_sum" class="text-dark">0.00</td>
-            <td colspan="2"></td>
-            <td id="total_amount_sum" class="text-success">0.00</td>
-            <td></td>
-        </tr>
-    </tfoot>
-</table>
+                                <thead>
+                                    <tr>
+                                        <th>Sr. No.</th>
+                                        <th>Station Name</th>
+                                        <th>Reading Date</th>
+                                        <th>Tank</th>
+                                        <th>Dispenser</th>
+                                        <th>Product</th>
+                                        <th>Nozzle Name</th>
+                                        <th>Opening</th>
+                                        <th>Closing</th>
+                                        <th>Dispensed (L)</th>
+                                        <th>Testing (L)</th>
+                                        <th>Rate (PKR)</th>
+                                        <th>Total Amount (PKR)</th>
+                                        <th>Collected By</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                                <tfoot>
+                                    <tr class="fw-bold bg-light">
+                                        <td colspan="8" class="text-end">Summary Total:</td>
+                                        <td id="total_dispensed_sum" class="text-dark">0.00</td>
+                                        <td colspan="2"></td>
+                                        <td id="total_amount_sum" class="text-success">0.00</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -334,7 +342,7 @@
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
 
     <script>
-        let choicesDispensers, choicesNozzles;
+        let choicesStation, choicesDispensers, choicesNozzles;
         let rawOptionsData = { dispensers: [], nozzles: [] };
         let dataTableInstance = null;
 
@@ -359,6 +367,8 @@
 
             $('#btnReset').on('click', function () {
                 $('#filterForm')[0].reset();
+                if (choicesStation) choicesStation.setChoiceByValue('');   // All Stations
+
                 if (choicesDispensers) choicesDispensers.removeActiveItems();
                 if (choicesNozzles) choicesNozzles.removeActiveItems();
                 populateCascadedFilters($('#filter_station').val());
@@ -377,19 +387,43 @@
         });
 
         function initializeChoices() {
+            choicesStation = new Choices('#filter_station', {
+                searchEnabled: true,
+                removeItemButton: false,          // single select — remove button nahi
+                placeholderValue: 'Select Station',
+                shouldSort: false
+            });
             choicesDispensers = new Choices('#filter_dispensers', { removeItemButton: true, searchEnabled: true, placeholderValue: 'Select Dispensers' });
             choicesNozzles = new Choices('#filter_nozzles', { removeItemButton: true, searchEnabled: true, placeholderValue: 'Select Nozzles' });
         }
 
+        // function loadFilterOptions() {
+        //     $.get('/nozzle-sales/filters', function (response) {
+        //         let stationOptions = '<option value="">All Stations</option>';
+        //         if (response.stations) {
+        //             response.stations.forEach(s => {
+        //                 stationOptions += `<option value="${s.id}">${s.name}</option>`;
+        //             });
+        //         }
+        //         $('#filter_station').html(stationOptions);
+
+        //         rawOptionsData.dispensers = response.dispensers || [];
+        //         rawOptionsData.nozzles = response.nozzles || [];
+
+        //         populateCascadedFilters('');
+        //     });
+        // }
+
         function loadFilterOptions() {
             $.get('/nozzle-sales/filters', function (response) {
-                let stationOptions = '<option value="">All Stations</option>';
-                if (response.stations) {
-                    response.stations.forEach(s => {
-                        stationOptions += `<option value="${s.id}">${s.name}</option>`;
-                    });
-                }
-                $('#filter_station').html(stationOptions);
+                // Stations via Choices.js
+                choicesStation.clearStore();
+                choicesStation.setChoices(
+                    [{ value: '', label: 'All Stations', selected: true }].concat(
+                        (response.stations || []).map(s => ({ value: s.id, label: s.name }))
+                    ),
+                    'value', 'label', false
+                );
 
                 rawOptionsData.dispensers = response.dispensers || [];
                 rawOptionsData.nozzles = response.nozzles || [];
@@ -406,7 +440,7 @@
             }
 
             choicesDispensers.clearStore();
-            choicesDispensers.setChoices(filteredDispensers.map(d => ({ value: d.id, label: d.name })), 'value', 'label', false);
+            choicesDispensers.setChoices(filteredDispensers.map(d => ({ value: d.id, label: `${d.name} ,(${d.station_name})` })), 'value', 'label', false);
 
             updateNozzlesBySelectedDispensers();
         }
@@ -432,7 +466,7 @@
             const payload = {
                 date_from: $('#date_from').val(),
                 date_to: $('#date_to').val(),
-                station_id: $('#filter_station').val(),
+                station_id: choicesStation ? choicesStation.getValue(true) : $('#filter_station').val(),
                 dispenser_ids: choicesDispensers ? choicesDispensers.getValue(true) : [],
                 nozzle_ids: choicesNozzles ? choicesNozzles.getValue(true) : []
             };
@@ -515,92 +549,94 @@
         }
 
         function renderDataTable(tableData) {
-    if (dataTableInstance) {
-        dataTableInstance.destroy();
-    }
-
-    dataTableInstance = $('#nozzleSalesTable').DataTable({
-        data: tableData,
-        destroy: true,
-        dom: '<"d-flex justify-content-between align-items-center mb-3"Bf>rt<"d-flex justify-content-between align-items-center mt-3"lip>',
-        buttons: [
-            {
-                extend: 'excelHtml5',
-                className: 'btn btn-sm btn-success',
-                text: '<i class="bi bi-file-earmark-excel me-1"></i> Excel Export',
-                title: 'Nozzle Sales Detailed Report',
-                footer: true
-            },
-            {
-                extend: 'pdfHtml5',
-                className: 'btn btn-sm btn-danger',
-                text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF Export',
-                orientation: 'landscape',
-                title: 'Nozzle Sales Detailed Report',
-                footer: true
-            },
-            {
-                extend: 'print',
-                className: 'btn btn-sm btn-secondary',
-                text: '<i class="bi bi-printer me-1"></i> Print',
-                title: 'Nozzle Sales Detailed Report',
-                footer: true
+            if (dataTableInstance) {
+                dataTableInstance.destroy();
             }
-        ],
-        columns: [
-            // Sr. No. 1 se start hoga dynamically
-            { 
-                data: null, 
-                render: function (data, type, row, meta) {
-                    return `<span class="fw-semibold">${meta.row + 1}</span>`;
-                } 
-            },
-            {
-                data: 'reading_date',
-                render: function (data) {
-                    if (!data) return 'N/A';
-                    return data.split(' ')[0];
+
+            dataTableInstance = $('#nozzleSalesTable').DataTable({
+                data: tableData,
+                destroy: true,
+                dom: '<"d-flex justify-content-between align-items-center mb-3"Bf>rt<"d-flex justify-content-between align-items-center mt-3"lip>',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        className: 'btn btn-sm btn-success',
+                        text: '<i class="bi bi-file-earmark-excel me-1"></i> Excel Export',
+                        title: 'Nozzle Sales Detailed Report',
+                        footer: true
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        className: 'btn btn-sm btn-danger',
+                        text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF Export',
+                        orientation: 'landscape',
+                        title: 'Nozzle Sales Detailed Report',
+                        footer: true
+                    },
+                    {
+                        extend: 'print',
+                        className: 'btn btn-sm btn-secondary',
+                        text: '<i class="bi bi-printer me-1"></i> Print',
+                        title: 'Nozzle Sales Detailed Report',
+                        footer: true
+                    }
+                ],
+                columns: [
+                    // Sr. No. 1 se start hoga dynamically
+                    {
+                        data: null,
+                        render: function (data, type, row, meta) {
+                            return `<span class="fw-semibold">${meta.row + 1}</span>`;
+                        }
+                    },
+                    { data: 'station_name', render: data => `<span class="fw-semibold">${data ?? 'N/A'}</span>` },
+
+                    {
+                        data: 'reading_date',
+                        render: function (data) {
+                            if (!data) return 'N/A';
+                            return data.split(' ')[0];
+                        }
+                    },
+                    { data: 'tank_name', render: data => `<span class="badge bg-info-subtle text-info">${data ?? 'N/A'}</span>` },
+                    { data: 'dispenser_name', render: data => `<span class="fw-semibold text-secondary">${data ?? 'N/A'}</span>` },
+                    { data: 'product_name', render: data => `<span class="badge bg-primary-subtle text-primary">${data ?? 'N/A'}</span>` },
+                    { data: 'nozzel_name', render: data => `<span class="fw-semibold">${data ?? 'N/A'}</span>` },
+                    { data: 'opening_reading', render: data => parseFloat(data || 0).toFixed(2) },
+                    { data: 'closing_reading', render: data => parseFloat(data || 0).toFixed(2) },
+                    { data: 'total_dispensed', render: data => `<span class="fw-bold text-dark">${parseFloat(data || 0).toFixed(2)}</span>` },
+                    { data: 'testing_reading', render: data => parseFloat(data || 0).toFixed(2) },
+                    { data: 'rate', render: data => parseFloat(data || 0).toFixed(2) },
+                    { data: 'total_amount', render: data => `<span class="fw-bold text-success">${parseFloat(data || 0).toFixed(2)}</span>` },
+                    { data: 'collected_from_name', render: data => data ?? 'N/A' }
+                ],
+                footerCallback: function (row, data, start, end, display) {
+                    var api = this.api();
+
+                    var intVal = function (i) {
+                        return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
+                    };
+
+                    // Shift ID hatne ke baad Total Dispensed index 8 par hai
+                    var totalDispensed = api
+                        .column(8)
+                        .data()
+                        .reduce(function (a, b) {
+                            return intVal(a) + intVal(b);
+                        }, 0);
+
+                    // Shift ID hatne ke baad Total Amount index 11 par hai
+                    var totalAmount = api
+                        .column(11)
+                        .data()
+                        .reduce(function (a, b) {
+                            return intVal(a) + intVal(b);
+                        }, 0);
+
+                    $(api.column(8).footer()).html(totalDispensed.toFixed(2));
+                    $(api.column(11).footer()).html(totalAmount.toFixed(2));
                 }
-            },
-            { data: 'tank_name', render: data => `<span class="badge bg-info-subtle text-info">${data ?? 'N/A'}</span>` },
-            { data: 'dispenser_name', render: data => `<span class="fw-semibold text-secondary">${data ?? 'N/A'}</span>` },
-            { data: 'product_name', render: data => `<span class="badge bg-primary-subtle text-primary">${data ?? 'N/A'}</span>` },
-            { data: 'nozzel_name', render: data => `<span class="fw-semibold">${data ?? 'N/A'}</span>` },
-            { data: 'opening_reading', render: data => parseFloat(data || 0).toFixed(2) },
-            { data: 'closing_reading', render: data => parseFloat(data || 0).toFixed(2) },
-            { data: 'total_dispensed', render: data => `<span class="fw-bold text-dark">${parseFloat(data || 0).toFixed(2)}</span>` },
-            { data: 'testing_reading', render: data => parseFloat(data || 0).toFixed(2) },
-            { data: 'rate', render: data => parseFloat(data || 0).toFixed(2) },
-            { data: 'total_amount', render: data => `<span class="fw-bold text-success">${parseFloat(data || 0).toFixed(2)}</span>` },
-            { data: 'collected_from_name', render: data => data ?? 'N/A' }
-        ],
-        footerCallback: function (row, data, start, end, display) {
-            var api = this.api();
-
-            var intVal = function (i) {
-                return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
-            };
-
-            // Shift ID hatne ke baad Total Dispensed index 8 par hai
-            var totalDispensed = api
-                .column(8)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            // Shift ID hatne ke baad Total Amount index 11 par hai
-            var totalAmount = api
-                .column(11)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            $(api.column(8).footer()).html(totalDispensed.toFixed(2));
-            $(api.column(11).footer()).html(totalAmount.toFixed(2));
+            });
         }
-    });
-}
     </script>
 @endsection

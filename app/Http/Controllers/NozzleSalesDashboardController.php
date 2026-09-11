@@ -34,8 +34,14 @@ class NozzleSalesDashboardController extends Controller
 
         // Fetch Dispensers
         $dispensers = DB::table('dispensers')
-            ->select('id', 'name', 'station_id')
-            ->whereIn('station_id', $stationIds)
+            ->join('stations as s', 'dispensers.station_id', '=', 's.id')
+            ->select(
+                'dispensers.id',
+                'dispensers.name',
+                'dispensers.station_id',
+                's.name as station_name'
+            )
+            ->whereIn('dispensers.station_id', $stationIds)
             ->get();
 
         // Fetch Nozzles with dispenser_id for cascading script
@@ -120,7 +126,9 @@ class NozzleSalesDashboardController extends Controller
             'snr.total_amount',
             'snr.collected_from',
             'u.username as collected_from_name',
-            's.start_time as reading_date'
+            's.start_time as reading_date',
+            's.station_id',
+            'st.name as station_name'
         ])
             ->orderBy('snr.id', 'desc')
             ->get();
