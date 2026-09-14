@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\EditCloseShiftController;
 use App\Http\Controllers\reportController;
 use App\Http\Controllers\NozzleSalesDashboardController;
+use App\Http\Controllers\OverviewController;
+
 
 
 use App\Http\Controllers\ShiftComprehensiveReportController;
@@ -36,7 +38,8 @@ Route::get('/comprehensive-export/{shiftId}', [App\Http\Controllers\ShiftCompreh
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/nozzle-sales-dashboard', [NozzleSalesDashboardController::class, 'index'])->name('nozzle-sales.index');
-    
+        Route::get('/shift-overview', [OverviewController::class, 'index'])->name('shift.overview');
+
     // Move AJAX endpoints here
     Route::get('/nozzle-sales/filters', [NozzleSalesDashboardController::class, 'getFilterOptions']);
     Route::get('/nozzle-sales/dashboard-data', [NozzleSalesDashboardController::class, 'getDashboardData']);

@@ -44,6 +44,14 @@ use App\Http\Controllers\ShiftCashFlow;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ReceivedAmountController;
 use App\Http\Controllers\NozzleSalesDashboardController;
+use App\Http\Controllers\OverviewController;
+
+
+Route::prefix('overview')->group(function () {
+    Route::get('/stations', [OverviewController::class, 'getStationsOverview']);
+    Route::get('/station/{id}/shifts', [OverviewController::class, 'getStationShifts']);
+    Route::get('/station/{id}/manager', [OverviewController::class, 'getStationManager']);
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/nozzle-sales/filters', [NozzleSalesDashboardController::class, 'getFilterOptions']);

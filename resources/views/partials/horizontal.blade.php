@@ -274,6 +274,14 @@
                             <span class="pe-nav-content">Nozzle Sales</span>
                         </a>
                     </li>
+<li class="pe-slide">
+    <a href="{{url('shift-overview')}}" data-page="shift_overview" class="pe-nav-link">
+        <!-- Option 1: Speedometer/Gauge Icon (Best for Overview/Analytics) -->
+        <i class="bi bi-speedometer2 pe-nav-icon"></i>
+        
+        <span class="pe-nav-content">Shift Overview</span>
+    </a>
+</li>
                 </ul>
             </li>
             
