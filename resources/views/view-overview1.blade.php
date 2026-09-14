@@ -1908,57 +1908,55 @@
         }
 
         function editProduct(id) {
-            $.get(`/api/station-product/${id}`, function (res) {
-                if (!res) return;
+    $.get(`/api/station-product/${id}`, function (res) {
+        if (!res) return;
 
-                console.log("Editing product:", res);
+        console.log("Editing product:", res);
 
-                // ✅ Station dropdown (Choices.js)
-                let stationSelect = document.querySelector('#addProductModal select[name="station_id"]');
-                if (stationSelect && stationSelect.choicesInstance) {
-                    // clear old & set new
-                    stationSelect.choicesInstance.clearChoices();
-                    stationSelect.choicesInstance.setChoices([{
-                        value: res.station_id,
-                        label: res.station_name,
-                        selected: true
-                    }], 'value', 'label', true);
-                }
-
-                // ✅ Product dropdown (Choices.js)
-                let productSelect = document.querySelector('#addProductModal select[name="product_id"]');
-                if (productSelect && productSelect.choicesInstance) {
-                    productSelect.choicesInstance.clearChoices();
-                    productSelect.choicesInstance.setChoices([{
-                        value: res.product_id,
-                        label: res.product_name,
-                        selected: true
-                    }], 'value', 'label', true);
-                }
-
-                // ✅ Stock
-
-                // ✅ Price
-                $('#addProductModal input[name="price"]').val(res.price);
-
-                // ✅ Effective From
-                if (res.effective_from) {
-                    let dt = new Date(res.effective_from);
-                    let formatted = dt.toISOString().slice(0, 16);
-                    $('#addProductModal input[name="effective_from"]').val(formatted);
-                }
-
-                // ✅ Effective To
-                if (res.effective_to) {
-                    let dt = new Date(res.effective_to);
-                    let formatted = dt.toISOString().slice(0, 16);
-                    $('#addProductModal input[name="effective_to"]').val(formatted);
-                }
-
-                // ✅ Save edit ID
-                $('#addProductModal').data('edit-id', res.station_product_id).modal('show');
-            });
+        // ✅ Station dropdown (Choices.js)
+        let stationSelect = document.querySelector('#addProductModal select[name="station_id"]');
+        if (stationSelect && stationSelect.choicesInstance) {
+            stationSelect.choicesInstance.clearChoices();
+            stationSelect.choicesInstance.setChoices([{
+                value: res.station_id,
+                label: res.station_name,
+                selected: true
+            }], 'value', 'label', true);
         }
+
+        // ✅ Product dropdown (Choices.js)
+        let productSelect = document.querySelector('#addProductModal select[name="product_id"]');
+        if (productSelect && productSelect.choicesInstance) {
+            productSelect.choicesInstance.clearChoices();
+            productSelect.choicesInstance.setChoices([{
+                value: res.product_id,
+                label: res.product_name,
+                selected: true
+            }], 'value', 'label', true);
+        }
+
+        // ✅ Price
+        $('#addProductModal input[name="price"]').val(res.price);
+
+        // ✅ FIX: Effective From - Direct string manipulation
+        if (res.effective_from) {
+            // API se "2026-09-10 00:00:00" aata hai, isko "2026-09-10T00:00" banayein
+            let formattedFrom = res.effective_from.replace(' ', 'T').slice(0, 16);
+            $('#addProductModal input[name="effective_from"]').val(formattedFrom);
+        }
+
+        // ✅ FIX: Effective To - Direct string manipulation
+        if (res.effective_to) {
+            // API se "2026-09-10 23:59:00" aata hai, isko "2026-09-10T23:59" banayein
+            let formattedTo = res.effective_to.replace(' ', 'T').slice(0, 16);
+            $('#addProductModal input[name="effective_to"]').val(formattedTo);
+        }
+
+        // ✅ Save edit ID
+        $('#addProductModal').data('edit-id', res.station_product_id).modal('show');
+    });
+}
+
 
         // ✅ Reset modal when closed
         $('#addProductModal').on('hidden.bs.modal', function () {
