@@ -9,21 +9,10 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
     <style>
         /* Status Row Flags */
-        .flag-red {
-            border-left: 4px solid #dc3545 !important;
-        }
-
-        .flag-yellow {
-            border-left: 4px solid #ffc107 !important;
-        }
-
-        .flag-green {
-            border-left: 4px solid #198754 !important;
-        }
-
-        .flag-gray {
-            border-left: 4px solid #adb5bd !important;
-        }
+        .flag-red { border-left: 4px solid #dc3545 !important; }
+        .flag-yellow { border-left: 4px solid #ffc107 !important; }
+        .flag-green { border-left: 4px solid #198754 !important; }
+        .flag-gray { border-left: 4px solid #adb5bd !important; }
 
         .flag-dot {
             display: inline-block;
@@ -33,43 +22,15 @@
             margin-right: 6px;
         }
 
-        .dot-red {
-            background: #dc3545;
-            box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
-        }
-
-        .dot-yellow {
-            background: #ffc107;
-            box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.2);
-        }
-
-        .dot-green {
-            background: #198754;
-            box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.2);
-        }
-
-        .dot-gray {
-            background: #adb5bd;
-        }
+        .dot-red { background: #dc3545; box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2); }
+        .dot-yellow { background: #ffc107; box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.2); }
+        .dot-green { background: #198754; box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.2); }
+        .dot-gray { background: #adb5bd; }
 
         /* High-contrast Badges */
-        .badge-solid-success {
-            background-color: #198754;
-            color: #ffffff;
-            font-weight: 500;
-        }
-
-        .badge-solid-danger {
-            background-color: #dc3545;
-            color: #ffffff;
-            font-weight: 500;
-        }
-
-        .badge-solid-warning {
-            background-color: #ffc107;
-            color: #000000;
-            font-weight: 600;
-        }
+        .badge-solid-success { background-color: #198754; color: #ffffff; font-weight: 500; }
+        .badge-solid-danger { background-color: #dc3545; color: #ffffff; font-weight: 500; }
+        .badge-solid-warning { background-color: #ffc107; color: #000000; font-weight: 600; }
 
         .stat-pill {
             display: inline-flex;
@@ -92,9 +53,7 @@
             transition: color 0.2s;
         }
 
-        .site-title:hover {
-            color: #2563eb;
-        }
+        .site-title:hover { color: #2563eb; }
 
         /* Layout & Spacing Fix */
         .overview-wrapper {
@@ -111,6 +70,15 @@
         .kpi-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        /* Interactive Card Style for Inactive Sites */
+        .kpi-card-clickable {
+            cursor: pointer;
+            border: 1px solid #fecaca !important;
+        }
+        .kpi-card-clickable:hover {
+            background-color: #fff5f5;
         }
 
         .kpi-icon {
@@ -135,14 +103,6 @@
             background-color: #f8fafc;
             border-bottom: 1px solid #e2e8f0;
             padding: 16px 24px;
-        }
-
-        /* Table Light Headers */
-        .table-light-custom {
-            background-color: #f1f5f9 !important;
-            color: #334155 !important;
-            font-weight: 600;
-            border-bottom: 2px solid #cbd5e1 !important;
         }
 
         .table-light-custom th {
@@ -210,16 +170,20 @@
                     </div>
                 </div>
             </div>
+            <!-- Clickable Inactive Sites Card -->
             <div class="col-xl-3 col-md-6">
-                <div class="card kpi-card border-0 shadow-sm">
-                    <div class="card-body p-3 d-flex align-items-center gap-3">
-                        <div class="kpi-icon bg-danger-subtle text-danger">
-                            <i class="bi bi-exclamation-triangle"></i>
+                <div class="card kpi-card kpi-card-clickable border-0 shadow-sm" onclick="openInactiveSitesModal()" title="Click to view inactive sites">
+                    <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="kpi-icon bg-danger-subtle text-danger">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                            <div>
+                                <span class="text-muted fs-7 fw-medium d-block">Inactive Sites (>3d)</span>
+                                <h3 class="fw-bold mb-0 text-danger" id="totalAlerts">0</h3>
+                            </div>
                         </div>
-                        <div>
-                            <span class="text-muted fs-7 fw-medium d-block">Inactive Sites (>3d)</span>
-                            <h3 class="fw-bold mb-0 text-dark" id="totalAlerts">0</h3>
-                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
                     </div>
                 </div>
             </div>
@@ -250,6 +214,38 @@
                         </thead>
                         <tbody></tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== Inactive Sites Modal ==================== -->
+    <div class="modal fade" id="inactiveSitesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header modal-header-custom">
+                    <h6 class="modal-title fw-bold d-flex align-items-center gap-2 mb-0 text-danger">
+                        <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                        Inactive Sites Overview (>3 Days Inactive)
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="inactiveSitesTable">
+                            <thead class="table-light-custom small">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Site Name</th>
+                                    <th>Location</th>
+                                    <th>Last Shift Date</th>
+                                    <th>Days Inactive</th>
+                                    <th>Manager</th>
+                                </tr>
+                            </thead>
+                            <tbody class="small"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -308,7 +304,6 @@
             </div>
         </div>
     </div>
-</main>
 @endsection
 
 @section('js')
@@ -322,6 +317,7 @@
         const AUTH_ROLE = "{{ Auth::check() ? strtolower(Auth::user()->role) : '' }}";
 
         let overviewTable = null;
+        let globalStationsData = [];
 
         $(document).ready(function () {
             loadOverview();
@@ -337,6 +333,8 @@
                     if (AUTH_ROLE === 'owner') {
                         stations = stations.filter(s => String(s.user_id) === String(AUTH_USER_ID));
                     }
+
+                    globalStationsData = stations; // Cache station data locally
 
                     renderSummaryCards(stations);
                     renderOverviewTable(stations);
@@ -375,38 +373,38 @@
                     : `<span class="badge badge-solid-danger px-2 py-1"><i class="bi bi-x-circle me-1"></i> Pending</span>`;
 
                 const setupDetails = `
-                        <div class="mt-2 d-flex gap-1">
-                            <span class="stat-pill" title="Tanks"><i class="bi bi-fuel-pump text-primary"></i> T: ${station.tanks_count || 0}</span>
-                            <span class="stat-pill" title="Dispensers"><i class="bi bi-droplet text-info"></i> D: ${station.dispensers_count || 0}</span>
-                            <span class="stat-pill" title="Nozzles"><i class="bi bi-droplet-half text-secondary"></i> N: ${station.nozzles_count || 0}</span>
-                        </div>
-                    `;
+                    <div class="mt-2 d-flex gap-1">
+                        <span class="stat-pill" title="Tanks"><i class="bi bi-fuel-pump text-primary"></i> T: ${station.tanks_count || 0}</span>
+                        <span class="stat-pill" title="Dispensers"><i class="bi bi-droplet text-info"></i> D: ${station.dispensers_count || 0}</span>
+                        <span class="stat-pill" title="Nozzles"><i class="bi bi-droplet-half text-secondary"></i> N: ${station.nozzles_count || 0}</span>
+                    </div>
+                `;
 
                 const shiftBtn = station.closed_shifts > 0
                     ? `<button class="btn btn-sm btn-outline-primary px-3 fw-medium" onclick="openShiftsModal(${station.id}, '${escapeHtml(station.name)}')">
-                                <i class="bi bi-eye me-1"></i> View (${station.closed_shifts})
-                           </button>`
+                            <i class="bi bi-eye me-1"></i> View (${station.closed_shifts})
+                       </button>`
                     : `<span class="text-muted small">No closed shifts</span>`;
 
                 const managerLink = station.manager
                     ? `<a href="javascript:void(0)" class="text-primary fw-semibold text-decoration-none d-inline-flex align-items-center gap-1" onclick="openManagerModal(${station.id})">
-                                <i class="bi bi-person-circle fs-6"></i> ${escapeHtml(station.manager.manager_name || 'N/A')}
-                           </a>`
+                            <i class="bi bi-person-circle fs-6"></i> ${escapeHtml(station.manager.manager_name || 'N/A')}
+                       </a>`
                     : `<span class="text-muted small">Not Assigned</span>`;
 
                 return {
                     flagClass: flagClass,
                     site: `
-                            <div>
-                                <a href="javascript:void(0)" class="site-title" onclick="openShiftsModal(${station.id}, '${escapeHtml(station.name)}')">
-                                    <span class="flag-dot ${dotClass}"></span>
-                                    ${escapeHtml(station.name)}
-                                </a>
-                                <div class="text-muted small mt-1">
-                                    <i class="bi bi-geo-alt"></i> ${escapeHtml(station.location || 'N/A')}
-                                </div>
+                        <div>
+                            <a href="javascript:void(0)" class="site-title" onclick="openShiftsModal(${station.id}, '${escapeHtml(station.name)}')">
+                                <span class="flag-dot ${dotClass}"></span>
+                                ${escapeHtml(station.name)}
+                            </a>
+                            <div class="text-muted small mt-1">
+                                <i class="bi bi-geo-alt"></i> ${escapeHtml(station.location || 'N/A')}
                             </div>
-                        `,
+                        </div>
+                    `,
                     created: `<div>${createdDate}</div>`,
                     setup: setupBadge + setupDetails,
                     closing: shiftBtn,
@@ -432,6 +430,41 @@
             });
         }
 
+        // Dynamic Inactive Sites Modal Opener
+        function openInactiveSitesModal() {
+            const inactiveStations = globalStationsData.filter(s => s.flag === 'red');
+            const tbody = $('#inactiveSitesTable tbody').empty();
+
+            if (inactiveStations.length === 0) {
+                tbody.html(`<tr><td colspan="6" class="text-center py-4 text-muted"><i class="bi bi-check-circle-fill text-success me-1"></i> All sites are active! No alerts found.</td></tr>`);
+            } else {
+                inactiveStations.forEach((station, i) => {
+                    const lastShift = station.last_shift_date 
+                        ? new Date(station.last_shift_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                        : 'Never';
+
+                    const daysText = station.days_since_last_shift !== null 
+                        ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2">${station.days_since_last_shift} Days</span>`
+                        : `<span class="badge bg-secondary-subtle text-secondary px-2">No Shifts Logged</span>`;
+
+                    const managerName = station.manager ? escapeHtml(station.manager.manager_name) : 'Not Assigned';
+
+                    tbody.append(`
+                        <tr>
+                            <td class="fw-bold text-secondary">${i + 1}</td>
+                            <td class="fw-semibold text-dark">${escapeHtml(station.name)}</td>
+                            <td><i class="bi bi-geo-alt text-muted me-1"></i>${escapeHtml(station.location || 'N/A')}</td>
+                            <td>${lastShift}</td>
+                            <td>${daysText}</td>
+                            <td class="fw-medium">${managerName}</td>
+                        </tr>
+                    `);
+                });
+            }
+
+            $('#inactiveSitesModal').modal('show');
+        }
+
         function openShiftsModal(stationId, stationName) {
             $('#shiftsStationName').text(stationName);
             $('#shiftsTable tbody').html(`<tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>`);
@@ -454,18 +487,18 @@
                             : `<span class="badge badge-solid-warning px-2">Open</span>`;
 
                         tbody.append(`
-                                <tr>
-                                    <td class="fw-bold">${i + 1}</td>
-                                    <td>${escapeHtml(s.incharger_name || '-')}</td>
-                                    <td>${s.start_time ? new Date(s.start_time).toLocaleString('en-GB') : '-'}</td>
-                                    <td>${s.end_time ? new Date(s.end_time).toLocaleString('en-GB') : '-'}</td>
-                                    <td class="fw-medium">Rs. ${parseFloat(s.cash_handover || 0).toLocaleString()}</td>
-                                    <td class="fw-medium">Rs. ${parseFloat(s.cash_return || 0).toLocaleString()}</td>
-                                    <td><span class="badge bg-secondary">${s.readings_count}</span></td>
-                                    <td class="fw-bold text-success">Rs. ${parseFloat(s.total_sale || 0).toLocaleString()}</td>
-                                    <td>${statusBadge}</td>
-                                </tr>
-                            `);
+                            <tr>
+                                <td class="fw-bold">${i + 1}</td>
+                                <td>${escapeHtml(s.incharger_name || '-')}</td>
+                                <td>${s.start_time ? new Date(s.start_time).toLocaleString('en-GB') : '-'}</td>
+                                <td>${s.end_time ? new Date(s.end_time).toLocaleString('en-GB') : '-'}</td>
+                                <td class="fw-medium">Rs. ${parseFloat(s.cash_handover || 0).toLocaleString()}</td>
+                                <td class="fw-medium">Rs. ${parseFloat(s.cash_return || 0).toLocaleString()}</td>
+                                <td><span class="badge bg-secondary">${s.readings_count}</span></td>
+                                <td class="fw-bold text-success">Rs. ${parseFloat(s.total_sale || 0).toLocaleString()}</td>
+                                <td>${statusBadge}</td>
+                            </tr>
+                        `);
                     });
                 }
             });
@@ -490,28 +523,28 @@
                         : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle">Inactive</span>`;
 
                     $('#managerModalBody').html(`
-                            <div class="row align-items-center g-4">
-                                <div class="col-md-4 text-center border-end">
-                                    <div class="profile-avatar-box mx-auto mb-3">
-                                        <i class="bi bi-person"></i>
-                                    </div>
-                                    <h6 class="fw-bold text-dark mb-1">${escapeHtml(m.full_name || 'N/A')}</h6>
-                                    <span class="small text-muted d-block mb-2">Station Manager</span>
-                                    ${statusBadge}
+                        <div class="row align-items-center g-4">
+                            <div class="col-md-4 text-center border-end">
+                                <div class="profile-avatar-box mx-auto mb-3">
+                                    <i class="bi bi-person"></i>
                                 </div>
-                                <div class="col-md-8">
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-borderless align-middle mb-0 small">
-                                            <tr><th width="35%" class="text-secondary">Username</th><td class="fw-semibold text-dark">${escapeHtml(m.username || '-')}</td></tr>
-                                            <tr><th class="text-secondary">Email</th><td>${escapeHtml(m.email || '-')}</td></tr>
-                                            <tr><th class="text-secondary">Phone</th><td>${escapeHtml(m.user_phone || m.emp_phone || '-')}</td></tr>
-                                            <tr><th class="text-secondary">City/Region</th><td>${escapeHtml(m.city || '-')} / ${escapeHtml(m.region || '-')}</td></tr>
-                                            <tr><th class="text-secondary">Address</th><td>${escapeHtml(m.address || '-')}</td></tr>
-                                        </table>
-                                    </div>
+                                <h6 class="fw-bold text-dark mb-1">${escapeHtml(m.full_name || 'N/A')}</h6>
+                                <span class="small text-muted d-block mb-2">Station Manager</span>
+                                ${statusBadge}
+                            </div>
+                            <div class="col-md-8">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-borderless align-middle mb-0 small">
+                                        <tr><th width="35%" class="text-secondary">Username</th><td class="fw-semibold text-dark">${escapeHtml(m.username || '-')}</td></tr>
+                                        <tr><th class="text-secondary">Email</th><td>${escapeHtml(m.email || '-')}</td></tr>
+                                        <tr><th class="text-secondary">Phone</th><td>${escapeHtml(m.user_phone || m.emp_phone || '-')}</td></tr>
+                                        <tr><th class="text-secondary">City/Region</th><td>${escapeHtml(m.city || '-')} / ${escapeHtml(m.region || '-')}</td></tr>
+                                        <tr><th class="text-secondary">Address</th><td>${escapeHtml(m.address || '-')}</td></tr>
+                                    </table>
                                 </div>
                             </div>
-                        `);
+                        </div>
+                    `);
                 }
             });
         }
