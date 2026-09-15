@@ -168,7 +168,7 @@
                                             <th>#</th>
                                             <th>Amount Given To</th>
                                             <th>Vehicle Number/CNIC</th>
-                                            <th>Shift #</th>
+                                            <th>Coustomer</th>
                                             <th>Amount</th>
                                             <th>Status</th>
                                             <th>Action</th>
@@ -565,7 +565,7 @@
                                     }
                                 }
                             },
-                            { data: "shift_no", defaultContent: "N/A" },
+                            { data: "name", defaultContent: "N/A" },
                             { data: "amount", render: (d) => `<span class="fw-bold">PKR ${parseFloat(d).toFixed(2)}</span>` },
                             { 
                                 data: "is_paid", 

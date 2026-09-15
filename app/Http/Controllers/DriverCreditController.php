@@ -151,10 +151,12 @@ public function getByShift1($shiftId)
                     cd.amount,
                     cd.is_paid,
                     cd.created_at,
+                    cd.account_id,
+                    a.name,
                     s.shift_no
                 FROM credit_driver cd
                 LEFT JOIN shifts s ON cd.shift_id = s.id
-               
+                Left Join accounts a on cd.account_id  = a.id
                 ORDER BY cd.created_at DESC
             ");
             
@@ -180,9 +182,12 @@ public function getByShift1($shiftId)
                     cd.amount,
                     cd.is_paid,
                     cd.created_at,
+					cd.account_id,
+                    a.name,
                     s.shift_no
                 FROM credit_driver cd
                 LEFT JOIN shifts s ON cd.shift_id = s.id
+				Left Join accounts a on cd.account_id  = a.id
                 INNER JOIN stations st ON cd.station_id = st.id
                 WHERE  st.user_id = ?
                 ORDER BY cd.created_at DESC
@@ -220,9 +225,12 @@ public function getByShift1($shiftId)
                     cd.amount,
                     cd.is_paid,
                     cd.created_at,
+                    cd.account_id,
+                    a.name,
                     s.shift_no
                 FROM credit_driver cd
                 LEFT JOIN shifts s ON cd.shift_id = s.id
+                Left Join accounts a on cd.account_id  = a.id
                 WHERE cd.station_id = ?
                 ORDER BY cd.created_at DESC
             ", [$stationId]);
@@ -324,11 +332,13 @@ public function receivePayment(Request $request)
             SET is_paid = 1, 
                 shift_id = ?, 
                 method = ?, 
+                bank_acc_id = ?,
                 updated_at = ? 
             WHERE id = ?
         ", [
             $request->shift_id, 
             $request->payment_method, 
+            $request ->bank_account_id,
             date('Y-m-d H:i:s'), 
             $request->driver_credit_id
         ]);
