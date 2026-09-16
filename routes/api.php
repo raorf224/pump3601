@@ -179,6 +179,7 @@ Route::post('/oil-purchases', [OilPurchaseController::class, 'store']);
 Route::patch('/oil-purchases/{id}/payment-status', [OilPurchaseController::class, 'updatePaymentStatus']);
 Route::put('/oil-purchases/{id}', [OilPurchaseController::class, 'update']);
 Route::get('/oil-purchasess/{id}', [OilPurchaseController::class, 'getbyId']);
+Route::delete('/oil-purchases/{id}', [OilPurchaseController::class, 'destroy']);
 Route::get('/oil-purchases/{id}/payment-history', [OilPurchaseController::class, 'getPaymentHistory']);
 Route::post('/oil-purchases/{id}/partial-payment', [OilPurchaseController::class, 'processPartialPayment']);
 Route::get('/oil-purchases/{id}/receive-history', [OilPurchaseController::class, 'getReceiveHistory']);
