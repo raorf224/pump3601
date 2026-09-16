@@ -1292,15 +1292,15 @@
                 const tankId = $(this).closest('.tank-dip-row').data('tank-id');
                 const warningElement = $(`#tank-warning-${tankId}`);
 
-                if (newDip > currentLevel) {
-                    warningElement.html(`⚠️ New dip (${newDip}L) > Current level (${currentLevel}L)`);
-                    warningElement.css('color', 'red');
-                    $(this).addClass('is-invalid');
-                } else {
-                    warningElement.html('');
-                    warningElement.css('color', '');
-                    $(this).removeClass('is-invalid');
-                }
+                // if (newDip > currentLevel) {
+                //     warningElement.html(`⚠️ New dip (${newDip}L) > Current level (${currentLevel}L)`);
+                //     warningElement.css('color', 'red');
+                //     $(this).addClass('is-invalid');
+                // } else {
+                //     warningElement.html('');
+                //     warningElement.css('color', '');
+                //     $(this).removeClass('is-invalid');
+                // }
             });
 
             // ✅ Render Nozzle Readings

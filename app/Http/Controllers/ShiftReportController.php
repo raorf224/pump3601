@@ -181,7 +181,7 @@ class ShiftReportController extends Controller
             // ✅ **OIL PURCHASE** - Sirf us shift ka oil receive dikhao jisme actually receive hua hai
             $oilPurchases = DB::table('oil_recived_tanks as ort')
                 ->join('oil_purchase as op', 'op.id', '=', 'ort.oil_purchase_id')
-                ->where('op.tank_id', $tankId)
+                ->where('ort.tanks_id', $tankId)
                 ->where('ort.shift_id', $shiftId)  // ✅ RECEIVE SHIFT ID MATCH
 
                 ->sum('ort.recived_qty');

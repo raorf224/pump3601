@@ -2119,6 +2119,8 @@
             $('#alreadyReceivedDisplay').text('0');
             $('#remainingQtyDisplay').text('0');
             $('#thisReceiveDisplay').text('0');
+            $('.tank-shortage-input').val('');
+
 
             // Reset input fields
             $('#thisReceiveQty').val('')
@@ -2194,168 +2196,179 @@
 
         // ✅ Directly load tanks for distribution (no product selection)
         function loadTanksForDistributionDirect(stationId, productId, maxRemaining) {
-            if (!stationId || !productId) {
-                $('#tanksDistributionSection').html(`
-                                                                                                        <div class="alert alert-warning">
-                                                                                                            <i class="bi bi-exclamation-triangle me-2"></i>
-                                                                                                            Station or product information missing.
-                                                                                                        </div>
-                                                                                                    `);
+    if (!stationId || !productId) {
+        $('#tanksDistributionSection').html(`
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Station or product information missing.
+            </div>
+        `);
+        return;
+    }
+
+    $('#tanksDistributionSection').html(`
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading tanks...</p>
+        </div>
+    `);
+
+    $.ajax({
+        url: `/api/station-product-tanks/${stationId}/${productId}`,
+        method: 'GET',
+        success: function (tanks) {
+            const container = $('#tanksDistributionSection');
+
+            if (!tanks || tanks.length === 0) {
+                container.html(`
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        No active tanks found for this product.
+                    </div>
+                `);
                 return;
             }
 
-            $('#tanksDistributionSection').html(`
-                                                                                                    <div class="text-center py-4">
-                                                                                                        <div class="spinner-border text-primary" role="status">
-                                                                                                            <span class="visually-hidden">Loading...</span>
-                                                                                                        </div>
-                                                                                                        <p class="mt-2">Loading tanks...</p>
-                                                                                                    </div>
-                                                                                                `);
+            // Build tanks table — WITH PER-TANK SHORTAGE COLUMN
+            let html = `
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Distribute Oil to Tanks:</h6>
+                            <div>
+                                <strong>Net to distribute: <span id="netToDistribute" class="text-primary">0.00</span> L</strong><br>
+                                <small>Remaining to distribute: <span id="remainingDistributeQty">0</span> L</small>
+                            </div>
+                        </div>
 
-            $.ajax({
-                url: `/api/station-product-tanks/${stationId}/${productId}`,
-                method: 'GET',
-                success: function (tanks) {
-                    const container = $('#tanksDistributionSection');
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 15%">Tank Name</th>
+                                        <th class="text-center">Current</th>
+                                        <th class="text-center">Capacity</th>
+                                        <th class="text-center">Available</th>
+                                        <th style="width: 18%">Quantity to Add</th>
+                                        <th style="width: 18%">Shortage (This Tank)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
 
-                    if (!tanks || tanks.length === 0) {
-                        container.html(`
-                                                                                                                <div class="alert alert-warning">
-                                                                                                                    <i class="bi bi-exclamation-triangle me-2"></i>
-                                                                                                                    No active tanks found for this product.
-                                                                                                                </div>
-                                                                                                            `);
-                        return;
-                    }
+            tanks.forEach(tank => {
+                const currentLevel = parseFloat(tank.current_level) || 0;
+                const capacity = parseFloat(tank.capacity) || 0;
+                const dryLimit = parseFloat(tank.dry_limit) || 0;
 
-                    // Build tanks table
-                    let html = `
-                                                                                                            <div class="card">
-                                                                                                                <div class="card-body">
-                                                                                                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                                                                                                        <h6 class="mb-0">Distribute Oil to Tanks:</h6>
-                                                                                                                        <div>
-                                                                                                                            <strong>Net to distribute: <span id="netToDistribute" class="text-primary">0.00</span> L</strong><br>
-                                                                                                                            <small>Remaining to distribute: <span id="remainingDistributeQty">0</span> L</small>
-                                                                                                                        </div>
-                                                                                                                    </div>
-
-                                                                                                                    <div class="table-responsive">
-                                                                                                                        <table class="table table-bordered table-hover">
-                                                                                                                            <thead class="table-light">
-                                                                                                                                <tr>
-                                                                                                                                    <th style="width: 20%">Tank Name</th>
-                                                                                                                                    <th class="text-center">Current Level</th>
-                                                                                                                                    <th class="text-center">Capacity</th>
-                                                                                                                                    <th class="text-center">Dry Limit</th>
-                                                                                                                                    <th class="text-center">Available Space</th>
-                                                                                                                                    <th style="width: 25%">Quantity to Add</th>
-                                                                                                                                </tr>
-                                                                                                                            </thead>
-                                                                                                                            <tbody>`;
-
-                    tanks.forEach(tank => {
-                        const currentLevel = parseFloat(tank.current_level) || 0;
-                        const capacity = parseFloat(tank.capacity) || 0;
-                        const dryLimit = parseFloat(tank.dry_limit) || 0;
-
-                        // Calculate available space
-                        let availableSpace = capacity - currentLevel;
-
-                        // Consider dry limit
-                        if (dryLimit > 0) {
-                            const minLevel = dryLimit;
-                            // availableSpace = Math.max(0, capacity - currentLevel);
-                            availableSpace = capacity - currentLevel;
-
-                        }
-
-                        // availableSpace = Math.max(0, availableSpace);
-
-                        let statusBadge = '';
-                        if (currentLevel <= 0) {
-                            statusBadge = '<span class="badge bg-danger">Empty</span>';
-                        } else if (dryLimit > 0 && currentLevel <= dryLimit) {
-                            statusBadge = '<span class="badge bg-warning">At/Below Dry Limit</span>';
-                        } else if (currentLevel >= capacity) {
-                            statusBadge = '<span class="badge bg-danger">Full</span>';
-                        } else {
-                            statusBadge = '<span class="badge bg-success">OK</span>';
-                        }
-
-                        // For percentage calculation - handle capacity = 0 case
-                        const percentage = capacity > 0 ? ((currentLevel / capacity) * 100).toFixed(1) : '0.0';
-
-                        html += `
-            <tr>
-                <td>
-                    <strong>${tank.name || 'Unnamed Tank'}</strong><br>
-                    <small class="text-muted">${statusBadge}</small>
-                </td>
-                <td class="text-center">
-                    ${currentLevel.toFixed(2)} L<br>
-                    <small class="text-muted">${percentage}%</small>
-                </td>
-                <td class="text-center">${capacity.toFixed(2)} L</td>
-                <td class="text-center">
-                    ${dryLimit > 0 ? `
-                        ${dryLimit.toFixed(2)} L<br>
-                        <small class="text-muted">${capacity > 0 ? ((dryLimit / capacity) * 100).toFixed(1) : '0.0'}%</small>
-                    ` : 'N/A'}
-                </td>
-                <td class="text-center">
-                    <span class="badge bg-info fs-6">${availableSpace.toFixed(2)} L</span>
-                </td>
-                <td>
-                    <div class="input-group">
-                        <input type="number" 
-                                class="form-control tank-qty-input" 
-                                data-tank-id="${tank.id}"
-                                data-tank-name="${tank.name}"
-                                data-current="${currentLevel}"
-                                data-capacity="${capacity}"
-                                data-dry-limit="${dryLimit}"
-                                data-max="${availableSpace}"
-                                min="0" 
-                                max=""
-                                step="0.01"
-                                placeholder="0.00"
-                                oninput="updateRemainingQty()"
-                                disabled>
-                        <span class="input-group-text">L</span>
-                    </div>
-                    <div class="d-flex justify-content-between mt-1">
-                        <small class="text-muted">
-                            Max: ${availableSpace.toFixed(2)}L
-                        </small>
-                        <button type="button" class="btn btn-sm btn-outline-secondary btn-sm" 
-                                onclick="fillToMax(${tank.id})" disabled>
-                            <i class="bi bi-arrow-up"></i> Fill
-                        </button>
-                    </div>
-                </td>
-            </tr>`;
-                    });
-
-                    html += `</tbody></table></div></div></div>`;
-
-                    container.html(html);
-                    calculateNetReceived(); // Initialize calculation
-                },
-                error: function (err) {
-                    console.error('Failed to load tanks:', err);
-                    $('#tanksDistributionSection').html(`
-                                                                                                            <div class="alert alert-danger">
-                                                                                                                <i class="bi bi-x-circle me-2"></i>
-                                                                                                                Failed to load tanks. Please try again.
-                                                                                                            </div>
-                                                                                                        `);
+                let availableSpace = capacity - currentLevel;
+                if (dryLimit > 0) {
+                    availableSpace = capacity - currentLevel;
                 }
+
+                let statusBadge = '';
+                if (currentLevel <= 0) {
+                    statusBadge = '<span class="badge bg-danger">Empty</span>';
+                } else if (dryLimit > 0 && currentLevel <= dryLimit) {
+                    statusBadge = '<span class="badge bg-warning">At/Below Dry Limit</span>';
+                } else if (currentLevel >= capacity) {
+                    statusBadge = '<span class="badge bg-danger">Full</span>';
+                } else {
+                    statusBadge = '<span class="badge bg-success">OK</span>';
+                }
+
+                const percentage = capacity > 0 ? ((currentLevel / capacity) * 100).toFixed(1) : '0.0';
+
+                html += `
+                    <tr>
+                        <td>
+                            <strong>${tank.name || 'Unnamed Tank'}</strong><br>
+                            <small class="text-muted">${statusBadge}</small>
+                        </td>
+                        <td class="text-center">
+                            ${currentLevel.toFixed(2)} L<br>
+                            <small class="text-muted">${percentage}%</small>
+                        </td>
+                        <td class="text-center">${capacity.toFixed(2)} L</td>
+                        <td class="text-center">
+                            <span class="badge bg-info fs-6">${availableSpace.toFixed(2)} L</span>
+                        </td>
+                        <td>
+                            <div class="input-group">
+                                <input type="number" 
+                                    class="form-control tank-qty-input" 
+                                    data-tank-id="${tank.id}"
+                                    data-tank-name="${tank.name}"
+                                    data-current="${currentLevel}"
+                                    data-capacity="${capacity}"
+                                    data-dry-limit="${dryLimit}"
+                                    data-max="${availableSpace}"
+                                    min="0" 
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    oninput="updateRemainingQty()">
+                                <span class="input-group-text">L</span>
+                            </div>
+                            <small class="text-muted">Max: ${availableSpace.toFixed(2)}L</small>
+                        </td>
+                        <td>
+                            <div class="input-group">
+                                <input type="number" 
+                                    class="form-control tank-shortage-input" 
+                                    data-tank-id="${tank.id}"
+                                    data-tank-name="${tank.name}"
+                                    min="0" 
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    oninput="updateTankShortageTotal()">
+                                <span class="input-group-text">L</span>
+                            </div>
+                            <small class="text-muted">Enter shortage for this tank</small>
+                        </td>
+                    </tr>`;
             });
+
+            html += `</tbody></table></div></div></div>`;
+
+            container.html(html);
+            calculateNetReceived();
+        },
+        error: function (err) {
+            console.error('Failed to load tanks:', err);
+            $('#tanksDistributionSection').html(`
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Failed to load tanks. Please try again.
+                </div>
+            `);
         }
+    });
+}
+
         // max="${Math.max(0, availableSpace)}" <!-- Allow max 0 if negative -->
 
+// ✅ NEW: Calculate total shortage from all tank inputs
+function updateTankShortageTotal() {
+    let totalTankShortage = 0;
+
+    $('.tank-shortage-input').each(function () {
+        const val = parseFloat($(this).val()) || 0;
+        if (val < 0) {
+            $(this).val(0);
+            return;
+        }
+        totalTankShortage += val;
+    });
+
+    // Update the top-level shortage field
+    $('#thisReceiveShortage').val(totalTankShortage.toFixed(2));
+
+    // Recalculate net received
+    calculateNetReceived();
+
+    console.log('Total tank shortage:', totalTankShortage);
+}
 
         // ✅ Validate total received quantity
         function validateTotalReceivedQty(maxAllowed) {
@@ -2412,23 +2425,23 @@
         function loadTanksForDistribution(stationId, productId) {
             if (!stationId || !productId) {
                 $('#tanksContainer').html(`
-                                                                                                                                            <div class="alert alert-warning">
-                                                                                                                                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                                                                                                                                Please select a product first
-                                                                                                                                            </div>
-                                                                                                                                        `);
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Please select a product first
+                    </div>
+                `);
                 return;
             }
 
             // Show loading in tanks container
             $('#tanksContainer').html(`
-                                                                                                                                                                        <div class="text-center py-3">
-                                                                                                                                                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                                                                                                                                                                <span class="visually-hidden">Loading...</span>
-                                                                                                                                                                            </div>
-                                                                                                                                                                            <p class="mt-2 small text-muted">Loading tanks...</p>
-                                                                                                                                                                        </div>
-                                                                                                                                                                    `);
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 small text-muted">Loading tanks...</p>
+                    </div>
+                `);
 
             // Show the distribution area
             $('#tanksDistributionArea').show();
@@ -2441,30 +2454,30 @@
 
                     if (!tanks || tanks.length === 0) {
                         container.html(`
-                                                                                                                                                                                    <div class="alert alert-warning">
-                                                                                                                                                                                        <i class="bi bi-exclamation-triangle me-2"></i>
-                                                                                                                                                                                        No active tanks found for this product at this station.
-                                                                                                                                                                                    </div>
-                                                                                                                                                                                `);
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                No active tanks found for this product at this station.
+                            </div>
+                        `);
                         updateRemainingQty();
                         return;
                     }
 
                     // Build tanks table
                     let html = `
-                                                                                                                                                                                <div class="table-responsive">
-                                                                                                                                                                                    <table class="table table-bordered table-hover">
-                                                                                                                                                                                        <thead class="table-light">
-                                                                                                                                                                                            <tr>
-                                                                                                                                                                                                <th style="width: 20%">Tank Name</th>
-                                                                                                                                                                                                <th class="text-center">Current Level</th>
-                                                                                                                                                                                                <th class="text-center">Capacity</th>
-                                                                                                                                                                                                <th class="text-center">Dry Limit</th>
-                                                                                                                                                                                                <th class="text-center">Available Space</th>
-                                                                                                                                                                                                <th style="width: 25%">Quantity to Add</th>
-                                                                                                                                                                                            </tr>
-                                                                                                                                                                                        </thead>
-                                                                                                                                                                                        <tbody>`;
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 20%">Tank Name</th>
+                                                <th class="text-center">Current Level</th>
+                                                <th class="text-center">Capacity</th>
+                                                <th class="text-center">Dry Limit</th>
+                                                <th class="text-center">Available Space</th>
+                                                <th style="width: 25%">Quantity to Add</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
 
                     tanks.forEach(tank => {
                         const currentLevel = parseFloat(tank.current_level) || 0;
@@ -2576,88 +2589,89 @@
         }
 
         // ✅ Function to calculate net received after shortage
-        function calculateNetReceived() {
-            const thisReceiveQty = parseFloat($('#thisReceiveQty').val()) || 0;
-            const thisShortage = parseFloat($('#thisReceiveShortage').val()) || 0;
+function calculateNetReceived() {
+    const thisReceiveQty = parseFloat($('#thisReceiveQty').val()) || 0;
+    const thisShortage = parseFloat($('#thisReceiveShortage').val()) || 0;
 
-            // Calculate net received (after shortage deduction for THIS receive)
-            let netReceived = thisReceiveQty - thisShortage;
+    let netReceived = thisReceiveQty - thisShortage;
 
-            // Ensure it's not negative
-            if (netReceived < 0) {
-                netReceived = 0;
-                $('#thisReceiveShortage').val(thisReceiveQty); // Set shortage to max
-                toastr.warning('Shortage cannot exceed this receive quantity');
-            }
+    if (netReceived < 0) {
+        netReceived = 0;
+        $('#thisReceiveShortage').val(thisReceiveQty);
+        toastr.warning('Shortage cannot exceed this receive quantity');
+    }
 
-            // Update display
-            $('#netReceivedDisplay').text(netReceived.toFixed(2));
-            $('#calculationFormula').text(`${thisReceiveQty.toFixed(2)} - ${thisShortage.toFixed(2)} = ${netReceived.toFixed(2)}`);
-            $('#thisReceiveDisplay').text(thisReceiveQty.toFixed(2));
+    $('#netReceivedDisplay').text(netReceived.toFixed(2));
+    $('#calculationFormula').text(`${thisReceiveQty.toFixed(2)} - ${thisShortage.toFixed(2)} = ${netReceived.toFixed(2)}`);
+    $('#thisReceiveDisplay').text(thisReceiveQty.toFixed(2));
 
-            // Update tanks distribution max limit
-            if (netReceived > 0) {
-                $('.tank-qty-input').prop('disabled', false);
-                $('.btn-sm[onclick^="fillToMax"]').prop('disabled', false);
-            } else {
-                $('.tank-qty-input').prop('disabled', true);
-                $('.btn-sm[onclick^="fillToMax"]').prop('disabled', true);
-            }
+    // ✅ Tank inputs ALWAYS enabled
+    $('.tank-qty-input').prop('disabled', false);
+    $('.btn-sm[onclick^="fillToMax"]').prop('disabled', false);
 
-            updateRemainingQty();
-        }
+    updateRemainingQty();
+}
+
 
 
         // ✅ Calculate remaining quantity - FIXED
         function updateRemainingQty() {
-            const netReceived = parseFloat($('#netReceivedDisplay').text()) || 0;
-            let distributed = 0;
+    const netReceived = parseFloat($('#netReceivedDisplay').text()) || 0;
+    let distributed = 0;
 
-            $('.tank-qty-input').each(function () {
-                const val = parseFloat($(this).val()) || 0;
-                const max = parseFloat($(this).data('max')) || 0;
+    $('.tank-qty-input').each(function () {
+        const val = parseFloat($(this).val()) || 0;
+        const max = parseFloat($(this).data('max')) || 0;
 
-                // Only validate negative inputs, not max limit
-                if (val < 0) {
-                    $(this).val(0);
-                    distributed += 0;
-                } else {
-                    // Allow any positive value - no max restriction
-                    distributed += val;
-                }
-            });
+        // Only validate negative inputs, not max limit
+        if (val < 0) {
+            $(this).val(0);
+            distributed += 0;
+        } else {
+            // Allow any positive value - no max restriction
+            distributed += val;
+        }
+    });
 
-            const remaining = netReceived - distributed;
-            const remainingSpan = $('#remainingDistributeQty');
+    const remaining = netReceived - distributed;
+    const remainingSpan = $('#remainingDistributeQty');
+    
+    if (remainingSpan.length) {
+        remainingSpan.text(remaining.toFixed(2));
+    }
+
+    // ✅ REMOVED: Button disable logic
+    // Ab button sirf tab disable hoga jab net received 0 ho
+    // Warna user jo bhi enter kare, click kar sakta hai — validation backend mein hoga
+    const saveBtn = $('#saveReceive');
+
+    if (netReceived <= 0) {
+        saveBtn.prop('disabled', true);
+        if (remainingSpan.length) {
+            remainingSpan.removeClass('text-danger text-warning text-success');
+        }
+    } else {
+        // ✅ ALWAYS ENABLE — chahe remaining positive ho, negative ho, ya zero
+        saveBtn.prop('disabled', false);
+
+        // Sirf color change karo warning ke liye (button disable NAHI)
+        if (Math.abs(remaining) <= 0.01) {
             if (remainingSpan.length) {
-                remainingSpan.text(remaining.toFixed(2));
+                remainingSpan.removeClass('text-danger text-warning').addClass('text-success');
             }
-
-            // Update save button state
-            const saveBtn = $('#saveReceive');
-
-            if (netReceived <= 0) {
-                saveBtn.prop('disabled', true);
-                if (remainingSpan.length) {
-                    remainingSpan.removeClass('text-danger text-warning text-success');
-                }
-            } else if (Math.abs(remaining) <= 0.01) {
-                if (remainingSpan.length) {
-                    remainingSpan.removeClass('text-danger text-warning').addClass('text-success');
-                }
-                saveBtn.prop('disabled', false);
-            } else if (remaining > 0) {
-                if (remainingSpan.length) {
-                    remainingSpan.removeClass('text-danger text-success').addClass('text-warning');
-                }
-                saveBtn.prop('disabled', false);
-            } else {
-                if (remainingSpan.length) {
-                    remainingSpan.removeClass('text-success text-warning').addClass('text-danger');
-                }
-                saveBtn.prop('disabled', true);
+        } else if (remaining > 0) {
+            if (remainingSpan.length) {
+                remainingSpan.removeClass('text-danger text-success').addClass('text-warning');
+            }
+        } else {
+            // Over-distributed — lekin button enable rahega
+            if (remainingSpan.length) {
+                remainingSpan.removeClass('text-success text-warning').addClass('text-danger');
             }
         }
+    }
+}
+
 
 
 
@@ -2772,11 +2786,17 @@
             // Collect tank distribution - REMOVE MAX VALIDATION
             const tankDistribution = [];
             let totalDistributed = 0;
+            let totalTankShortage = 0;
+
 
             $('.tank-qty-input').each(function () {
                 const qty = parseFloat($(this).val()) || 0;
                 const tankId = $(this).data('tank-id');
                 const tankName = $(this).data('tank-name');
+                    // ✅ Get this tank's shortage
+    const tankShortage = parseFloat(
+        $(`.tank-shortage-input[data-tank-id="${tankId}"]`).val()
+    ) || 0;
 
                 // ✅ REMOVED: if (qty > max) validation
                 // ✅ Allow any positive quantity regardless of available space
@@ -2785,11 +2805,26 @@
                     tankDistribution.push({
                         tank_id: tankId,
                         tank_name: tankName,
-                        quantity: qty
+                        quantity: qty,
+                        shortage: tankShortage  // ✅ Per-tank shortage
+
                     });
                     totalDistributed += qty;
+                    totalTankShortage += tankShortage;
+
                 }
             });
+
+            const topLevelShortage = parseFloat($('#thisReceiveShortage').val()) || 0;
+if (Math.abs(totalTankShortage - topLevelShortage) > 0.01) {
+    toastr.error(
+        `Sum of tank shortages (${totalTankShortage.toFixed(2)}L) ` +
+        `does not match total shortage (${topLevelShortage.toFixed(2)}L). ` +
+        `Please verify.`
+    );
+    saveBtn.prop('disabled', false).html(originalText);
+    return;
+}
 
             if (tankDistribution.length === 0) {
                 toastr.error('Please distribute quantity to at least one tank');

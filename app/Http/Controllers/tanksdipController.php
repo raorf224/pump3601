@@ -68,6 +68,183 @@ class tanksdipController extends Controller
                 }
 
                 // ✅ IMPORTANT: COMPARE WITH PREVIOUS TANK LEVEL
+                // if ($dipLiters > $currentTankLevel) {
+                //     return response()->json([
+                //         "success" => false,
+                //         "message" => "New dip reading ({$dipLiters}L) is GREATER than current tank level ({$currentTankLevel}L). Check your reading!",
+                //         "tank_id" => $tankReading['tank_id'],
+                //         "current_tank_level" => $currentTankLevel,
+                //         "new_dip_reading" => $dipLiters
+                //     ], 422);
+                // }
+            }
+
+            // ✅ GET PREVIOUS DIP READING FROM tanks_dip TABLE
+            $previousReading = DB::table('tanks_dip')
+                ->where('tank_id', $tankReading['tank_id'])
+                ->orderBy('to_date', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // ✅ SET OLD VALUES
+            if (!$previousReading) {
+                // First reading in tanks_dip table
+                $oldDipLiters = $tank->current_level ?? 0;
+                $oldDipMm = $tank->current_level_mm ?? 0;
+            } else {
+                $oldDipLiters = $previousReading->dip_in_liters ?? 0;
+                $oldDipMm = $previousReading->dip_mm ?? 0;
+            }
+
+            // ✅ ========== HANDLE IMAGE ==========
+            $imagePath = null;
+            if (!empty($tankReading['tanks_dip_image']) && $tankReading['tanks_dip_image'] !== 'null' && $tankReading['tanks_dip_image'] !== '') {
+                try {
+                    $imageData = $tankReading['tanks_dip_image'];
+                    $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+                    $imageData = str_replace(' ', '+', $imageData);
+
+                    $decoded = base64_decode($imageData, true);
+                    if ($decoded !== false && strlen($decoded) > 0) {
+                        $imageName = 'tank_dip_' . $tankReading['tank_id'] . '_' . time() . '.png';
+                        $imagePath = 'uploads/tank_dips/' . $imageName;
+                        $fullPath = public_path($imagePath);
+
+                        if (!file_exists(public_path('uploads/tank_dips'))) {
+                            mkdir(public_path('uploads/tank_dips'), 0777, true);
+                        }
+
+                        file_put_contents($fullPath, $decoded);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to save tank dip image: ' . $e->getMessage());
+                    $imagePath = null;
+                }
+            }
+
+
+            $fromDate = $tankReading['from_date'];
+            $toDate = $tankReading['to_date'];
+
+            $currentDipMm = isset($tankReading['dip_mm']) ? (float) $tankReading['dip_mm'] : 0;
+            $currentDipLiters = isset($tankReading['dip_in_liters']) ? (float) $tankReading['dip_in_liters'] : 0;
+
+            $reading = [
+                'tank_id' => $tankReading['tank_id'],
+                'shift_id' => $tankReading['shift_id'] ?? null,
+                
+                // ✅ CURRENT/NEW DIP READINGS
+                'dip_mm' => $currentDipMm,
+                'dip_in_liters' => $currentDipLiters,
+                
+                // ✅ OLD/PREVIOUS READINGS
+                'old_dip_mm' => $oldDipMm,
+                'old_dip_liters' => $oldDipLiters,
+                
+                // ✅ DATE RANGE
+                'from_date' => $fromDate,
+                'to_date' => $toDate,
+                
+                'remarks' => $tankReading['remarks'] ?? null,
+                'tanks_dip_image' => $imagePath, 
+
+                'created_by' => $tankReading['created_by'],
+                'created_at' => now()
+            ];
+
+            // Insert into tanks_dip table
+            $readingId = DB::table('tanks_dip')->insertGetId($reading);
+            
+            // ✅ IMPORTANT: UPDATE TANK'S CURRENT LEVEL WITH NEW DIP READING
+            // Jab dip liya jata hai, toh wahi tank ka current level ban jata hai
+			
+			
+            DB::table('tanks')
+                ->where('id', $tankReading['tank_id'])
+                ->update([
+                    'current_level' => $currentDipLiters > 0 ? $currentDipLiters : $tank->current_level,
+                    'current_level_mm' => $currentDipMm > 0 ? $currentDipMm : $tank->current_level_mm,
+                    'updated_at' => now()
+                ]);
+
+		
+            // Add to response
+            $savedReading = $reading;
+            $savedReading['id'] = $readingId;
+            $savedReading['tank_capacity'] = $tankCapacity;
+            $savedReading['previous_tank_level'] = $currentTankLevel;
+            $savedReadings[] = $savedReading;
+        }
+
+        return response()->json([
+            "success" => true,
+            "message" => "Tank dip readings saved successfully",
+            "data" => $savedReadings
+        ], 201);
+
+    } catch (\Exception $e) {
+        \Log::error('Error saving tank dip readings:', ['error' => $e->getMessage()]);
+        return response()->json([
+            "success" => false,
+            "message" => "Failed to save tank dip readings",
+            "error" => $e->getMessage()
+        ], 500);
+    }
+}
+
+ public function storeTankDipReadings1(Request $request)
+{
+    
+
+    try {
+        $request->validate([
+            'tank_data' => 'required|array',
+            'tank_data.*.tank_id' => 'required|integer|exists:tanks,id',
+            'tank_data.*.dip_mm' => 'nullable|numeric|min:0',
+            'tank_data.*.dip_in_liters' => 'nullable|numeric|min:0',
+            'tank_data.*.from_date' => 'required|date',
+            'tank_data.*.to_date' => 'required|date',
+            'tank_data.*.shift_id' => 'nullable|integer|exists:shifts,id',
+            'tank_data.*.remarks' => 'nullable|string|max:255',
+            'tank_data.*.created_by' => 'required|integer',
+            'tank_data.*.tanks_dip_image' => 'nullable|string|max:5242880' 
+
+        ]);
+
+        $savedReadings = [];
+
+        foreach ($request->tank_data as $tankReading) {
+            // Check if at least one reading is provided
+            if (empty($tankReading['dip_mm']) && empty($tankReading['dip_in_liters'])) {
+                continue;
+            }
+
+            // ✅ GET TANK DETAILS (capacity aur current level)
+            $tank = DB::table('tanks')
+                ->where('id', $tankReading['tank_id'])
+                ->select('capacity', 'current_level', 'current_level_mm')
+                ->first();
+
+            if (!$tank) {
+                continue; // Skip if tank not found
+            }
+
+            $tankCapacity = (float) $tank->capacity;
+            $currentTankLevel = (float) $tank->current_level; // Tank ka abhi ka level
+
+            // ✅ VALIDATE DIP IN LITERS AGAINST TANK CAPACITY
+            if (isset($tankReading['dip_in_liters']) && $tankReading['dip_in_liters'] > 0) {
+                $dipLiters = (float) $tankReading['dip_in_liters'];
+
+                if ($dipLiters > $tankCapacity) {
+                    return response()->json([
+                        "success" => false,
+                        "message" => "Dip in liters ({$dipLiters}) cannot exceed tank capacity ({$tankCapacity}) for tank ID: {$tankReading['tank_id']}",
+                        "error" => "dip_liters_exceeds_capacity"
+                    ], 422);
+                }
+
+                // ✅ IMPORTANT: COMPARE WITH PREVIOUS TANK LEVEL
                 if ($dipLiters > $currentTankLevel) {
                     return response()->json([
                         "success" => false,
@@ -191,7 +368,6 @@ class tanksdipController extends Controller
         ], 500);
     }
 }
-
 
     /**
      * Get tank dip readings by station

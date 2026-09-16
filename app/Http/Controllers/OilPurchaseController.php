@@ -808,8 +808,298 @@ END as shortage_paid
         }
     }
 
-    // ✅Receive order and distribute to tanks - UPDATED WITH SHORTAGE LOGIC
     public function receiveOrder(Request $request, $id)
+{
+    $validated = $request->validate([
+        'receive_date' => 'required|date',
+        'shift_id' => 'required|integer|exists:shifts,id',
+
+        'this_receive_qty' => 'required|numeric|min:0.01',
+        'this_shortage_qty' => 'required|numeric|min:0',
+        'net_received_qty' => 'required|numeric|min:0.01',
+        'product_id' => 'required|integer',
+        'station_id' => 'required|integer',
+        'invoice_number' => 'nullable|string|max:45',
+        'reference_number' => 'nullable|string|max:45',
+        'vehicle_number' => 'required|string|max:45',
+        'shortage' => 'required|numeric|min:0',
+        'tanks' => 'required|array|min:1',
+        'tanks.*.tank_id' => 'required|integer',
+        'tanks.*.quantity' => 'required|numeric|min:0',
+        // ✅ NEW: Per-tank shortage validation
+        'tanks.*.shortage' => 'nullable|numeric|min:0',
+    ]);
+
+    DB::beginTransaction();
+    try {
+        // Get current purchase details
+        $purchase = DB::select('SELECT * FROM oil_purchase WHERE id = ?', [$id]);
+        if (empty($purchase)) {
+            return response()->json(['message' => 'Purchase not found'], 404);
+        }
+
+        $purchase = $purchase[0];
+        $orderedQty = floatval($purchase->qty);
+        $alreadyReceived = floatval($purchase->recieved_qty) ?? 0;
+
+        // Get values from request
+        $thisReceiveQty = floatval($validated['this_receive_qty']);
+        $thisShortageQty = floatval($validated['this_shortage_qty']);
+        $netReceivedQty = floatval($validated['net_received_qty']);
+        $shiftId = $validated['shift_id'];
+
+        // Validate this receive calculation
+        if (abs($thisReceiveQty - $thisShortageQty - $netReceivedQty) > 0.01) {
+            return response()->json([
+                'message' => 'Quantity calculation error',
+                'formula' => 'This Receive - This Shortage = Net Received',
+                'calculation' => "$thisReceiveQty - $thisShortageQty = " . ($thisReceiveQty - $thisShortageQty),
+                'net_received' => $netReceivedQty
+            ], 400);
+        }
+
+        // Check if this receive exceeds remaining ordered quantity
+        $remainingOrdered = $orderedQty - $alreadyReceived;
+        if ($thisReceiveQty > $remainingOrdered) {
+            return response()->json([
+                'message' => 'This receive exceeds remaining ordered quantity',
+                'ordered_qty' => $orderedQty,
+                'already_received' => $alreadyReceived,
+                'remaining' => $remainingOrdered,
+                'trying_to_receive' => $thisReceiveQty,
+                'exceeds_by' => $thisReceiveQty - $remainingOrdered
+            ], 400);
+        }
+
+        // Calculate total distributed from tanks in THIS receive
+        $totalDistributed = 0;
+        $tankIds = [];
+
+        foreach ($validated['tanks'] as $tank) {
+            $quantity = floatval($tank['quantity']);
+            $totalDistributed += $quantity;
+            $tankIds[] = $tank['tank_id'];
+        }
+
+        // VALIDATION: Check if distributed quantity matches net received
+        if (abs($netReceivedQty - $totalDistributed) > 0.01) {
+            return response()->json([
+                'message' => 'Distributed quantity does not match net received quantity',
+                'net_received' => $netReceivedQty,
+                'distributed_qty' => $totalDistributed,
+                'difference' => $netReceivedQty - $totalDistributed
+            ], 400);
+        }
+
+        // Calculate new total received
+        $newTotalReceived = $alreadyReceived + $thisReceiveQty;
+        $newNetAddedToTanks = $alreadyReceived + $netReceivedQty;
+
+        // STRICT VALIDATION
+        if ($newTotalReceived > $orderedQty && ($newTotalReceived - $orderedQty) > 0.01) {
+            return response()->json([
+                'message' => 'Cannot receive more than ordered quantity',
+                'ordered_qty' => $orderedQty,
+                'already_received' => $alreadyReceived,
+                'trying_to_receive' => $thisReceiveQty,
+                'new_total_would_be' => $newTotalReceived,
+                'max_allowed' => $orderedQty - $alreadyReceived,
+                'exceeded_by' => $newTotalReceived - $orderedQty
+            ], 400);
+        }
+
+        $tankIdsStr = implode(',', $tankIds);
+        $isFullyReceived = abs($orderedQty - $newTotalReceived) <= 0.01;
+
+        // ✅ HANDLE INVOICE IMAGE UPLOAD
+        $invoiceImagePath = null;
+
+        if ($request->has('invoice_image') && !empty($request->invoice_image)) {
+            try {
+                $imageData = $request->invoice_image;
+
+                if (is_string($imageData) && strpos($imageData, 'base64,') !== false) {
+                    preg_match('/^data:image\/(\w+);base64,/', $imageData, $matches);
+                    $imageType = isset($matches[1]) ? $matches[1] : 'jpg';
+
+                    $allowedTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                    if (!in_array(strtolower($imageType), $allowedTypes)) {
+                        throw new Exception("Invalid image type. Allowed: " . implode(', ', $allowedTypes));
+                    }
+
+                    $imageData = explode('base64,', $imageData)[1];
+                    $imageData = str_replace(' ', '+', $imageData);
+                    $decoded = base64_decode($imageData, true);
+
+                    if ($decoded === false) {
+                        throw new Exception("Invalid base64 image data");
+                    }
+
+                    $filename = time() . '_' . uniqid() . '.' . $imageType;
+                    $destinationPath = public_path('assets/uploads/invoices');
+
+                    if (!file_exists($destinationPath)) {
+                        mkdir($destinationPath, 0777, true);
+                    }
+
+                    $fullPath = $destinationPath . DIRECTORY_SEPARATOR . $filename;
+                    file_put_contents($fullPath, $decoded);
+                    $invoiceImagePath = 'assets/uploads/invoices/' . $filename;
+                } else if ($imageData instanceof \Illuminate\Http\UploadedFile) {
+                    $file = $imageData;
+                    $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $destinationPath = public_path('assets/uploads/invoices');
+
+                    if (!file_exists($destinationPath)) {
+                        mkdir($destinationPath, 0777, true);
+                    }
+
+                    $file->move($destinationPath, $filename);
+                    $invoiceImagePath = 'assets/uploads/invoices/' . $filename;
+                } else {
+                    throw new Exception("Invalid image format");
+                }
+            } catch (Exception $e) {
+                throw new Exception("Image upload failed: " . $e->getMessage());
+            }
+        } else if ($request->hasFile('invoice_image')) {
+            $file = $request->file('invoice_image');
+
+            if (!$file->isValid()) {
+                throw new Exception("Invalid file upload");
+            }
+
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $destinationPath = public_path('assets/uploads/invoices');
+
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0777, true);
+            }
+
+            $file->move($destinationPath, $filename);
+            $invoiceImagePath = 'assets/uploads/invoices/' . $filename;
+        }
+
+        // UPDATE oil_purchase
+        DB::update(
+            'UPDATE oil_purchase SET 
+                recieving_date = ?,
+                recieved_qty = ?,
+                tank_id = CONCAT(COALESCE(tank_id, ""), ?, ?),
+                recive_status = ?,
+                stock_update = 1,
+                updated_at = NOW()
+            WHERE id = ?',
+            [
+                $validated['receive_date'],
+                $newTotalReceived,
+                ($purchase->tank_id ? ',' : ''),
+                $tankIdsStr,
+                $isFullyReceived ? 'Recived' : 'Not-Recived',
+                $id
+            ]
+        );
+
+        // Get additional fields
+        $invoiceNumber = $validated['invoice_number'] ?? null;
+        $referenceNumber = $validated['reference_number'] ?? null;
+        $vehicleNumber = $validated['vehicle_number'] ?? null;
+
+        // Update tank levels and record in history
+        $lastReceiveId = null;
+
+        foreach ($validated['tanks'] as $tank) {
+            $quantity = floatval($tank['quantity']);
+
+            // ✅ PER-TANK SHORTAGE - Har tank ka apna shortage
+            // Agar frontend se nahi aayi, toh 0 use karo
+            $tankShortage = floatval($tank['shortage'] ?? 0);
+
+            DB::update(
+                'UPDATE tanks SET current_level = current_level + ? WHERE id = ?',
+                [$quantity, $tank['tank_id']]
+            );
+
+            // ✅ INSERT INTO oil_recived_tanks with PER-TANK shortage
+            DB::insert(
+                'INSERT INTO oil_recived_tanks (
+                    oil_purchase_id, 
+                    tanks_id, 
+                    recived_qty, 
+                    recive_date,
+                    shift_id,  
+                    inovice_number,
+                    reference_number,
+                    vehicle_number,
+                    invoice_image,
+                    shortage,
+                    created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+                [
+                    $id,
+                    $tank['tank_id'],
+                    $quantity,
+                    $validated['receive_date'],
+                    $shiftId,
+                    $invoiceNumber,
+                    $referenceNumber,
+                    $vehicleNumber,
+                    $invoiceImagePath,
+                    $tankShortage  // ✅ PER-TANK SHORTAGE (was $shortage before)
+                ]
+            );
+
+            $lastReceiveId = DB::getPdo()->lastInsertId();
+
+            // Insert into fuel_inventory_layers
+            DB::insert(
+                'INSERT INTO fuel_inventory_layers
+                    (tank_id, product_id, remaining_qty, rate)
+                VALUES (?, ?, ?, ?)',
+                [
+                    $tank['tank_id'],
+                    $purchase->product_id,
+                    $quantity,
+                    $purchase->rate
+                ]
+            );
+        }
+
+        DB::commit();
+
+        $fullImageUrl = $invoiceImagePath ? url($invoiceImagePath) : null;
+
+        return response()->json([
+            'message' => 'Order received successfully',
+            'receive_id' => $lastReceiveId,
+            'id' => $id,
+            'shift_id' => $shiftId,
+            'ordered_quantity' => $orderedQty,
+            'already_received_before' => $alreadyReceived,
+            'this_receive' => $thisReceiveQty,
+            'shortage_this_time' => $thisShortageQty,
+            'net_added_to_tanks' => $netReceivedQty,
+            'total_received_so_far' => $newTotalReceived,
+            'total_net_in_tanks' => $newNetAddedToTanks,
+            'remaining' => max(0, $orderedQty - $newTotalReceived),
+            'status' => $isFullyReceived ? 'Fully Received' : 'Partially Received',
+            'calculation' => "This: $thisReceiveQty - Shortage: $thisShortageQty = Net: $netReceivedQty",
+            'invoice_image' => $invoiceImagePath,
+            'invoice_image_url' => $fullImageUrl
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Failed to receive order: ' . $e->getMessage());
+        return response()->json([
+            'message' => 'Failed to receive order',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+    // ✅Receive order and distribute to tanks - UPDATED WITH SHORTAGE LOGIC
+    public function receiveOrder1(Request $request, $id)
     {
         $validated = $request->validate([
             'receive_date' => 'required|date',
