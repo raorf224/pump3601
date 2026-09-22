@@ -140,7 +140,94 @@ public function getStationProduct($id)
     return response()->json($product[0], 200);
 }
 
+
 public function updateStationProduct(Request $request, $id)
+{
+    DB::beginTransaction();
+    try {
+        $request->validate([
+            'price'          => 'required|numeric|min:0',
+            'effective_from' => 'required|date',
+            'effective_to'   => 'required|date',
+            'shift_id'       => 'nullable|integer',
+        ]);
+
+        // 1. Latest price row
+        $existing = DB::selectOne(
+            "SELECT * FROM product_prices 
+             WHERE station_product_id = ? 
+             ORDER BY created_at DESC, id DESC 
+             LIMIT 1",
+            [$id]
+        );
+
+        if ($existing) {
+            // 2. product_prices UPDATE
+            DB::update(
+                "UPDATE product_prices 
+                 SET price = ?, effective_from = ?, effective_to = ?, shift_id = ?, station_id = ?, updated_at = NOW()
+                 WHERE id = ?",
+                [
+                    $request->price,
+                    $request->effective_from,
+                    $request->effective_to,
+                    $request->shift_id ?? null,
+                    $request->station_id ?? null,
+                    $existing->id
+                ]
+            );
+
+            // 3. ✅ Log mein nayi entry (updated values)
+            DB::insert(
+                "INSERT INTO product_prices_log 
+                    (product_price_id, price, effective_from, effective_to, created_at)
+                 VALUES (?, ?, ?, ?, NOW())",
+                [
+                    $existing->id,
+                    $request->price,
+                    $request->effective_from,
+                    $request->effective_to,
+                ]
+            );
+
+        } else {
+            // Koi row nahi → insert karo + log
+            DB::insert(
+                "INSERT INTO product_prices 
+                    (station_product_id, price, effective_from, effective_to, shift_id, station_id, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())",
+                [
+                    $id,
+                    $request->price,
+                    $request->effective_from,
+                    $request->effective_to,
+                    $request->shift_id ?? null,
+                    $request->station_id ?? null,
+                ]
+            );
+            $priceId = DB::getPdo()->lastInsertId();
+
+            DB::insert(
+                "INSERT INTO product_prices_log 
+                    (product_price_id, price, effective_from, effective_to, created_at)
+                 VALUES (?, ?, ?, ?, NOW())",
+                [$priceId, $request->price, $request->effective_from, $request->effective_to]
+            );
+        }
+
+        DB::commit();
+        return response()->json(['message' => 'Station Product updated successfully'], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'message' => 'Failed to update Station Product',
+            'error'   => $e->getMessage()
+        ], 500);
+    }
+}
+
+public function updateStationProduct1(Request $request, $id)
 {
     DB::beginTransaction();
     try {

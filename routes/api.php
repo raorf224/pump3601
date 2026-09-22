@@ -275,7 +275,7 @@ Route::get('nozzles/station/{stationId}', [NozzlesController::class, 'getByStati
 Route::get('nozzles/station/{stationId}/shift/{shiftId}', [NozzlesController::class, 'getByStationWithShift']);
 Route::get('shift-nozzle-readings/last-reading/{nozzleId}', [ShiftNozzleReadingsController::class, 'getLastReading']);
 Route::get('/last-shift-end-time/{stationId}', [ShiftController::class, 'getLastShiftEndTime']);
-Route::get('/product-price/{stationId}/{productId}/{date}', [NozzleTotalizerResetController::class, 'getPriceByDate']);
+Route::get('/product-price/{stationId}/{productId}/{shiftId}/{date}', [NozzleTotalizerResetController::class, 'getPriceByDate']);
 Route::get('/shifts/close', [ShiftController::class, 'closeShiftPage'])->name('shifts.close');
 Route::get('/stations/{id}/open-shifts', [ShiftController::class, 'getOpenShiftsByStation']);
 Route::post('shift-cash-flow', [ShiftController::class, 'saveCashFlow']);
@@ -288,7 +288,7 @@ Route::get('/station-products/{stationId}', [ProductController::class, 'getStati
 Route::get('/station-product-tanks/{stationId}/{productId}', [TanksController::class, 'getStationProductTanks']);
 Route::post('/oil-purchases/{id}/receive', [OilPurchaseController::class, 'receiveOrder']);
 Route::get('/oil-purchases/shift/{shiftId}', [OilPurchaseController::class, 'getByShift']);
-Route::get('/product-price/{stationId}/{productId}/{date}', [NozzleTotalizerResetController::class, 'getPriceByDate']);
+Route::get('/product-price/{stationId}/{productId}/{shiftId}/{date}', [NozzleTotalizerResetController::class, 'getPriceByDate']);
 Route::get('/accounts/station/{stationId}/type/{type}', [AccountsController::class, 'getAccountsByStationAndType1']);
 
 

@@ -6,11 +6,11 @@ use Illuminate\Support\Facades\DB;
 
 class StationProductsController extends Controller
 {
-// Get station-wise products with their prices
-public function getStationProductsWithPrices($stationId)
-{
-    $products = DB::select(
-        'SELECT 
+    // Get station-wise products with their prices
+    public function getStationProductsWithPrices($stationId)
+    {
+        $products = DB::select(
+            'SELECT 
             sp.id AS station_product_id,
             s.name as station,
             p.name as product,
@@ -33,15 +33,15 @@ public function getStationProductsWithPrices($stationId)
              LIMIT 1
          )
          ORDER BY p.name',
-        [$stationId]
-    );
+            [$stationId]
+        );
 
-    if (empty($products)) {
-        return response()->json(['message' => 'No products found for this station'], 404);
+        if (empty($products)) {
+            return response()->json(['message' => 'No products found for this station'], 404);
+        }
+
+        return response()->json($products);
     }
-
-    return response()->json($products);
-}
 
     // Assign a product to a station
     public function assignProductToStation(Request $request)
@@ -64,53 +64,73 @@ public function getStationProductsWithPrices($stationId)
         return response()->json(['message' => 'Product assigned to station successfully'], 201);
     }
 
-// Assign a product to a station with price
-public function assignProductWithPrice(Request $request)
-{
-    $validatedData = $request->validate([
-        'station_id' => 'required|integer',
-        'product_id' => 'required|integer',
-        'stock' => 'nullable|numeric',
-        'price' => 'required|numeric',
-        'effective_from' => 'required|date',
-        'effective_to' => 'required|date', // ✅ ADDED
-    ]);
+    // Assign a product to a station with price
+    public function assignProductWithPrice(Request $request)
+    {
+        $validatedData = $request->validate([
+            'station_id' => 'required|integer',
+            'product_id' => 'required|integer',
+            'stock' => 'nullable|numeric',
+            'price' => 'required|numeric',
+            'effective_from' => 'required|date',
+            'effective_to' => 'required|date',
+        ]);
 
-    DB::beginTransaction();
+        DB::beginTransaction();
 
-    try {
-        // Insert into station_products table
-        DB::insert(
-            'INSERT INTO station_products (station_id, product_id, stock, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
-            [
-                $validatedData['station_id'],
-                $validatedData['product_id'],
-                $validatedData['stock'] ?? 0.00,
-            ]
-        );
+        try {
+            // 1. Insert into station_products
+            DB::insert(
+                'INSERT INTO station_products (station_id, product_id, stock, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
+                [
+                    $validatedData['station_id'],
+                    $validatedData['product_id'],
+                    $validatedData['stock'] ?? 0.00,
+                ]
+            );
 
-        // Get the last inserted station_product_id
-        $stationProductId = DB::getPdo()->lastInsertId();
+            $stationProductId = DB::getPdo()->lastInsertId();
 
-        // Insert into product_prices table WITH effective_to
-        DB::insert(
-            'INSERT INTO product_prices (station_product_id, price, effective_from, effective_to, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
-            [
-                $stationProductId,
-                $validatedData['price'],
-                $validatedData['effective_from'],
-                $validatedData['effective_to'], // ✅ ADDED
-            ]
-        );
+            // 2. Insert into product_prices (with station_id)
+            DB::insert(
+                'INSERT INTO product_prices 
+                (station_product_id, price, effective_from, effective_to, station_id, created_at, updated_at) 
+             VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+                [
+                    $stationProductId,
+                    $validatedData['price'],
+                    $validatedData['effective_from'],
+                    $validatedData['effective_to'],
+                    $validatedData['station_id'],
+                ]
+            );
 
-        DB::commit();
+            $priceId = DB::getPdo()->lastInsertId();
 
-        return response()->json(['message' => 'Product assigned to station with price successfully'], 201);
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return response()->json(['message' => 'Failed to assign product with price', 'error' => $e->getMessage()], 500);
+            // 3. ✅ Insert into product_prices_log (initial entry)
+            DB::insert(
+                'INSERT INTO product_prices_log 
+                (product_price_id, price, effective_from, effective_to, created_at) 
+             VALUES (?, ?, ?, ?, NOW())',
+                [
+                    $priceId,
+                    $validatedData['price'],
+                    $validatedData['effective_from'],
+                    $validatedData['effective_to'],
+                ]
+            );
+
+            DB::commit();
+
+            return response()->json(['message' => 'Product assigned to station with price successfully'], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to assign product with price',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
-
 
 }

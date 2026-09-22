@@ -29,11 +29,11 @@ class NozzleTotalizerResetController extends Controller
     // ✅ Get resets by station_id
     public function show($stationId)
     {
-        $stationrec =DB::select("select * from stations where id =?",[$stationId]);
+        $stationrec = DB::select("select * from stations where id =?", [$stationId]);
 
-        if($stationrec[0]->local=="1"){
+        if ($stationrec[0]->local == "1") {
             $resets = DB::select(
-            'SELECT r.id, r.old_reading, r.new_reading, r.reason, r.reset_date,r.created_by,
+                'SELECT r.id, r.old_reading, r.new_reading, r.reason, r.reset_date,r.created_by,
                     n.id as nozzle_id, n.name as nozzle_name,
                     d.id as dispenser_id, d.name as dispenser_name,
                     st.id as station_id, st.name as station_name,
@@ -45,13 +45,13 @@ class NozzleTotalizerResetController extends Controller
              LEFT JOIN stations st ON d.station_id = st.id
              WHERE st.id = ?
              ORDER BY r.reset_date DESC',
-            [$stationId]
-        );
-        }else{
+                [$stationId]
+            );
+        } else {
 
-        
-        $resets = DB::select(
-            'SELECT r.id, r.old_reading, r.new_reading, r.reason, r.reset_date,r.created_by,
+
+            $resets = DB::select(
+                'SELECT r.id, r.old_reading, r.new_reading, r.reason, r.reset_date,r.created_by,
                     n.id as nozzle_id, n.name as nozzle_name,
                     d.id as dispenser_id, d.name as dispenser_name,
                     st.id as station_id, st.name as station_name,
@@ -63,8 +63,8 @@ class NozzleTotalizerResetController extends Controller
              LEFT JOIN stations st ON d.station_id = st.id
              WHERE st.id = ?
              ORDER BY r.reset_date DESC',
-            [$stationId]
-        );
+                [$stationId]
+            );
         }
 
         return response()->json($resets);
@@ -85,154 +85,247 @@ class NozzleTotalizerResetController extends Controller
     }
 
     // Store a new reset record
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'nozzle_id' => 'required|integer|exists:nozzles,id',
-        'shift_id' => 'required|integer|exists:shifts,id',
-        'reset_date' => 'required|date', // ✅ ADDED
-        'old_reading' => 'required|numeric',
-        'new_reading' => 'required|numeric',
-        'total_dispensed' => 'required|numeric',
-        'rate' => 'required|numeric',
-        'total_amount' => 'required|numeric',
-        'reason' => 'nullable|string',
-        'created_by' => 'nullable|integer|exists:users,id',
-    ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'nozzle_id' => 'required|integer|exists:nozzles,id',
+            'shift_id' => 'required|integer|exists:shifts,id',
+            'reset_date' => 'required|date', // ✅ ADDED
+            'old_reading' => 'required|numeric',
+            'new_reading' => 'required|numeric',
+            'total_dispensed' => 'required|numeric',
+            'rate' => 'required|numeric',
+            'total_amount' => 'required|numeric',
+            'reason' => 'nullable|string',
+            'created_by' => 'nullable|integer|exists:users,id',
+        ]);
 
-    // ✅ START TRANSACTION
-    DB::beginTransaction();
+        // ✅ START TRANSACTION
+        DB::beginTransaction();
 
-    try {
-        // 1. Insert reset record with reset_date from user
-        DB::insert(
-            'INSERT INTO nozzle_totalizer_resets (nozzle_id, shift_id, reset_date, old_reading, new_reading, 
+        try {
+            // 1. Insert reset record with reset_date from user
+            DB::insert(
+                'INSERT INTO nozzle_totalizer_resets (nozzle_id, shift_id, reset_date, old_reading, new_reading, 
              total_dispensed, rate, total_amount, reason, created_by, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-            [
-                $validated['nozzle_id'],
-                $validated['shift_id'],
-                $validated['reset_date'], // ✅ Use user provided date
-                $validated['old_reading'],
-                $validated['new_reading'],
-                $validated['total_dispensed'],
-                $validated['rate'],
-                $validated['total_amount'],
-                $validated['reason'] ?? null,
-                $validated['created_by'] ?? null,
-            ]
-        );
+                [
+                    $validated['nozzle_id'],
+                    $validated['shift_id'],
+                    $validated['reset_date'], // ✅ Use user provided date
+                    $validated['old_reading'],
+                    $validated['new_reading'],
+                    $validated['total_dispensed'],
+                    $validated['rate'],
+                    $validated['total_amount'],
+                    $validated['reason'] ?? null,
+                    $validated['created_by'] ?? null,
+                ]
+            );
 
-        // 2. Update nozzle initial meter reading
-        DB::table('nozzles')
-            ->where('id', $validated['nozzle_id'])
-            ->update([
-                'intial_meter_reading' => $validated['new_reading'],
-                'intial_date' => $validated['reset_date'], // ✅ Use user provided date
-                'updated_at' => now(),
+            // 2. Update nozzle initial meter reading
+            DB::table('nozzles')
+                ->where('id', $validated['nozzle_id'])
+                ->update([
+                    'intial_meter_reading' => $validated['new_reading'],
+                    'intial_date' => $validated['reset_date'], // ✅ Use user provided date
+                    'updated_at' => now(),
+                ]);
+
+            // ✅ COMMIT TRANSACTION
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Nozzle totalizer reset recorded and nozzle reading updated successfully'
+            ], 201);
+
+        } catch (\Exception $e) {
+            // ✅ ROLLBACK TRANSACTION
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Error saving nozzle reset: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getPriceByDate($stationId, $productId, $shiftId, $date)
+    {
+        try {
+            $dateTime = date('Y-m-d H:i:s', strtotime($date));
+
+            \Log::info("Price lookup → station:{$stationId}, product:{$productId}, shift:{$shiftId}, date:{$dateTime}");
+
+            // ✅ Validate productId
+            if (empty($productId) || $productId === 'undefined' || $productId === 'null') {
+                return response()->json(['message' => 'Invalid product id'], 400);
+            }
+
+            // ✅ Station product mapping
+            $stationProductRecord = DB::table('station_products')
+                ->where('station_id', $stationId)
+                ->where('product_id', $productId)
+                ->first();
+
+            if (!$stationProductRecord) {
+                return response()->json(['message' => 'Station product mapping not found'], 404);
+            }
+
+            $stationProductId = $stationProductRecord->id;
+            $productPrice = null;
+
+            // ✅ STEP 1: Shift_id hai toh pehle usse try karo
+            if (!empty($shiftId) && $shiftId !== 'null' && $shiftId !== '0') {
+                $productPrice = DB::table('product_prices')
+                    ->where('station_product_id', $stationProductId)
+                    ->where('shift_id', $shiftId)
+                    ->whereNotNull('price')             // ✅ price null na ho
+                    ->where('price', '>', 0)            // ✅ price 0 na ho
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                \Log::info("Shift lookup (shift_id={$shiftId}): " . ($productPrice ? 'FOUND ' . $productPrice->price : 'NOT FOUND'));
+            }
+
+            // ✅ STEP 2: Shift se nahi mila → date-based fallback
+            if (!$productPrice) {
+                $productPrice = DB::table('product_prices')
+                    ->where('station_product_id', $stationProductId)
+                    ->where('price', '>', 0)            // ✅ 0 skip karo
+                    ->where(function ($q) use ($dateTime) {
+                        // ✅ Shift-less records (jinki shift_id NULL hai)
+                        $q->whereNull('shift_id')->orWhere('shift_id', '');
+
+                        // Aur jinka date range match ho
+                        // (niche wali condition se combine)
+                    })
+                    ->where('effective_from', '<=', $dateTime)
+                    ->where(function ($query) use ($dateTime) {
+                        $query->where('effective_to', '>=', $dateTime)
+                            ->orWhereNull('effective_to');
+                    })
+                    ->orderBy('effective_from', 'desc')
+                    ->first();
+
+                \Log::info("Date lookup (shift-less, date={$dateTime}): " . ($productPrice ? 'FOUND ' . $productPrice->price : 'NOT FOUND'));
+            }
+
+            // ✅ STEP 3: Kuch bhi nahi mila → koi bhi latest rate (date ignore)
+            if (!$productPrice) {
+                $productPrice = DB::table('product_prices')
+                    ->where('station_product_id', $stationProductId)
+                    ->where('price', '>', 0)
+                    ->orderBy('effective_from', 'desc')
+                    ->first();
+
+                \Log::info("Fallback (latest any): " . ($productPrice ? 'FOUND ' . $productPrice->price : 'NOT FOUND'));
+            }
+
+            if (!$productPrice) {
+                return response()->json(['message' => 'Product price not found'], 404);
+            }
+
+            return response()->json([
+                'price' => (float) $productPrice->price,
+                'effective_from' => $productPrice->effective_from,
+                'effective_to' => $productPrice->effective_to,
+                'shift_id' => $productPrice->shift_id ?? null,
+                'station_product_id' => $stationProductId
             ]);
 
-        // ✅ COMMIT TRANSACTION
-        DB::commit();
-
-        return response()->json([
-            'message' => 'Nozzle totalizer reset recorded and nozzle reading updated successfully'
-        ], 201);
-
-    } catch (\Exception $e) {
-        // ✅ ROLLBACK TRANSACTION
-        DB::rollBack();
-
-        return response()->json([
-            'message' => 'Error saving nozzle reset: ' . $e->getMessage()
-        ], 500);
+        } catch (\Exception $e) {
+            \Log::error("Error fetching product price: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Error fetching product price',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
-public function getPriceByDate($stationId, $productId, $date)
-{
-    try {
-        // Convert ISO date to MySQL datetime format
-        $dateTime = date('Y-m-d H:i:s', strtotime($date));
-        
-        // Debug info
-        \Log::info("Fetching price for station: {$stationId}, product: {$productId}, date: {$dateTime}");
-        $stationrec =DB::select("select * from stations where id =?",[$stationId]);
-       if($stationrec[0]->local=="1"){
-        // ✅ DIRECT QUERY - nozzles table mein directly product_id hai
-        // Pehle check karo ki station pe yeh product available hai
-        $stationProduct = DB::table('nozzles')
-            ->join('dispensers', 'nozzles.dispenser_id', '=', 'dispensers.stationrow_id')
-            ->where('dispensers.station_id', $stationId)
-            ->where('nozzles.product_id', $productId)
-            ->first();
-       }else{
-        $stationProduct = DB::table('nozzles')
-            ->join('dispensers', 'nozzles.dispenser_id', '=', 'dispensers.id')
-            ->where('dispensers.station_id', $stationId)
-            ->where('nozzles.product_id', $productId)
-            ->first();
-       }
-        if (!$stationProduct) {
-            return response()->json([
-                'message' => 'Product not found at this station'
-            ], 404);
-        }
+    public function getPriceByDate1($stationId, $productId, $date)
+    {
+        try {
+            // Convert ISO date to MySQL datetime format
+            $dateTime = date('Y-m-d H:i:s', strtotime($date));
 
-        // ✅ Ab directly product_prices table mein query karo
-        // Pehle station_product_id find karo station_products table se
-        $stationProductRecord = DB::table('station_products')
-            ->where('station_id', $stationId)
-            ->where('product_id', $productId)
-            ->first();
+            // Debug info
+            \Log::info("Fetching price for station: {$stationId}, product: {$productId}, date: {$dateTime}");
+            $stationrec = DB::select("select * from stations where id =?", [$stationId]);
+            if ($stationrec[0]->local == "1") {
+                // ✅ DIRECT QUERY - nozzles table mein directly product_id hai
+                // Pehle check karo ki station pe yeh product available hai
+                $stationProduct = DB::table('nozzles')
+                    ->join('dispensers', 'nozzles.dispenser_id', '=', 'dispensers.stationrow_id')
+                    ->where('dispensers.station_id', $stationId)
+                    ->where('nozzles.product_id', $productId)
+                    ->first();
+            } else {
+                $stationProduct = DB::table('nozzles')
+                    ->join('dispensers', 'nozzles.dispenser_id', '=', 'dispensers.id')
+                    ->where('dispensers.station_id', $stationId)
+                    ->where('nozzles.product_id', $productId)
+                    ->first();
+            }
+            if (!$stationProduct) {
+                return response()->json([
+                    'message' => 'Product not found at this station'
+                ], 404);
+            }
 
-        if (!$stationProductRecord) {
-            return response()->json([
-                'message' => 'Station product mapping not found'
-            ], 404);
-        }
+            // ✅ Ab directly product_prices table mein query karo
+            // Pehle station_product_id find karo station_products table se
+            $stationProductRecord = DB::table('station_products')
+                ->where('station_id', $stationId)
+                ->where('product_id', $productId)
+                ->first();
 
-        $stationProductId = $stationProductRecord->id;
+            if (!$stationProductRecord) {
+                return response()->json([
+                    'message' => 'Station product mapping not found'
+                ], 404);
+            }
 
-        // Get effective price for the given date
-        $productPrice = DB::table('product_prices')
-            ->where('station_product_id', $stationProductId)
-            ->where('effective_from', '<=', $dateTime)
-            ->where(function($query) use ($dateTime) {
-                $query->where('effective_to', '>=', $dateTime)
-                      ->orWhereNull('effective_to');
-            })
-            ->orderBy('effective_from', 'desc')
-            ->first();
+            $stationProductId = $stationProductRecord->id;
 
-        // If no price found with effective_to condition, try getting latest active price
-        if (!$productPrice) {
+            // Get effective price for the given date
             $productPrice = DB::table('product_prices')
                 ->where('station_product_id', $stationProductId)
                 ->where('effective_from', '<=', $dateTime)
+                ->where(function ($query) use ($dateTime) {
+                    $query->where('effective_to', '>=', $dateTime)
+                        ->orWhereNull('effective_to');
+                })
                 ->orderBy('effective_from', 'desc')
                 ->first();
-        }
 
-        if (!$productPrice) {
+            // If no price found with effective_to condition, try getting latest active price
+            if (!$productPrice) {
+                $productPrice = DB::table('product_prices')
+                    ->where('station_product_id', $stationProductId)
+                    ->where('effective_from', '<=', $dateTime)
+                    ->orderBy('effective_from', 'desc')
+                    ->first();
+            }
+
+            if (!$productPrice) {
+                return response()->json([
+                    'message' => 'Product price not found for the given date'
+                ], 404);
+            }
+
             return response()->json([
-                'message' => 'Product price not found for the given date'
-            ], 404);
+                'price' => (float) $productPrice->price,
+                'effective_from' => $productPrice->effective_from,
+                'effective_to' => $productPrice->effective_to,
+                'station_product_id' => $stationProductId
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error("Error fetching product price: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Error fetching product price',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'price' => (float)$productPrice->price,
-            'effective_from' => $productPrice->effective_from,
-            'effective_to' => $productPrice->effective_to,
-            'station_product_id' => $stationProductId
-        ]);
-
-    } catch (\Exception $e) {
-        \Log::error("Error fetching product price: " . $e->getMessage());
-        return response()->json([
-            'message' => 'Error fetching product price',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
 }
