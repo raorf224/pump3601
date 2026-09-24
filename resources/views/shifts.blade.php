@@ -92,6 +92,54 @@
                         </div>
                     </div>
 
+                    <!-- ✅ FILTER CARD -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">
+                                <i class="bi bi-funnel me-2"></i>Filter Shifts
+                            </h6>
+                            <div class="row g-3 align-items-end">
+                                <!-- Station -->
+                                <div class="col-md-3">
+                                    <label class="form-label">Station</label>
+                                    <select class="form-select" id="filter_station_id">
+                                        <option value="">-- All Stations --</option>
+                                    </select>
+                                </div>
+
+                                <!-- Manager -->
+                                <div class="col-md-3">
+                                    <label class="form-label">Manager</label>
+                                    <select class="form-select" id="filter_manager_id">
+                                        <option value="">-- All Managers --</option>
+                                    </select>
+                                </div>
+
+                                <!-- From Date -->
+                                <div class="col-md-2">
+                                    <label class="form-label">From Date</label>
+                                    <input type="datetime-local" class="form-control" id="filter_from_date">
+                                </div>
+
+                                <!-- To Date -->
+                                <div class="col-md-2">
+                                    <label class="form-label">To Date</label>
+                                    <input type="datetime-local" class="form-control" id="filter_to_date">
+                                </div>
+
+                                <!-- Buttons -->
+                                <div class="col-md-2 d-flex gap-2">
+                                    <button type="button" class="btn btn-primary flex-fill" id="apply_filter_btn">
+                                        <i class="bi bi-search"></i> Apply
+                                    </button>
+                                    <button type="button" class="btn btn-light flex-fill" id="reset_filter_btn">
+                                        <i class="bi bi-arrow-clockwise"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Shifts Table -->
                     <h5 class="card-title mb-3">Shift Records</h5>
                     <div class="table-responsive">
@@ -140,6 +188,17 @@
             shouldSort: false
         });
 
+        // ✅ Filter dropdowns (Choices.js)
+        const filterStationSelect = new Choices('#filter_station_id', {
+            searchPlaceholderValue: 'Search station...',
+            shouldSort: false
+        });
+
+        const filterManagerSelect = new Choices('#filter_manager_id', {
+            searchPlaceholderValue: 'Search manager...',
+            shouldSort: false
+        });
+
         let userPermissions = [];
 
         document.addEventListener("DOMContentLoaded", function () {
@@ -165,28 +224,32 @@
             // ✅ Toast Function
             function showToast(message, type = "success") {
                 const toastId = `toast-${Date.now()}`;
-                const bgClass = type === "success" ? "bg-success text-white" : "bg-danger text-white";
+
+                // ✅ Type-wise color
+                let bgClass = "bg-success text-white";       // default success
+                if (type === "error") bgClass = "bg-danger text-white";
+                else if (type === "warning") bgClass = "bg-warning text-dark";
+                else if (type === "info") bgClass = "bg-info text-white";
 
                 const toastHtml = `
-                        <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
-                            <div class="d-flex">
-                                <div class="toast-body">${message}</div>
-                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                            </div>
-                        </div>
-                    `;
+            <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
 
                 $("#toastContainer").append(toastHtml);
                 const toastElement = document.getElementById(toastId);
-                const bsToast = new bootstrap.Toast(toastElement, {
-                    delay: 3000
-                });
+                const bsToast = new bootstrap.Toast(toastElement, { delay: 3000 });
                 bsToast.show();
 
                 toastElement.addEventListener("hidden.bs.toast", () => {
                     $(toastElement).remove();
                 });
             }
+
 
             // ✅ Load last shift end time and set min start time
             function loadLastShiftEndTime(stationId) {
@@ -505,20 +568,20 @@
                     }
 
                     tableBody.append(`
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${stationName}</td>
-                    <td>${shiftType}</td>
-                    <td>${shiftIncharger}</td>
-                    <td>${cash_handover}</td>
-                    <td>${cash_return}</td>
-                    <td>${start}</td>
-                    <td>${end}</td>
-                    <td><span class="badge bg-${status === 'open' ? 'success' : 'secondary'}">${status}</span></td>
-                    <td>${created}</td>
-                    <td class="text-center">${actionButtons}</td>
-                </tr>
-            `);
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${stationName}</td>
+                        <td>${shiftType}</td>
+                        <td>${shiftIncharger}</td>
+                        <td>${cash_handover}</td>
+                        <td>${cash_return}</td>
+                        <td>${start}</td>
+                        <td>${end}</td>
+                        <td><span class="badge bg-${status === 'open' ? 'success' : 'secondary'}">${status}</span></td>
+                        <td>${created}</td>
+                        <td class="text-center">${actionButtons}</td>
+                    </tr>
+                `);
                 });
             }
             // ✅ Load All Shifts (role-aware)
@@ -531,6 +594,8 @@
                         method: 'GET',
                         success: function (res) {
                             const data = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
+                            allShiftsData = data;          // ✅ Cache
+
                             renderShiftRows(data);
                         },
                         error: function (xhr) {
@@ -552,6 +617,8 @@
                             success: function (res) {
                                 const data = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
                                 const filtered = data.filter(s => stationIds.includes(s.station_id));
+                                allShiftsData = filtered;          // ✅ Cache
+
                                 renderShiftRows(filtered);
                             },
                             error: function (xhr) {
@@ -571,6 +638,8 @@
                     method: 'GET',
                     success: function (res) {
                         const data = Array.isArray(res) ? res : (res && Array.isArray(res.data) ? res.data : []);
+                        allShiftsData = data;              // ✅ Cache
+
                         renderShiftRows(data);
                     },
                     error: function (xhr) {
@@ -746,6 +815,181 @@
                 window.location.href = "/close?shift_id=" + shiftId;
             });
 
+            // ✅ Filter variables
+            let allShiftsData = [];       // Original data cache
+            let filterStationsCache = []; // Filter card ke liye stations
+
+            // ✅ Filter ke liye stations load karo (role-wise)
+            function loadFilterStations() {
+                let endpoint;
+                if (AUTH_ROLE === 'admin') {
+                    endpoint = 'stations';
+                } else if (AUTH_ROLE === 'employee') {
+                    endpoint = `stations_emp/${AUTH_USER_ID}`;
+                } else {
+                    endpoint = `stations/${AUTH_USER_ID}`;
+                }
+
+                $.ajax({
+                    url: getApiUrl(endpoint),
+                    method: "GET",
+                    success: function (res) {
+                        const stations = Array.isArray(res) ? res : (res?.data || []);
+                        filterStationsCache = stations;
+
+                        // Populate filter station dropdown
+                        filterStationSelect.clearChoices();
+
+                        // Admin/Owner: "All Stations" option + saari stations
+                        const choices = [{ value: '', label: '-- All Stations --' }];
+                        stations.forEach(st => {
+                            choices.push({ value: st.id.toString(), label: st.name });
+                        });
+                        filterStationSelect.setChoices(choices, 'value', 'label', true);
+
+                        // ✅ Employee (manager): station fixed + disabled
+                        if (AUTH_ROLE === 'employee' && stations.length >= 1) {
+                            const sid = stations[0].id.toString();
+                            filterStationSelect.setChoiceByValue(sid);
+                            filterStationSelect.disable();
+                            loadFilterManagers(sid, true); // manager bhi fixed
+                        }
+                    },
+                    error: function () {
+                        console.error("Error loading filter stations");
+                    }
+                });
+            }
+
+            // ✅ Filter ke liye managers load karo (station-wise)
+            function loadFilterManagers(stationId, autoSelectSelf = false) {
+                if (!stationId) {
+                    // Clear manager dropdown
+                    filterManagerSelect.clearChoices();
+                    filterManagerSelect.setChoices(
+                        [{ value: '', label: '-- All Managers --' }],
+                        'value', 'label', true
+                    );
+                    return;
+                }
+
+                $.ajax({
+                    url: `/api/employees/station/${stationId}`,
+                    method: "GET",
+                    success: function (employees) {
+                        const choices = [{ value: '', label: '-- All Managers --' }];
+                        employees.forEach(emp => {
+                            choices.push({
+                                value: emp.employee_id.toString(),
+                                label: emp.user_full_name || emp.user_name || `Employee ${emp.employee_id}`
+                            });
+                        });
+
+                        filterManagerSelect.clearChoices();
+                        filterManagerSelect.setChoices(choices, 'value', 'label', true);
+
+                        // ✅ Manager (employee) role: khud auto-select + disabled
+                        if (AUTH_ROLE === 'employee') {
+                            // Khud ka employee id find karo
+                            // Aapke paas AUTH_USER_ID hai, lekin ye user_id hai, employee_id nahi
+                            // Toh hum employees list se match karenge
+                            // Backend se employee_id aata hai, lekin frontend ke paas user_id hai
+                            // Fallback: pehla manager select karo
+                            if (employees.length > 0) {
+                                // Best: backend se employee_id mile, filhal pehla wala set karo
+                                const selfEmp = employees.find(e => e.employee_id) || employees[0];
+                                filterManagerSelect.setChoiceByValue(selfEmp.employee_id.toString());
+                            }
+                            filterManagerSelect.disable();
+                        }
+                    },
+                    error: function () {
+                        console.error("Error loading filter managers");
+                    }
+                });
+            }
+
+            // ✅ Filter: Station change → Managers reload
+            document.getElementById('filter_station_id').addEventListener('change', function (e) {
+                const stationId = e.target.value;
+                loadFilterManagers(stationId);
+            });
+
+            // ✅ Apply Filter
+            $('#apply_filter_btn').on('click', function () {
+                applyFilter();
+            });
+
+            // ✅ Reset Filter
+            $('#reset_filter_btn').on('click', function () {
+                resetFilter();
+            });
+
+            // ✅ Apply filter function
+            function applyFilter() {
+                const stationId = document.getElementById('filter_station_id').value;
+                const managerId = document.getElementById('filter_manager_id').value;
+                const fromDate = $('#filter_from_date').val();
+                const toDate = $('#filter_to_date').val();
+
+                let filtered = [...allShiftsData];
+
+                // Filter by station
+                if (stationId) {
+                    filtered = filtered.filter(s => String(s.station_id) === String(stationId));
+                }
+
+                // Filter by manager (shift_incharger = employee id)
+                if (managerId) {
+                    filtered = filtered.filter(s => String(s.shift_incharger) === String(managerId));
+                }
+
+                // Filter by From Date (start_time >= from)
+                if (fromDate) {
+                    const fromTs = new Date(fromDate).getTime();
+                    filtered = filtered.filter(s => {
+                        if (!s.start_time) return false;
+                        return new Date(s.start_time.replace(' ', 'T')).getTime() >= fromTs;
+                    });
+                }
+
+                // Filter by To Date (end_time <= to)
+                if (toDate) {
+                    const toTs = new Date(toDate).getTime();
+                    filtered = filtered.filter(s => {
+                        if (!s.end_time) return false; // ✅ Open shifts skip
+                        return new Date(s.end_time.replace(' ', 'T')).getTime() <= toTs;
+                    });
+                }
+
+                renderShiftRows(filtered);
+                showToast(`Filter applied — ${filtered.length} records found`, "info");
+            }
+
+            // ✅ Reset filter
+            function resetFilter() {
+                // Dates clear
+                $('#filter_from_date').val('');
+                $('#filter_to_date').val('');
+
+                // Station/Manager reset — role-wise
+                if (AUTH_ROLE === 'employee') {
+                    // Fixed hai — kuch mat karo
+                } else {
+                    filterStationSelect.setChoiceByValue('');
+                    filterManagerSelect.clearChoices();
+                    filterManagerSelect.setChoices(
+                        [{ value: '', label: '-- All Managers --' }],
+                        'value', 'label', true
+                    );
+                }
+
+                // Table wapas full data
+                renderShiftRows(allShiftsData);
+                showToast("Filter reset", "info");
+            }
+
+
             function getApiUrl(endpoint) {
                 return `/api/${endpoint}`;
             }
@@ -756,6 +1000,8 @@
             loadStations().then(() => {
                 loadShifts();
             });
+            loadFilterStations();
+
         });
 
         function hasPermission(moduleName, action) {
