@@ -45,6 +45,40 @@ class TransactionsController extends Controller
         return response()->json($transactions);
     }
 
+    // ✅ FIXED VERSION
+    public function getByOwner($user_id)
+    {
+        // ✅ Owner ki SAARI stations uthao
+        $stations = DB::select(
+            'SELECT id FROM stations WHERE user_id = ?',
+            [$user_id]
+        );
+
+        if (empty($stations)) {
+            return response()->json(['message' => 'Owner station not found'], 404);
+        }
+
+        // ✅ Station IDs array banao
+        $stationIds = array_column($stations, 'id');
+        $placeholders = implode(',', array_fill(0, count($stationIds), '?'));
+
+        // ✅ Raw SQL with IN clause
+        $transactions = DB::select(
+            "SELECT t.id, t.station_id, s.name AS station_name, t.account_id, a.name AS account_name, 
+                t.shift_id, t.type, t.debit, t.credit, t.method, t.to_account, 
+                b.name AS to_account_name, b.bank_name, b.account_number,
+                t.note, t.created_at
+         FROM transactions t
+         LEFT JOIN stations s ON t.station_id = s.id
+         LEFT JOIN accounts a ON t.account_id = a.id OR t.account_id = a.stationrow_id
+         LEFT JOIN accounts b ON t.to_account = b.id OR t.to_account = b.stationrow_id
+         WHERE t.station_id IN ($placeholders)
+         ORDER BY t.created_at DESC",
+            $stationIds
+        );
+
+        return response()->json($transactions);
+    }
     // ✅ NEW: Get transactions for employee
     public function getByEmployee($user_id)
     {

@@ -342,6 +342,8 @@ Route::post('/transactions', [TransactionsController::class, 'store']);
 Route::delete('/transactions/{id}', [TransactionsController::class, 'destroy']);
 // Route::get('/transactions/expense-sheet', [TransactionsController::class, 'expenseSheet']);
 Route::get('/transactions/employee/{user_id}', [TransactionsController::class, 'getByEmployee']); // Employee ke liye naya route
+Route::get('/transactions/owner/{user_id}', [TransactionsController::class, 'getByOwner']);
+
 
 
 Route::put('/transactions/receive/{id}', [TransactionsController::class, 'receiveTransaction']);
