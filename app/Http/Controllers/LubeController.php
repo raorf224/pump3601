@@ -749,52 +749,75 @@ class LubeController extends Controller
     }
 
     public function getInventory(Request $request)
-    {
-        try {
-            $stationId = $request->get('station_id');
+{
+    try {
+        $authUser = auth()->user();
+        $role = strtolower($authUser->role);
+        $stationId = $request->get('station_id');
 
-            $query = DB::table('lube_inventory as i')
-                ->join('products as p', 'i.product_id', '=', 'p.id')
-                ->select(
-                    'i.product_id',
-                    'p.name as product_name',
-                    'p.category',
-                    'i.quantity as current_stock',
-                    'i.avg_buying_price',
-                    'i.total_purchased',
-                    'i.total_sold',
-                    'i.last_updated as last_purchase_date',
-                    DB::raw("'Packs' as unit")
-                )
-                ->where('p.category', 'lubricants');
+        $query = DB::table('lube_inventory as i')
+            ->join('products as p', 'i.product_id', '=', 'p.id')
+            ->join('stations as s', 'i.station_id', '=', 's.id')
+            ->select(
+                'i.product_id',
+                'i.station_id',
+                's.name as station_name',   // ✅ station name bhi bhejo
+                'p.name as product_name',
+                'p.category',
+                'i.quantity as current_stock',
+                'i.avg_buying_price',
+                'i.total_purchased',
+                'i.total_sold',
+                'i.last_updated as last_purchase_date',
+                DB::raw("'Packs' as unit")
+            )
+            ->where('p.category', 'lubricants');
 
+        // ✅ ROLE BASED FILTER
+        if ($role === 'admin') {
+            // Admin: sab stations
             if ($stationId) {
                 $query->where('i.station_id', $stationId);
             }
-
-            $inventory = $query->orderBy('p.name')->get();
-
-            // If no inventory records exist, return empty array
-            if ($inventory->isEmpty()) {
-                return response()->json([]);
+        } 
+        elseif ($role === 'owner') {
+            // Owner: sirf apni stations
+            $query->where('s.user_id', $authUser->id);
+            if ($stationId) {
+                $query->where('i.station_id', $stationId);
             }
-
-            // Add status badge info
-            foreach ($inventory as $item) {
-                $item->status = $item->current_stock <= 0 ? 'Out of Stock' :
-                    ($item->current_stock < 50 ? 'Low Stock' : 'In Stock');
-            }
-
-            return response()->json($inventory);
-
-        } catch (\Exception $e) {
-            Log::error('Inventory Error: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Failed to get inventory',
-                'message' => $e->getMessage()
-            ], 500);
+        } 
+        elseif ($role === 'employee') {
+            // Employee: sirf apni assigned station(s)
+            $query->join('employees as e', 'e.station_id', '=', 's.id')
+                  ->where('e.user_id', $authUser->id);
+        } 
+        else {
+            // koi aur role — kuch na do
+            return response()->json([]);
         }
+
+        $inventory = $query->orderBy('s.name')->orderBy('p.name')->get();
+
+        if ($inventory->isEmpty()) {
+            return response()->json([]);
+        }
+
+        foreach ($inventory as $item) {
+            $item->status = $item->current_stock <= 0 ? 'Out of Stock' :
+                ($item->current_stock < 50 ? 'Low Stock' : 'In Stock');
+        }
+
+        return response()->json($inventory);
+
+    } catch (\Exception $e) {
+        Log::error('Inventory Error: ' . $e->getMessage());
+        return response()->json([
+            'error' => 'Failed to get inventory',
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * ✅ Create or update inventory from initial setup

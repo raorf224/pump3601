@@ -7,7 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta content="Pump 360 - Fuel Station Management System" name="description" />
     <meta content="Pump 360" name="author" />
-
+    <!-- ✅ CSRF TOKEN — ye line add karo -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- layout setup -->
     <script type="module" src="{{ asset('assets/js/layout-setup.js') }}"></script>
 
