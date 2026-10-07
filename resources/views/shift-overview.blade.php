@@ -170,16 +170,16 @@
                     </div>
                 </div>
             </div>
-            <!-- Clickable Inactive Sites Card -->
+            <!-- Clickable Pending Shifts Card -->
             <div class="col-xl-3 col-md-6">
-                <div class="card kpi-card kpi-card-clickable border-0 shadow-sm" onclick="openInactiveSitesModal()" title="Click to view inactive sites">
+                <div class="card kpi-card kpi-card-clickable border-0 shadow-sm" onclick="openInactiveSitesModal()" title="Click to view pending shifts of sites">
                     <div class="card-body p-3 d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center gap-3">
                             <div class="kpi-icon bg-danger-subtle text-danger">
                                 <i class="bi bi-exclamation-triangle"></i>
                             </div>
                             <div>
-                                <span class="text-muted fs-7 fw-medium d-block">Inactive Sites (>3d)</span>
+                                <span class="text-muted fs-7 fw-medium d-block">Pending Shifts (>3d)</span>
                                 <h3 class="fw-bold mb-0 text-danger" id="totalAlerts">0</h3>
                             </div>
                         </div>
@@ -226,7 +226,7 @@
                 <div class="modal-header modal-header-custom">
                     <h6 class="modal-title fw-bold d-flex align-items-center gap-2 mb-0 text-danger">
                         <i class="bi bi-exclamation-triangle-fill text-danger"></i>
-                        Inactive Sites Overview (>3 Days Inactive)
+                        Pending Shifts Overview (>3 Days Pending)
                     </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -239,7 +239,7 @@
                                     <th>Site Name</th>
                                     <th>Location</th>
                                     <th>Last Shift Date</th>
-                                    <th>Days Inactive</th>
+                                    <th>Days Pending</th>
                                     <th>Manager</th>
                                 </tr>
                             </thead>
