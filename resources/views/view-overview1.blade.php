@@ -1017,6 +1017,7 @@
         const AUTH_USER_ID = "{{ Auth::id() }}";
         const AUTH_ROLE = "{{ Auth::check() ? strtolower(Auth::user()->role) : '' }}";
 
+        const CAN_ASSIGN_ERP = (AUTH_ROLE === 'admin' || AUTH_ROLE === 'owner');
 
 
         // ✅ Load stations
@@ -1129,18 +1130,21 @@
                         // ✅ ERP code button — assigned ya Not Assigned
                 const hasErp = t.erpcode && String(t.erpcode).trim() !== '';
                 const erpLabel = hasErp ? t.erpcode : 'Not Assigned';
+
+                // ✅ ERP column — sirf admin/owner ke liye button, employee ke liye plain text
+                const erpCell = CAN_ASSIGN_ERP
+                    ? `<button type="button"
+                            class="btn btn-sm btn-light border text-dark erp-btn"
+                            onclick="openErpModal(${t.id}, '${(t.name || '').replace(/'/g, "\\'")}', '${hasErp ? String(t.erpcode).replace(/'/g, "\\'") : ''}')">
+                        ${erpLabel}
+                    </button>`
+                    : `<span class="text-muted">${erpLabel}</span>`;
+
                 tbody.append(`
                                         <tr>
                                             <td>${i + 1}</td>
                                             <td>${t.name}</td>
-                                            <td>
-                                                <button type="button"
-                                                        class="btn btn-sm btn-light border text-dark erp-btn"
-                                                        onclick="openErpModal(${t.id}, '${(t.name || '').replace(/'/g, "\\'")}', '${hasErp ? String(t.erpcode).replace(/'/g, "\\'") : ''}')">
-                                                    ${erpLabel}
-                                                </button>
-                                            </td>
-
+                                            <td>${erpCell}</td>
                                             <td>${t.capacity}</td>
                                             <td>${t.current_level}</td>
                                             <td>${t.product_name}</td>
@@ -1388,6 +1392,12 @@
         // ✅ Submit — same function handles CREATE + UPDATE
         $('#erpCodeForm').off('submit').on('submit', function (e) {
             e.preventDefault();
+
+            // ✅ Extra safety — agar permission nahi to block karo
+            if (!CAN_ASSIGN_ERP) {
+                showToast('You are not allowed to assign ERP codes', 'error');
+                return;
+            }
 
             const tankId = $('#erp_tank_id').val();
             const erpcode = $('#erpcode_input').val().trim();
@@ -1861,18 +1871,21 @@
                 const hasErp = n.erpcode && String(n.erpcode).trim() !== '';
                 const erpLabel = hasErp ? String(n.erpcode) : 'Not Assigned';
 
+                // ✅ ERP column — sirf admin/owner ke liye button, employee ke liye plain text
+                const erpCell = CAN_ASSIGN_ERP
+                    ? `<button type="button"
+                            class="btn btn-sm btn-light border text-dark erp-btn"
+                            onclick="openNozzleErpModal(${n.id}, '${(n.name || '').replace(/'/g, "\\'")}', '${hasErp ? String(n.erpcode).replace(/'/g, "\\'") : ''}')">
+                        ${erpLabel}
+                    </button>`
+                    : `<span class="text-muted">${erpLabel}</span>`;
+
 
                 tbody.append(`
                                 <tr>
                                     <td>${i + 1}</td>
                                     <td>${n.name}</td>
-                                    <td>
-                                        <button type="button"
-                                                class="btn btn-sm btn-light border text-dark erp-btn"
-                                                onclick="openNozzleErpModal(${n.id}, '${(n.name || '').replace(/'/g, "\\'")}', '${hasErp ? String(n.erpcode).replace(/'/g, "\\'") : ''}')">
-                                            ${erpLabel}
-                                        </button>
-                                    </td>
+                                    <td>${erpCell}</td>
                                     <td>${n.dispenser_name}</td>
                                     <td>${n.nozzle_reading}</td>
                                     <td>${n.tank_reading || 0}</td>
@@ -2051,6 +2064,12 @@
         $('#nozzleErpCodeForm').off('submit').on('submit', function (e) {
             e.preventDefault();
 
+            // ✅ Extra safety
+            if (!CAN_ASSIGN_ERP) {
+                showToast('You are not allowed to assign ERP codes', 'error');
+                return;
+            }
+            
             const nozzleId = $('#erp_nozzle_id').val();
             const erpcode  = $('#nozzle_erpcode_input').val().trim();
 
