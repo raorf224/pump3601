@@ -257,6 +257,7 @@
                                                     </div>
                                                     <div class="col-md-7 tank-details">
                                                         <div class="mb-2"><strong>Site:</strong> ${tank.station_name ?? 'N/A'}</div>
+                                                        <div class="mb-2"><strong>ERP Code:</strong> ${tank.erpcode ?? 'NOT ASSIGNED'}</div>
                                                         <div class="mb-2"><strong>Status:</strong>
                                                             <span class="badge bg-${badgeClass}">
                                                                 ${tank.status.charAt(0).toUpperCase() + tank.status.slice(1)}

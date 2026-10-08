@@ -373,6 +373,8 @@
                     const dispenserId = getId(n, 'dispenser_id', 'dispenserId');
                     const tankId = getId(n, 'tank_id', 'tankId');
                     const stationId = getId(n, 'station_id', 'stationId');
+                    const erpcode = getId(n, 'erpcode') || 'NOT ASSIGNED';
+
 
                     // 🔹 Reading & date fields — flexible keys handle karo
                     const currentReading = getId(n, 'nozzle_reading', 'current_reading', 'reading', 'intial_meter_reading') ?? 'N/A'; 4
@@ -412,6 +414,7 @@
                                         </div>
                                         <div>
                                             <div><strong>Station:</strong> ${stationName}</div>
+                                            <div><strong>Nozzle ERP Code:</strong> ${erpcode}</div>
                                             <div><strong>Dispenser:</strong> ${dispenserName}</div>
                                             <div><strong>Tank:</strong> ${tankName}</div>
                                             <div><strong>Last Reading:</strong> ${currentReading}</div>

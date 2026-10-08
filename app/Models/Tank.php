@@ -28,6 +28,7 @@ class Tank extends Model
         'capacity',
         'current_level',
         'status',
+        'erpcode',
     ];
 
     /**

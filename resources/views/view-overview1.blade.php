@@ -52,6 +52,16 @@
             background-position: right calc(0.375em + 0.1875rem) center;
             background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
         }
+
+        .erp-btn {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            border: 1px solid #ced4da !important;
+        }
+        .erp-btn:hover {
+            background-color: #f8f9fa !important;
+            color: #000000 !important;
+        }
     </style>
     </style>
 @endsection
@@ -303,6 +313,7 @@
                                                     <tr>
                                                         <th>Sr No</th>
                                                         <th>Tank Name</th>
+                                                        <th>ERP Code</th>   <!-- ✅ NEW COLUMN -->
                                                         <th>Capacity</th>
                                                         <th>Current Level</th>
                                                         <th>Product</th>
@@ -354,6 +365,7 @@
                                                     <tr>
                                                         <th>Sr No</th>
                                                         <th>Nozzle Name</th>
+                                                        <th>ERP Code</th>   <!-- ✅ NEW COLUMN -->
                                                         <th>Dispenser Name</th>
                                                         <th>Current Reading</th>
                                                         <th>Current Tank Level</th>
@@ -910,6 +922,61 @@
         </div>
     </div>
 
+    <!-- ✅ ERP Code Modal -->
+    <div class="modal fade" id="erpCodeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign ERP Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="erpCodeForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="erp_tank_id" name="tank_id">
+
+                        <div class="mb-3">
+                            <label for="erpcode_input" class="form-label">ERP Code</label>
+                            <input type="text" class="form-control" id="erpcode_input" name="erpcode"
+                                placeholder="Enter ERP Code" autocomplete="off">
+                            <small class="text-muted">Tank: <span id="erp_tank_name">-</span></small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ Nozzle ERP Code Modal -->
+    <div class="modal fade" id="nozzleErpCodeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign ERP Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="nozzleErpCodeForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="erp_nozzle_id" name="nozzle_id">
+
+                        <div class="mb-3">
+                            <label for="nozzle_erpcode_input" class="form-label">ERP Code</label>
+                            <input type="text" class="form-control" id="nozzle_erpcode_input" name="erpcode"
+                                placeholder="Enter ERP Code" autocomplete="off">
+                            <small class="text-muted">Nozzle: <span id="erp_nozzle_name">-</span></small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     </main>
 
 @endsection
@@ -1059,10 +1126,21 @@
         function populateTanksTable(tanks) {
             const tbody = $('#tanksTable tbody').empty();
             tanks.forEach((t, i) => {
+                        // ✅ ERP code button — assigned ya Not Assigned
+                const hasErp = t.erpcode && String(t.erpcode).trim() !== '';
+                const erpLabel = hasErp ? t.erpcode : 'Not Assigned';
                 tbody.append(`
                                         <tr>
                                             <td>${i + 1}</td>
                                             <td>${t.name}</td>
+                                            <td>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-light border text-dark erp-btn"
+                                                        onclick="openErpModal(${t.id}, '${(t.name || '').replace(/'/g, "\\'")}', '${hasErp ? String(t.erpcode).replace(/'/g, "\\'") : ''}')">
+                                                    ${erpLabel}
+                                                </button>
+                                            </td>
+
                                             <td>${t.capacity}</td>
                                             <td>${t.current_level}</td>
                                             <td>${t.product_name}</td>
@@ -1291,6 +1369,63 @@
                 error: () => showToast('Error deleting tank', 'error')
             });
         }
+        
+        // ✅ Open ERP modal
+        function openErpModal(tankId, tankName, currentErp) {
+            $('#erp_tank_id').val(tankId);
+            $('#erp_tank_name').text(tankName);
+            $('#erpcode_input').val(currentErp || '');
+            $('#erpCodeModal').modal('show');
+        }
+
+        // ✅ Reset on close
+        $('#erpCodeModal').on('hidden.bs.modal', function () {
+            $('#erpCodeForm')[0].reset();
+            $('#erp_tank_id').val('');
+            $('#erp_tank_name').text('-');
+        });
+
+        // ✅ Submit — same function handles CREATE + UPDATE
+        $('#erpCodeForm').off('submit').on('submit', function (e) {
+            e.preventDefault();
+
+            const tankId = $('#erp_tank_id').val();
+            const erpcode = $('#erpcode_input').val().trim();
+
+            if (!tankId) {
+                showToast('Tank ID missing', 'error');
+                return;
+            }
+
+            if (!erpcode) {
+                showToast('Please enter ERP code', 'error');
+                return;
+            }
+
+            $.ajax({
+                url: `/api/tanks/assign-erp-code`,   
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    tank_id: tankId,
+                    erpcode: erpcode,
+                    _token: '{{ csrf_token() }}'
+                }),
+                success: function (res) {
+                    showToast(res.message || 'ERP code saved', 'success');
+                    $('#erpCodeModal').modal('hide');
+                    loadTanks();   // refresh table
+                },
+                error: function (xhr) {
+                    const errors = xhr.responseJSON?.errors;
+                    if (errors) {
+                        showToast(Object.values(errors).flat().join(', '), 'error');
+                    } else {
+                        showToast(xhr.responseJSON?.message || 'Error saving ERP code', 'error');
+                    }
+                }
+            });
+        });
         // ================== Dispensers ==================
         function loadDispensers() {
             let stationId = `{{ request()->segment(2) }}`;
@@ -1722,22 +1857,34 @@
                 const statusClass = isActive ? 'success' : 'danger';
                 const statusText = isActive ? 'Active' : 'Inactive';
 
+                // ✅ ERP code handle
+                const hasErp = n.erpcode && String(n.erpcode).trim() !== '';
+                const erpLabel = hasErp ? String(n.erpcode) : 'Not Assigned';
+
+
                 tbody.append(`
-                                                                                                                        <tr>
-                                                                                                                            <td>${i + 1}</td>
-                                                                                                                            <td>${n.name}</td>
-                                                                                                                            <td>${n.dispenser_name}</td>
-                                                                                                                            <td>${n.nozzle_reading}</td>
-                                                                                                                            <td>${n.tank_reading || 0}</td>
-                                                                                                                            <td>
-                                                                                                                                <span class="badge bg-${statusClass}">${statusText}</span>
-                                                                                                                            </td>
-                                                                                                                            <td>
-                                                                                                                                <button class="btn btn-sm btn-outline-primary" onclick="editNozzle(${n.id})">Edit</button>
-                                                                                                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteNozzle(${n.id})">Delete</button>
-                                                                                                                            </td>
-                                                                                                                        </tr>
-                                                                                                                    `);
+                                <tr>
+                                    <td>${i + 1}</td>
+                                    <td>${n.name}</td>
+                                    <td>
+                                        <button type="button"
+                                                class="btn btn-sm btn-light border text-dark erp-btn"
+                                                onclick="openNozzleErpModal(${n.id}, '${(n.name || '').replace(/'/g, "\\'")}', '${hasErp ? String(n.erpcode).replace(/'/g, "\\'") : ''}')">
+                                            ${erpLabel}
+                                        </button>
+                                    </td>
+                                    <td>${n.dispenser_name}</td>
+                                    <td>${n.nozzle_reading}</td>
+                                    <td>${n.tank_reading || 0}</td>
+                                    <td>
+                                        <span class="badge bg-${statusClass}">${statusText}</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editNozzle(${n.id})">Edit</button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteNozzle(${n.id})">Delete</button>
+                                    </td>
+                                </tr>
+                            `);
             });
         }
 
@@ -1885,6 +2032,61 @@
             });
         }
 
+        // ✅ Open Nozzle ERP modal
+        function openNozzleErpModal(nozzleId, nozzleName, currentErp) {
+            $('#erp_nozzle_id').val(nozzleId);
+            $('#erp_nozzle_name').text(nozzleName);
+            $('#nozzle_erpcode_input').val(currentErp || '');
+            $('#nozzleErpCodeModal').modal('show');
+        }
+
+        // ✅ Reset on close
+        $('#nozzleErpCodeModal').on('hidden.bs.modal', function () {
+            $('#nozzleErpCodeForm')[0].reset();
+            $('#erp_nozzle_id').val('');
+            $('#erp_nozzle_name').text('-');
+        });
+
+        // ✅ Submit — same function handles CREATE + UPDATE
+        $('#nozzleErpCodeForm').off('submit').on('submit', function (e) {
+            e.preventDefault();
+
+            const nozzleId = $('#erp_nozzle_id').val();
+            const erpcode  = $('#nozzle_erpcode_input').val().trim();
+
+            if (!nozzleId) {
+                showToast('Nozzle ID missing', 'error');
+                return;
+            }
+
+            if (!erpcode) {
+                showToast('Please enter ERP code', 'error');
+                return;
+            }
+
+            $.ajax({
+                url: `/api/nozzles/assign-erp-code`,   // ✅ API route
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    nozzle_id: nozzleId,
+                    erpcode: erpcode,
+                }),
+                success: function (res) {
+                    showToast(res.message || 'ERP code saved', 'success');
+                    $('#nozzleErpCodeModal').modal('hide');
+                    loadNozzles();   // refresh table
+                },
+                error: function (xhr) {
+                    const errors = xhr.responseJSON?.errors;
+                    if (errors) {
+                        showToast(Object.values(errors).flat().join(', '), 'error');
+                    } else {
+                        showToast(xhr.responseJSON?.message || 'Error saving ERP code', 'error');
+                    }
+                }
+            });
+        });
         // ================== Products ==================
 
         function loadAllProducts() {

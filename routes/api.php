@@ -120,7 +120,7 @@ Route::delete('station-product/{id}', [ProductController::class, 'destroy'])->na
 ///////////////////////////////// TANKS //////////////////////////
 Route::get('user-tanks/{user_id}', [TanksController::class, 'index1'])->name('tanks.user');
 Route::apiResource('tanks', TanksController::class)->names('tanks');
-
+Route::post('/tanks/assign-erp-code', [TanksController::class, 'assignErpCode']);
 Route::get('stationwise/{id}', [TanksController::class, 'stationwise'])->name('tanks.stationwise');
 
 Route::apiResource('product-prices', ProductPricesController::class)->names('product-prices');
@@ -164,6 +164,8 @@ Route::get('accounts/category/{type}/{user_id}', [AccountsController::class, 'ge
 Route::get('station_nozzle/{id}', [NozzlesController::class, 'station_nozzle'])->name('station.nozzles');
 Route::apiResource('nozzles', NozzlesController::class)->names('nozzles');
 Route::get('user-nozzles/{user_id}', [NozzlesController::class, 'index1'])->name('nozzles.user');
+Route::post('/nozzles/assign-erp-code', [NozzlesController::class, 'assignErpCode']);
+
 
 
 

@@ -15,6 +15,7 @@ class NozzlesController extends Controller
                 n.name AS nozzle_name, 
                 n.status AS nozzle_status,
                 n.intial_meter_reading,
+                n.erpcode,
                 t.name AS tank_name, 
                 d.name AS dispenser_name, 
                 s.name AS station_name,
@@ -51,6 +52,7 @@ class NozzlesController extends Controller
                 n.name AS nozzle_name, 
                 n.status AS nozzle_status,
                 n.intial_meter_reading,
+                n.erpcode,
                 t.name AS tank_name, 
                 d.name AS dispenser_name, 
                 s.name AS station_name,
@@ -361,5 +363,50 @@ class NozzlesController extends Controller
     }
 
     return response()->json($nozzles);
-}
+    }
+
+        /**
+     * ✅ Assign / Update ERP Code for a Nozzle
+     * Ek hi function — create ya update dono handle karta hai
+     */
+    public function assignErpCode(Request $request)
+    {
+        $validated = $request->validate([
+            'nozzle_id' => 'required|integer|exists:nozzles,id',
+            'erpcode'   => 'required|string|max:45',
+        ]);
+
+        try {
+            $nozzle = DB::table('nozzles')->where('id', $validated['nozzle_id'])->first();
+
+            if (!$nozzle) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Nozzle not found',
+                ], 404);
+            }
+
+            DB::table('nozzles')
+                ->where('id', $validated['nozzle_id'])
+                ->update([
+                    'erpcode'    => $validated['erpcode'],
+                    'updated_at' => now(),
+                ]);
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'ERP code saved successfully',
+                'data'    => [
+                    'nozzle_id' => $validated['nozzle_id'],
+                    'erpcode'   => $validated['erpcode'],
+                ],
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
