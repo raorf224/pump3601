@@ -30,7 +30,8 @@ class NozzlesController extends Controller
                      ORDER BY created_at DESC 
                      LIMIT 1),
                     n.intial_meter_reading
-                ) as current_reading
+                ) as current_reading,
+                 n.updated_at
              FROM nozzles n
              LEFT JOIN tanks t ON n.tank_id = t.id OR n.tank_id = t.stationrow_id
              LEFT JOIN dispensers d ON n.dispenser_id = d.id OR n.dispenser_id = d.stationrow_id
@@ -64,7 +65,9 @@ class NozzlesController extends Controller
                      ORDER BY created_at DESC 
                      LIMIT 1),
                     n.intial_meter_reading
-                ) as current_reading
+                ) as current_reading,
+                 n.updated_at
+
              FROM nozzles n
                          LEFT JOIN tanks t ON n.tank_id = t.id OR n.tank_id = t.stationrow_id
              LEFT JOIN dispensers d ON n.dispenser_id = d.id OR n.dispenser_id = d.stationrow_id
@@ -103,7 +106,9 @@ class NozzlesController extends Controller
                      ORDER BY created_at DESC 
                      LIMIT 1),
                     n.intial_meter_reading
-                ) as current_reading
+                ) as current_reading,
+                 n.updated_at
+
              FROM nozzles n
             LEFT JOIN tanks t ON n.tank_id = t.id OR n.tank_id = t.stationrow_id
              LEFT JOIN dispensers d ON n.dispenser_id = d.id OR n.dispenser_id = d.stationrow_id
@@ -127,9 +132,11 @@ class NozzlesController extends Controller
         $nozzle = DB::select(
             'SELECT 
                 n.*, 
+                n.station_id as nozzle_station_id,
                 n.status as nozzle_status,
                 d.name as dispenser_name, 
                 t.current_level as tank_reading,
+                t.station_id,
                 COALESCE(
                     (SELECT closing_reading 
                      FROM shift_nozzle_readings 
@@ -144,8 +151,8 @@ class NozzlesController extends Controller
                     n.intial_meter_reading
                 ) as nozzle_reading
              FROM nozzles n 
-            JOIN dispensers d on n.dispenser_id = d.stationrow_id
-             JOIN tanks t on n.tank_id = t.id  OR n.tank_id = t.stationrow_id
+            Left JOIN dispensers d on n.dispenser_id = d.stationrow_id
+            Left JOIN tanks t on n.tank_id = t.id  OR n.tank_id = t.stationrow_id
              WHERE t.station_id = ?',
             [$id]
         );
@@ -154,9 +161,11 @@ class NozzlesController extends Controller
         $nozzle = DB::select(
             'SELECT 
                 n.*, 
+                n.station_id as nozzle_station_id,
                 n.status as nozzle_status,
                 d.name as dispenser_name, 
                 t.current_level as tank_reading,
+                t.station_id,
                 COALESCE(
                     (SELECT closing_reading 
                      FROM shift_nozzle_readings 
@@ -171,8 +180,8 @@ class NozzlesController extends Controller
                     n.intial_meter_reading
                 ) as nozzle_reading
              FROM nozzles n 
-            JOIN dispensers d on n.dispenser_id = d.id 
-             JOIN tanks t on n.tank_id = t.id  OR n.tank_id = t.id
+            Left JOIN dispensers d on n.dispenser_id = d.id 
+            Left JOIN tanks t on n.tank_id = t.id  OR n.tank_id = t.id
              WHERE t.station_id = ?',
             [$id]
         );}
