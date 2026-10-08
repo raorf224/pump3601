@@ -18,6 +18,7 @@ class NozzlesController extends Controller
                 t.name AS tank_name, 
                 d.name AS dispenser_name, 
                 s.name AS station_name,
+                t.station_id,
                 COALESCE(
                     (SELECT closing_reading 
                      FROM shift_nozzle_readings 
@@ -53,6 +54,7 @@ class NozzlesController extends Controller
                 t.name AS tank_name, 
                 d.name AS dispenser_name, 
                 s.name AS station_name,
+                t.station_id,
                 COALESCE(
                     (SELECT closing_reading 
                      FROM shift_nozzle_readings 

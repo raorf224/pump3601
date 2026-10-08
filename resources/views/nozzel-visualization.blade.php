@@ -278,15 +278,26 @@
             function loadNozzles() {
                 const selectedStation = $('#stationFilter').val();
 
-                if (AUTH_ROLE === 'admin') {
-                    $.ajax({
-                        url: `/api/nozzles`,
-                        method: 'GET',
-                        success: res => { allNozzles = res || []; applyFilters(); },
-                        error: err => console.error('❌ Nozzles failed', err)
-                    });
-                    return;
-                }
+    if (AUTH_ROLE === 'admin') {
+        if (selectedStation) {
+            $.ajax({
+                url: `/api/station_nozzle/${selectedStation}`,   // ✅ station-specific
+                method: 'GET',
+                success: res => { allNozzles = res || []; applyFilters(); },
+                error: err => console.error('❌ Station nozzles failed', err)
+            });
+            return;
+        }
+        // Agar station select nahi hai → saare nozzles
+        $.ajax({
+            url: `/api/nozzles`,
+            method: 'GET',
+            success: res => { allNozzles = res || []; applyFilters(); },
+            error: err => console.error('❌ Nozzles failed', err)
+        });
+        return;
+    }
+
 
                 if (AUTH_ROLE === 'employee') {
                     if (selectedStation) {
