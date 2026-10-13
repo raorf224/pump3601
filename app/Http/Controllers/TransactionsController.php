@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class TransactionsController extends Controller
 {
@@ -28,6 +30,46 @@ class TransactionsController extends Controller
 
     public function index1($user_id)
     {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+            abort_unless((int) $user->id === (int) $user_id, 403);
+
+            $transactions = DB::table('transactions as t')
+                ->leftJoin('stations as s', 't.station_id', '=', 's.id')
+                ->leftJoin('accounts as a', function ($join) {
+                    $join->on('t.account_id', '=', 'a.id')
+                        ->orOn('t.account_id', '=', 'a.stationrow_id');
+                })
+                ->leftJoin('accounts as b', function ($join) {
+                    $join->on('t.to_account', '=', 'b.id')
+                        ->orOn('t.to_account', '=', 'b.stationrow_id');
+                })
+                ->whereIn('s.id', StationAccess::ids($user))
+                ->select(
+                    't.id',
+                    't.station_id',
+                    's.name as station_name',
+                    't.account_id',
+                    'a.name as account_name',
+                    't.shift_id',
+                    't.type',
+                    't.debit',
+                    't.credit',
+                    't.method',
+                    't.to_account',
+                    'b.name as to_account_name',
+                    'b.bank_name',
+                    'b.account_number',
+                    't.note',
+                    't.created_at',
+                    's.user_id as station_user_id'
+                )
+                ->orderByDesc('t.created_at')
+                ->get();
+
+            return response()->json($transactions);
+        }
+
         $transactions = DB::select(
             'SELECT t.id, t.station_id, s.name AS station_name, t.account_id, a.name AS account_name, 
                     t.shift_id, t.type, t.debit, t.credit, t.method, t.to_account,
@@ -348,6 +390,15 @@ class TransactionsController extends Controller
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
         $userId = $request->get('user_id'); // ✅ ADD user_id filter
+        $user = Auth::user();
+        $managerStationIds = null;
+
+        if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+            $managerStationIds = StationAccess::ids($user);
+            if (empty($managerStationIds)) {
+                return response()->json([]);
+            }
+        }
 
         $query = "SELECT 
                 t.id,
@@ -376,6 +427,11 @@ class TransactionsController extends Controller
             $params[] = $userId;
         }
 
+        if ($managerStationIds !== null) {
+            $query .= " AND stations.id IN (" . implode(',', array_fill(0, count($managerStationIds), '?')) . ")";
+            $params = array_merge($params, $managerStationIds);
+        }
+
         // Station filter
         if ($stationId && $stationId !== '' && $stationId !== 'null') {
             $query .= " AND t.station_id = ?";
@@ -401,6 +457,12 @@ class TransactionsController extends Controller
 
     public function expenseSheet1(Request $request, $user_id)
     {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+            abort_unless((int) $user->id === (int) $user_id, 403);
+            return $this->expenseSheet($request);
+        }
+
         $stationId = $request->get('station_id');
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
@@ -466,6 +528,38 @@ class TransactionsController extends Controller
             a.id, a.name, a.type, s.id, s.name, s.user_id
         ORDER BY a.type, a.name'
         );
+
+        return response()->json($accounts);
+    }
+
+    public function accountsViewAccessible()
+    {
+        $user = Auth::user();
+        abort_unless($user, 401);
+
+        $stationIds = StationAccess::query($user)->select('stations.id');
+        $accounts = DB::table('accounts as a')
+            ->leftJoin('transactions as t', function ($join) {
+                $join->on('a.id', '=', 't.account_id')
+                    ->orOn('a.stationrow_id', '=', 't.account_id');
+            })
+            ->leftJoin('stations as s', 'a.station_id', '=', 's.id')
+            ->whereIn('s.id', $stationIds)
+            ->select(
+                'a.id as account_id',
+                'a.name as account_name',
+                'a.type as account_type',
+                's.id as station_id',
+                's.name as station_name',
+                's.user_id as station_user_id'
+            )
+            ->selectRaw('SUM(CASE WHEN t.type = "income" THEN t.credit ELSE 0 END) AS total_income')
+            ->selectRaw('SUM(CASE WHEN t.type = "expense" THEN t.debit ELSE 0 END) AS total_expense')
+            ->selectRaw('(SUM(CASE WHEN t.type = "income" THEN t.credit ELSE 0 END) - SUM(CASE WHEN t.type = "expense" THEN t.debit ELSE 0 END)) AS net_balance')
+            ->groupBy('a.id', 'a.name', 'a.type', 's.id', 's.name', 's.user_id')
+            ->orderBy('a.type')
+            ->orderBy('a.name')
+            ->get();
 
         return response()->json($accounts);
     }

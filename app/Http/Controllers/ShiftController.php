@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 use Log;
 use Carbon\Carbon;
 
@@ -47,6 +49,7 @@ class ShiftController extends Controller
 
     public function index1($user_id, Request $request)
     {
+        $user = Auth::user();
         $query = DB::table('shifts')
             ->join('stations', 'shifts.station_id', '=', 'stations.id')
             ->leftJoin('employees', 'shifts.shift_incharger', '=', 'employees.id')
@@ -57,8 +60,14 @@ class ShiftController extends Controller
                 'users.full_name as shift_incharger_name',
                 DB::raw("CASE WHEN shifts.shift_no = 1 THEN 'Day' ELSE 'Night' END AS shift_type")
             )
-            ->where('stations.user_id', $user_id)
             ->orderBy('shifts.id', 'desc');
+
+        if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+            abort_unless((int) $user->id === (int) $user_id, 403);
+            $query->whereIn('stations.id', StationAccess::ids($user));
+        } else {
+            $query->where('stations.user_id', $user_id);
+        }
 
         if ($request->has('station_id')) {
             $query->where('shifts.station_id', $request->station_id);
@@ -819,4 +828,3 @@ public function getByShiftId($shiftId)
     return response()->json($cashFlow);
 }
 }
-

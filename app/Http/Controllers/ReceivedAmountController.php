@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class ReceivedAmountController extends Controller
 {
@@ -81,6 +83,43 @@ class ReceivedAmountController extends Controller
             return response()->json($data);
         } catch (\Exception $e) {
             Log::error('getDataEmployee Error: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch data'], 500);
+        }
+    }
+
+    public function getDataManager(Request $request, $user_id)
+    {
+        $user = Auth::user();
+        abort_unless(
+            $user
+            && in_array($user->role, ['rm', 'tm'], true)
+            && (int) $user->id === (int) $user_id,
+            403
+        );
+
+        $type = $request->get('type');
+        if (!in_array($type, ['fuel', 'credit'], true)) {
+            return response()->json(['error' => 'Invalid type parameter'], 400);
+        }
+
+        $stationIds = StationAccess::ids($user);
+        if (empty($stationIds)) {
+            return response()->json([]);
+        }
+
+        $placeholders = implode(',', array_fill(0, count($stationIds), '?'));
+        $sql = $this->getIndividualRowsSql($type)
+            . " AND st.id IN ({$placeholders})"
+            . ' ORDER BY scf.created_at DESC';
+
+        try {
+            return response()->json(DB::select($sql, $stationIds));
+        } catch (\Exception $e) {
+            Log::error('getDataManager Error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'type' => $type,
+            ]);
+
             return response()->json(['error' => 'Failed to fetch data'], 500);
         }
     }

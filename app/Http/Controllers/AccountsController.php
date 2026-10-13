@@ -3,6 +3,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class AccountsController extends Controller
 {
@@ -18,6 +20,20 @@ class AccountsController extends Controller
 
     public function index1($user_id)
     {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+            abort_unless((int) $user->id === (int) $user_id, 403);
+
+            $accounts = DB::table('accounts as a')
+                ->leftJoin('stations as s', 'a.station_id', '=', 's.id')
+                ->whereIn('s.id', StationAccess::ids($user))
+                ->select('a.*', 's.user_id as stations_user_id', 's.name as station_name')
+                ->orderByDesc('a.created_at')
+                ->get();
+
+            return response()->json($accounts);
+        }
+
         $accounts = DB::select('SELECT a.*, s.user_id as stations_user_id, s.name as station_name
         FROM accounts a
         LEFT JOIN stations s on a.station_id = s.id
@@ -188,6 +204,23 @@ class AccountsController extends Controller
 
     public function getAccountsByCategory1($type, $user_id)
     {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+            abort_unless((int) $user->id === (int) $user_id, 403);
+
+            $accounts = DB::table('accounts')
+                ->where('type', $type)
+                ->whereIn('station_id', StationAccess::ids($user))
+                ->orderBy('name')
+                ->get();
+
+            if ($accounts->isEmpty()) {
+                return response()->json(['message' => 'No accounts found for this category'], 404);
+            }
+
+            return response()->json($accounts);
+        }
+
         // If userId is provided → filter accounts based on user's stations
         if ($user_id) {
             $accounts = DB::select(

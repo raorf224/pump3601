@@ -86,6 +86,18 @@
         </div>
     </div>
 </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Regional Manager (RM)</label>
+                                        <select id="rm_user_id" class="form-select" name="rm_user_id">
+                                            <option value="">No RM assigned</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Territory Manager (TM)</label>
+                                        <select id="tm_user_id" class="form-select" name="tm_user_id">
+                                            <option value="">No TM assigned</option>
+                                        </select>
+                                    </div>
 
                                     <!-- Products Section -->
                                     <div class="col-12">
@@ -186,6 +198,8 @@
             $("#working_capital").val(s.working_capital || '');
 			$("#local").prop('checked', s.local ? true : false);
             $("#coordinates").val(s.coordinates || '');
+            $("#rm_user_id").val(s.rm_user_id || '');
+            $("#tm_user_id").val(s.tm_user_id || '');
 			
 
             // Load existing products (if any)
@@ -377,6 +391,8 @@
         const coords = $("#coordinates").val().split(',');
         const formData = {
             user_id: AUTH_USER_ID,
+            rm_user_id: $("#rm_user_id").val() || null,
+            tm_user_id: $("#tm_user_id").val() || null,
             name: $("input[name='name']").val(),
             phone: $("#phone").val(),
             location: $("#location").val(),
@@ -493,6 +509,8 @@
 
         stationId = getQueryParam('id');
         console.log('Station ID:', stationId);
+        loadManagerOptions('rm', '#rm_user_id');
+        loadManagerOptions('tm', '#tm_user_id');
 
         // Update page titles safely
         if (stationId) {
@@ -517,5 +535,25 @@
             $("#productTable tbody").empty();
         }
     });
+
+    function loadManagerOptions(role, selector) {
+        $.get(`/api/users/role/${role}`, function (users) {
+            const select = $(selector);
+            users.forEach(function (user) {
+                select.append($('<option>', {
+                    value: user.id,
+                    text: user.full_name || user.username
+                }));
+            });
+            if (stationId) {
+                $.get(`api/stationss/${stationId}`, function (station) {
+                    select.val(role === 'rm' ? station.rm_user_id : station.tm_user_id);
+                });
+            }
+        }).fail(function (xhr) {
+            console.error(`Failed to load ${role.toUpperCase()} users:`, xhr.responseText);
+            toastr.error(`Failed to load ${role.toUpperCase()} users.`);
+        });
+    }
 </script>
 @endsection

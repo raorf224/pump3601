@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class DriverCreditController extends Controller
 {
@@ -238,6 +240,54 @@ public function getByShift1($shiftId)
             return response()->json($credits);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getManagerData($userId)
+    {
+        $user = Auth::user();
+        abort_unless(
+            $user
+            && in_array($user->role, ['rm', 'tm'], true)
+            && (int) $user->id === (int) $userId,
+            403
+        );
+
+        $stationIds = StationAccess::ids($user);
+        if (empty($stationIds)) {
+            return response()->json([]);
+        }
+
+        $placeholders = implode(',', array_fill(0, count($stationIds), '?'));
+
+        try {
+            $credits = DB::select("
+                SELECT
+                    cd.id,
+                    cd.station_id,
+                    cd.amount_given_to,
+                    cd.vehicle_number,
+                    cd.cnic,
+                    cd.amount,
+                    cd.is_paid,
+                    cd.created_at,
+                    cd.account_id,
+                    a.name,
+                    s.shift_no
+                FROM credit_driver cd
+                LEFT JOIN shifts s ON cd.shift_id = s.id
+                LEFT JOIN accounts a ON cd.account_id = a.id
+                WHERE cd.station_id IN ({$placeholders})
+                ORDER BY cd.created_at DESC
+            ", $stationIds);
+
+            return response()->json($credits);
+        } catch (\Exception $e) {
+            \Log::error('getManagerData Error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+            ]);
+
+            return response()->json(['error' => 'Failed to fetch data'], 500);
         }
     }
 

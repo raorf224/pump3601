@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RoleController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\EditCloseShiftController;
 use App\Http\Controllers\reportController;
 use App\Http\Controllers\NozzleSalesDashboardController;
 use App\Http\Controllers\OverviewController;
+use App\Support\StationAccess;
 
 
 
@@ -38,7 +40,9 @@ Route::get('/comprehensive-export/{shiftId}', [App\Http\Controllers\ShiftCompreh
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/nozzle-sales-dashboard', [NozzleSalesDashboardController::class, 'index'])->name('nozzle-sales.index');
-        Route::get('/shift-overview', [OverviewController::class, 'index'])->name('shift.overview');
+        Route::get('/shift-overview', [OverviewController::class, 'index'])
+            ->name('shift.overview')
+            ->middleware('permission:shift_overview');
 
     // Move AJAX endpoints here
     Route::get('/nozzle-sales/filters', [NozzleSalesDashboardController::class, 'getFilterOptions']);
@@ -65,16 +69,24 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:roles');
 
     // Another example
-    Route::get('view-overview1/{id}', function () {
+    Route::get('view-overview1/{id}', function ($id) {
+        abort_unless(StationAccess::query(Auth::user())->where('stations.id', $id)->exists(), 404);
         return view('view-overview1');
     });
-    Route::get('audit-reports/{id}', function () {
+    Route::get('audit-reports/{id}', function ($id) {
+        abort_unless(StationAccess::query(Auth::user())->where('stations.id', $id)->exists(), 404);
         return view('audit-report');
-    });
+    })->middleware('permission:audit');
 
     Route::get('/station-audit/{stationId?}', function ($stationId = null) {
+        if (in_array(Auth::user()->role, ['rm', 'tm'], true) && $stationId === null) {
+            abort(404);
+        }
+        if ($stationId !== null) {
+            abort_unless(StationAccess::query(Auth::user())->where('stations.id', $stationId)->exists(), 404);
+        }
         return view('station-audit', compact('stationId'));
-    })->name('station.audit')->middleware('auth');
+    })->name('station.audit')->middleware('permission:audit');
 
 
 

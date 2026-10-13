@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class AttendanceController extends Controller
 {
@@ -81,6 +83,16 @@ public function index1($user_id, Request $request)
     $role = $request->query('role');
     $status = $request->query('status');
 
+    $user = Auth::user();
+    $stationIds = null;
+    if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+        abort_unless((int) $user->id === (int) $user_id, 403);
+        $stationIds = StationAccess::ids($user);
+        if (empty($stationIds)) {
+            return response()->json([]);
+        }
+    }
+
     $query = "
         SELECT 
             a.id AS attendance_id,
@@ -118,10 +130,17 @@ LEFT JOIN shifts sh
     ON a.shift_id = sh.id 
     OR a.shift_id = sh.stationrow_id
 
-        WHERE s.user_id = ?
+        WHERE %s
     ";
 
-    $bindings = [$filterDate, $user_id];
+    $bindings = [$filterDate];
+    if ($stationIds !== null) {
+        $query = sprintf($query, 's.id IN (' . implode(',', array_fill(0, count($stationIds), '?')) . ')');
+        $bindings = array_merge($bindings, $stationIds);
+    } else {
+        $query = sprintf($query, 's.user_id = ?');
+        $bindings[] = $user_id;
+    }
 
     if (!empty($role)) {
         $query .= " AND e.role = ?";

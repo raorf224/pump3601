@@ -20,17 +20,20 @@ class CheckPermission
             return redirect('/login');
         }
 
-        // ✅ 2. Only check permissions if role = 'employee'
-        if ($user->role === 'employee') {
-            // Get role ID from employees table
-            $role = DB::select("
-                SELECT r.id 
-                FROM employees e
-                JOIN roles r 
-                    ON e.role COLLATE utf8mb4_unicode_ci = r.name COLLATE utf8mb4_unicode_ci
-                WHERE e.user_id = ?
-                LIMIT 1
-            ", [$user->id]);
+        // ✅ 2. Check permission roles for employee, RM and TM
+        if (in_array($user->role, ['employee', 'rm', 'tm'], true)) {
+            if ($user->role === 'employee') {
+                $role = DB::select("
+                    SELECT r.id
+                    FROM employees e
+                    JOIN roles r
+                        ON e.role COLLATE utf8mb4_unicode_ci = r.name COLLATE utf8mb4_unicode_ci
+                    WHERE e.user_id = ?
+                    LIMIT 1
+                ", [$user->id]);
+            } else {
+                $role = DB::table('roles')->where('name', $user->role)->select('id')->limit(1)->get()->all();
+            }
 
             $roleId = $role[0]->id ?? null;
 
@@ -42,6 +45,7 @@ class CheckPermission
             $permissions = DB::table('role_has_permissions')
                 ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
                 ->where('role_has_permissions.role_id', $roleId)
+                ->where('role_has_permissions.read', 1)
                 ->pluck('permissions.name')
                 ->toArray();
 

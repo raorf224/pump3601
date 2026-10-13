@@ -1,5 +1,3 @@
-
-
 <aside class="pe-app-sidebar horizontal-sidebar" id="horizontal-aside">
     <div class="pe-app-sidebar-logo px-6 d-flex align-items-center position-relative">
         <!-- Brand -->
@@ -15,16 +13,23 @@
         </a>
     </div>
 
-   <nav class="pe-app-sidebar-menu nav nav-pills">
+    <nav class="pe-app-sidebar-menu nav nav-pills">
 
         <ul class="pe-horizontal-menu list-unstyled" id="horizontal-menu">
 
             <!-- Main -->
             <li class="pe-menu-title">Main</li>
 
-            <li class="pe-slide">
-                <a href="{{url('sale-report')}}" class="pe-nav-link">
+            <!-- <li class="pe-slide">
+                <a href="{{url('sale-report')}}" data-page="sale-report" class="pe-nav-link">
                     <i class="bi bi-speedometer2 pe-nav-icon"></i>
+                    <span class="pe-nav-content">Dashboard</span>
+                </a>
+            </li> -->
+
+            <li class="pe-slide">
+                <a href="{{url('nozzle-sales')}}" data-page="nozzle_sales" class="pe-nav-link">
+                    <i class="bi bi-fuel-pump pe-nav-icon"></i>
                     <span class="pe-nav-content">Dashboard</span>
                 </a>
             </li>
@@ -75,24 +80,24 @@
             <!-- Separate Menu Items -->
             <li class="pe-menu-title">Management</li>
 
-            @if(Auth::check() && strtolower(Auth::user()->role) === 'admin')
-            <li class="pe-slide">
-                <a href="{{url('users')}}" data-page="users" class="pe-nav-link">
-                    <i class="bi bi-person-gear pe-nav-icon"></i>
-                    <span class="pe-nav-content">Users</span>
-                </a>
-            </li>
+            @if(Auth::check() && in_array(strtolower(Auth::user()->role), ['admin', 'owner', 'employee', 'rm', 'tm'], true))
+                <li class="pe-slide">
+                    <a href="{{url('users')}}" data-page="users" class="pe-nav-link">
+                        <i class="bi bi-person-gear pe-nav-icon"></i>
+                        <span class="pe-nav-content">Users</span>
+                    </a>
+                </li>
             @endif
 
             <li class="pe-menu-title">Purchase</li>
             <li class="pe-slide pe-has-sub">
-                <a href="#collapseReports" class="pe-nav-link" data-bs-toggle="collapse" aria-expanded="false"
-                    aria-controls="collapseReports">
+                <a href="#collapsePurchase" class="pe-nav-link" data-bs-toggle="collapse" aria-expanded="false"
+                    aria-controls="collapsePurchase">
                     <i class="bi bi-cart-check pe-nav-icon"></i>
                     <span class="pe-nav-content">Purchase</span>
                     <i class="ri-arrow-down-s-line pe-nav-arrow"></i>
                 </a>
-                <ul class="pe-slide-menu collapse" id="collapseReports">
+                <ul class="pe-slide-menu collapse" id="collapsePurchase">
                     <li class="pe-slide">
                         <a href="{{url('oil-purchase')}}" class="pe-nav-link" data-page="oilpurchase">
                             <i class="bi bi-fuel-pump pe-nav-icon"></i>
@@ -130,31 +135,31 @@
                             <span class="pe-nav-content">Transactions</span>
                         </a>
                     </li>
-					<li class="pe-slide">
-                        <a href="{{url('site_amount_workflow')}}"   data-page="bank" class="pe-nav-link" data-page="Bank Deposit">
-                            <i class="bi bi-cash-coin pe-nav-icon"></i> 
+                    <li class="pe-slide">
+                        <a href="{{url('site_amount_workflow')}}" data-page="bank" class="pe-nav-link">
+                            <i class="bi bi-cash-coin pe-nav-icon"></i>
                             <span class="pe-nav-content">Bank Deposit</span>
                         </a>
                     </li>
-					<li class="pe-slide">
-						<a href="{{url('received-amount')}}" class="pe-nav-link" data-page="received-amount">
-							<i class="bi bi-credit-card-2-front pe-nav-icon"></i>
-							<span class="pe-nav-content">Received Amount</span>
-						</a>
-					</li>
+                    <li class="pe-slide">
+                        <a href="{{url('received-amount')}}" class="pe-nav-link" data-page="received-amount">
+                            <i class="bi bi-credit-card-2-front pe-nav-icon"></i>
+                            <span class="pe-nav-content">Received Amount</span>
+                        </a>
+                    </li>
                 </ul>
             </li>
-			
+
 
 
             <li class="pe-slide">
-                <a href="{{url('employe')}}" class="pe-nav-link">
+                <a href="{{url('employe')}}" data-page="employees" class="pe-nav-link">
                     <i class="bi bi-people pe-nav-icon"></i>
                     <span class="pe-nav-content">Employee</span>
                 </a>
             </li>
 
-                 <!-- <li class="pe-menu-title">Employee Management</li>
+            <!-- <li class="pe-menu-title">Employee Management</li>
             <li class="pe-slide pe-has-sub">
                 <a href="#collapseEmployee" class="pe-nav-link" data-bs-toggle="collapse" aria-expanded="false"
                     aria-controls="collapseEmployee">
@@ -177,8 +182,8 @@
                     </li>
                 </ul>
             </li>   -->
-			
-           <li class="pe-menu-title">Salary Management</li>
+
+            <li class="pe-menu-title">Salary Management</li>
 
             <li class="pe-slide pe-has-sub">
                 <a href="#collapseSalary" class="pe-nav-link" data-bs-toggle="collapse" aria-expanded="false"
@@ -191,21 +196,23 @@
                 <ul class="pe-slide-menu collapse" id="collapseSalary">
 
                     <li class="pe-slide">
-                        <a href="{{ url('salary_component') }}"   data-page="salary_component" class="pe-nav-link">
+                        <a href="{{ url('salary_component') }}" data-page="salary_component" class="pe-nav-link">
                             <i class="bi bi-gear-wide-connected pe-nav-icon"></i>
                             <span class="pe-nav-content">Component</span>
                         </a>
                     </li>
 
                     <li class="pe-slide">
-                        <a href="{{ url('employe_salary_management') }}"  data-page="employe_salary_management" class="pe-nav-link">
+                        <a href="{{ url('employe_salary_management') }}" data-page="employe_salary_management"
+                            class="pe-nav-link">
                             <i class="bi bi-cash-coin pe-nav-icon"></i>
                             <span class="pe-nav-content">Management</span>
                         </a>
                     </li>
 
                     <li class="pe-slide">
-                        <a href="{{ url('payrol_run_management') }}"  data-page="payrol_run_management" class="pe-nav-link">
+                        <a href="{{ url('payrol_run_management') }}" data-page="payrol_run_management"
+                            class="pe-nav-link">
                             <i class="bi bi-clock-history pe-nav-icon"></i>
                             <span class="pe-nav-content">Payroll Run</span>
                         </a>
@@ -213,7 +220,7 @@
 
                     <!-- ✅ New Payslip Menu -->
                     <li class="pe-slide">
-                        <a href="{{ url('payslip') }}"  data-page="payslip" class="pe-nav-link">
+                        <a href="{{ url('payslip') }}" data-page="payslip" class="pe-nav-link">
                             <i class="bi bi-file-earmark-text pe-nav-icon"></i>
                             <span class="pe-nav-content">Payslips</span>
                         </a>
@@ -233,7 +240,7 @@
                 </a>
                 <ul class="pe-slide-menu collapse" id="collapseShiftsAttendance">
                     <li class="pe-slide">
-                        <a href="{{url('shifts')}}" data-page="shifts" class="pe-nav-link" data-page="shifts">
+                        <a href="{{url('shifts')}}" data-page="shifts" class="pe-nav-link">
                             <i class="bi bi-calendar-week pe-nav-icon"></i>
                             <span class="pe-nav-content">Shifts</span>
                         </a>
@@ -247,7 +254,7 @@
                 </ul>
             </li>
 
-<li class="pe-menu-title">Reports</li>
+            <li class="pe-menu-title">Reports</li>
             <li class="pe-slide pe-has-sub">
                 <a href="#collapseReports" class="pe-nav-link" data-bs-toggle="collapse" aria-expanded="false"
                     aria-controls="collapseReports">
@@ -268,23 +275,23 @@
                             <span class="pe-nav-content">Expense Sheet</span>
                         </a>
                     </li>
-                    <li class="pe-slide">
+                    <!-- <li class="pe-slide">
                         <a href="{{url('nozzle-sales')}}" data-page="nozzle_sales" class="pe-nav-link">
                             <i class="bi bi-fuel-pump pe-nav-icon"></i>
                             <span class="pe-nav-content">Nozzle Sales</span>
                         </a>
+                    </li> -->
+                    <li class="pe-slide">
+                        <a href="{{url('shift-overview')}}" data-page="shift_overview" class="pe-nav-link">
+                            <!-- Option 1: Speedometer/Gauge Icon (Best for Overview/Analytics) -->
+                            <i class="bi bi-speedometer2 pe-nav-icon"></i>
+
+                            <span class="pe-nav-content">Shift Overview</span>
+                        </a>
                     </li>
-<li class="pe-slide">
-    <a href="{{url('shift-overview')}}" data-page="shift_overview" class="pe-nav-link">
-        <!-- Option 1: Speedometer/Gauge Icon (Best for Overview/Analytics) -->
-        <i class="bi bi-speedometer2 pe-nav-icon"></i>
-        
-        <span class="pe-nav-content">Shift Overview</span>
-    </a>
-</li>
                 </ul>
             </li>
-            
+
             <li class="pe-menu-title">Store</li>
             <li class="pe-slide pe-has-sub">
                 <a href="#collapseStore" class="pe-nav-link" data-bs-toggle="collapse" aria-expanded="false"
@@ -331,30 +338,59 @@
 </aside>
 <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    if ('{{Auth::user()->role}}' == 'employee') {
-        const userId = "{{ Auth::user()->id }}";
-        fetch(`/api/sidebar/${userId}`)
-            .then(res => res.json())
-            .then(data => {
-                const allowedPages = data.pages || [];
-console.log("allowedPages",allowedPages);
-                // Hide all menu items by default
-                document.querySelectorAll('.pe-nav-link[data-page]').forEach(link => {
-                    const page = link.getAttribute('data-page');
-                    if (!allowedPages.includes(page)) {
-                        link.closest('li').style.display = 'none';
-                    }
+    document.addEventListener("DOMContentLoaded", () => {
+        const userRole = @json(Auth::check() ? strtolower(Auth::user()->role) : '');
+        if (['employee', 'rm', 'tm'].includes(userRole)) {
+            const userId = "{{ Auth::user()->id }}";
+            const refreshGroups = () => {
+                Array.from(document.querySelectorAll('.pe-has-sub')).reverse().forEach(group => {
+                    const visibleChild = Array.from(group.querySelectorAll(':scope > ul > li'))
+                        .some(item => item.style.display !== 'none');
+                    group.style.display = visibleChild ? '' : 'none';
                 });
-                // If all child links of a submenu are hidden, hide the parent group
-                document.querySelectorAll('.pe-has-sub').forEach(group => {
-                    const visibleChild = group.querySelector('li:not([style*="display: none"])');
-                    if (!visibleChild) {
-                        group.style.display = 'none';
+
+                document.querySelectorAll('.pe-menu-title').forEach(title => {
+                    let item = title.nextElementSibling;
+                    let hasVisibleItem = false;
+                    while (item && !item.classList.contains('pe-menu-title')) {
+                        if (item.style.display !== 'none') {
+                            hasVisibleItem = true;
+                            break;
+                        }
+                        item = item.nextElementSibling;
                     }
+                    title.style.display = hasVisibleItem ? '' : 'none';
                 });
+            };
+
+            fetch(`/api/sidebar/${userId}`, {
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: { 'Accept': 'application/json' }
             })
-            .catch(err => console.error('Sidebar load error:', err));
-    }
-});
+                .then(res => {
+                    if (!res.ok) throw new Error(`Sidebar permissions request failed (${res.status})`);
+                    return res.json();
+                })
+                .then(data => {
+                    if (!Array.isArray(data.pages)) {
+                        throw new Error('Sidebar permissions response is invalid');
+                    }
+                    const allowedPages = new Set(data.pages);
+
+                    document.querySelectorAll('.pe-nav-link[data-page]').forEach(link => {
+                        const page = link.getAttribute('data-page');
+                        link.closest('li').style.display = allowedPages.has(page) ? '' : 'none';
+                    });
+                    refreshGroups();
+                })
+                .catch(err => {
+                    console.error('Sidebar load error:', err);
+                    document.querySelectorAll('.pe-nav-link[data-page]').forEach(link => {
+                        link.closest('li').style.display = 'none';
+                    });
+                    refreshGroups();
+                });
+        }
+    });
 </script>

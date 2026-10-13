@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class PayrollManagementController extends Controller
 {
@@ -49,9 +51,14 @@ class PayrollManagementController extends Controller
         return response()->json(['data' => $payrolls]);
     }
 	
-	public function index1(Request $request)
+	public function index1(Request $request, $user_id)
 {
-    $userId = $request->user_id; // Owner ID, pass from route or frontend
+    $user = Auth::user();
+    $isManager = $user && in_array($user->role, ['rm', 'tm'], true);
+
+    if ($isManager) {
+        abort_unless((int) $user->id === (int) $user_id, 403);
+    }
 
     $query = DB::table('payrol_management as pm')
         ->join('stations as s', 'pm.station_id', '=', 's.id')
@@ -72,9 +79,6 @@ class PayrollManagementController extends Controller
             DB::raw('COUNT(DISTINCT pm.employe_id) as employee_count'),
             DB::raw('"No Component" as component_names')
         )
-        ->when($userId, function($q) use ($userId) {
-            return $q->where('s.user_id', $userId); // Filter only owner's stations
-        })
         ->groupBy(
             'pm.mutli_employes_id',
             'pm.station_id',
@@ -87,6 +91,12 @@ class PayrollManagementController extends Controller
             's.name'
         )
         ->orderByDesc('created_at');
+
+    if ($isManager) {
+        $query->whereIn('s.id', StationAccess::ids($user));
+    } else {
+        $query->where('s.user_id', $user_id);
+    }
 
     $payrolls = $query->get();
 

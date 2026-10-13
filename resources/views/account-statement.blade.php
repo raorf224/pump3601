@@ -82,6 +82,9 @@
             if (AUTH_ROLE === 'admin') {
                 // Admin: all stations
                 apiUrl = `api/account/view`;
+            } else if (AUTH_ROLE === 'rm' || AUTH_ROLE === 'tm') {
+                // Managers: only stations assigned to their role
+                apiUrl = `api/account/view-accessible`;
             } else if (AUTH_ROLE === 'owner') {
                 // Owner: only their stations
                 apiUrl = `api/account/view/${AUTH_USER_ID}`;

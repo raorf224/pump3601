@@ -3,6 +3,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class TanksController extends Controller
 {
@@ -20,6 +22,26 @@ class TanksController extends Controller
 
     public function index1($user_id)
     {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+            abort_unless((int) $user->id === (int) $user_id, 403);
+            $stationIds = StationAccess::ids($user);
+
+            $tanks = DB::table('tanks as t')
+                ->leftJoin('products', 't.product_id', '=', 'products.id')
+                ->leftJoin('stations as s', 't.station_id', '=', 's.id')
+                ->whereIn('s.id', $stationIds)
+                ->select(
+                    't.*',
+                    'products.name as product_name',
+                    's.id as station_id',
+                    's.name as station_name'
+                )
+                ->get();
+
+            return response()->json($tanks);
+        }
+
         $tanks = DB::select('
         SELECT 
             t.*, 
@@ -406,5 +428,4 @@ SELECT t.*, products.name as product_name , s.id as station_id, s.name as statio
     }
 
 }
-
 

@@ -16,16 +16,20 @@ class DashboardController extends Controller
             return redirect('/login');
         }
 
-        // ✅ Apply permission logic only if role = employee
-        if ($user->role === 'employee') {
-            $role = DB::select("
-                SELECT r.id 
-                FROM employees e
-                JOIN roles r 
-                    ON e.role COLLATE utf8mb4_unicode_ci = r.name COLLATE utf8mb4_unicode_ci
-                WHERE e.user_id = ?
-                LIMIT 1
-            ", [$user->id]);
+        // ✅ Employee permissions are based on their station designation; RM/TM use named roles.
+        if (in_array($user->role, ['employee', 'rm', 'tm'], true)) {
+            if ($user->role === 'employee') {
+                $role = DB::select("
+                    SELECT r.id
+                    FROM employees e
+                    JOIN roles r
+                        ON e.role COLLATE utf8mb4_unicode_ci = r.name COLLATE utf8mb4_unicode_ci
+                    WHERE e.user_id = ?
+                    LIMIT 1
+                ", [$user->id]);
+            } else {
+                $role = DB::table('roles')->where('name', $user->role)->select('id')->limit(1)->get()->all();
+            }
 
             $roleId = $role[0]->id ?? null;
 
@@ -37,28 +41,33 @@ class DashboardController extends Controller
             $permissions = DB::table('role_has_permissions')
                 ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
                 ->where('role_has_permissions.role_id', $roleId)
+                ->where('role_has_permissions.read', 1)
                 ->pluck('permissions.name')
                 ->toArray();
 
             // ✅ Map route → permission
             $pagePermissions = [
+                'sale-report' => 'sale-report',
+                'received-amount' => 'received-amount',
                 'users' => 'users',
                 'station-sites' => 'sites',
                 'products-setup' => 'product',
                 'tanks-visualization' => 'tanks',
                 'dispenser-visualization' => 'dispenser',
                 'nozzel-visualization' => 'nozzels',
+                'nozzle-sales' => 'nozzle_sales',
                 'oil-purchase' => 'oilpurchase',
                 'accounts' => 'accounts',
                 'transactions' => 'transactions',
                 'employe' => 'employees',
                 'payroll' => 'employee_payroll',
                 'shifts' => 'shifts',
+                'shift-overview' => 'shift_overview',
                 'attendance' => 'attendance',
                 'account-statement' => 'account_report',
                 'expense-sheet' => 'expense_sheet',
                 'store-setup' => 'store_setup',
-                'store-products' => 'product',
+                'store-products' => 'product_setup',
                 'pos' => 'pos',
                 'permissions' => 'permissions',
                 'lube-purchase' => 'lubricants',

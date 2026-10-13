@@ -3,22 +3,47 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
 class SidebarController extends Controller
 {
     public function getSidebar($userId)
-{
-    $permissions = DB::table('employees as e')
-    ->join('roles as r', DB::raw('r.name COLLATE utf8mb4_general_ci'), '=', DB::raw('e.role COLLATE utf8mb4_general_ci'))
-    ->join('role_has_permissions as rp', 'rp.role_id', '=', 'r.id')
-    ->join('permissions as p', 'p.id', '=', 'rp.permission_id')
-    ->where('e.user_id', $userId)
-    ->pluck('p.name')
-    ->toArray();
+    {
+        $user = Auth::user();
+        if (!$user || (int) $user->id !== (int) $userId) {
+            abort(401, 'Unauthenticated.');
+        }
 
-    return response()->json([
-        'pages' => $permissions
-    ]);
-}
+        $roleName = $user->role;
+        if ($user->role === 'employee') {
+            $roleName = DB::table('employees')
+                ->where('user_id', $user->id)
+                ->value('role');
+
+            if (!$roleName) {
+                return response()->json(['pages' => []]);
+            }
+        } elseif (!in_array($user->role, ['rm', 'tm'], true)) {
+            return response()->json(['pages' => []]);
+        }
+
+        $roleId = DB::table('roles')
+            ->where('name', $roleName)
+            ->value('id');
+
+        if (!$roleId) {
+            return response()->json(['pages' => []]);
+        }
+
+        $permissions = DB::table('role_has_permissions as rp')
+            ->join('permissions as p', 'p.id', '=', 'rp.permission_id')
+            ->where('rp.role_id', $roleId)
+            ->where('rp.read', 1)
+            ->orderBy('p.name')
+            ->pluck('p.name')
+            ->all();
+
+        return response()->json(['pages' => $permissions]);
+    }
 }

@@ -437,7 +437,7 @@
             let apiUrl = '/api/stations';
             if (AUTH_ROLE === 'employee') {
                 apiUrl = `/api/stations-employee/${AUTH_USER_ID}`;
-            } else if (AUTH_ROLE === 'owner' || AUTH_ROLE === 'admin') {
+            } else if (AUTH_ROLE === 'owner' || AUTH_ROLE === 'admin' || AUTH_ROLE === 'rm' || AUTH_ROLE === 'tm') {
                 apiUrl = `/api/stations/${AUTH_USER_ID}`;
             }
 

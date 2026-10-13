@@ -340,6 +340,8 @@
                 return `/api/received-amount/data/owner/${AUTH_USER_ID}?type=${type}`;
             } else if (AUTH_ROLE === 'employee') {
                 return `/api/received-amount/data/employee/${AUTH_USER_ID}?type=${type}`;
+            } else if (AUTH_ROLE === 'rm' || AUTH_ROLE === 'tm') {
+                return `/api/received-amount/data/manager/${AUTH_USER_ID}?type=${type}`;
             }
             return null;
         }
@@ -351,6 +353,8 @@
                 return `/api/driver-credit/owner/${AUTH_USER_ID}`;
             } else if (AUTH_ROLE === 'employee') {
                 return `/api/driver-credit/employee/${AUTH_USER_ID}`;
+            } else if (AUTH_ROLE === 'rm' || AUTH_ROLE === 'tm') {
+                return `/api/driver-credit/manager/${AUTH_USER_ID}`;
             }
             return null;
         }

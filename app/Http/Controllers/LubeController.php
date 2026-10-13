@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\StationAccess;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -12,7 +14,7 @@ class LubeController extends Controller
     // ✅ 1. Get all documents with joined details
     public function index()
     {
-        $docs = DB::table('lube_documents as d')
+        $query = DB::table('lube_documents as d')
             ->leftJoin('accounts as a', function ($join) {
                 $join->on('d.account_id', '=', 'a.id')
                     ->orOn('d.account_id', '=', 'a.stationrow_id');
@@ -29,10 +31,19 @@ class LubeController extends Controller
                 'a.type as account_type',
                 'a.name as account_name',
                 's.name as station_name',
+                's.id as station_id',
                 DB::raw('(SELECT SUM(line_amount + tax_amount) FROM lube_lines WHERE document_id = d.id) as total_amount')
             )
-            ->orderByDesc('d.id')
-            ->get();
+            ->orderByDesc('d.id');
+
+        $user = Auth::user();
+        abort_unless($user, 401, 'Unauthenticated.');
+
+        if ($user->role !== 'admin') {
+            $query->whereIn('s.id', StationAccess::query($user)->select('stations.id'));
+        }
+
+        $docs = $query->get();
 
         return response()->json($docs);
     }
@@ -750,10 +761,14 @@ class LubeController extends Controller
 
     public function getInventory(Request $request)
 {
-    try {
         $authUser = auth()->user();
-        $role = strtolower($authUser->role);
-        $stationId = $request->get('station_id');
+        if (!$authUser) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        try {
+            $role = strtolower($authUser->role);
+            $stationId = $request->get('station_id');
 
         $query = DB::table('lube_inventory as i')
             ->join('products as p', 'i.product_id', '=', 'p.id')
@@ -792,6 +807,21 @@ class LubeController extends Controller
             $query->join('employees as e', 'e.station_id', '=', 's.id')
                   ->where('e.user_id', $authUser->id);
         } 
+        elseif (in_array($role, ['rm', 'tm'], true)) {
+            // Managers: only stations assigned to their system role
+            $stationIds = StationAccess::ids($authUser);
+            if (empty($stationIds)) {
+                return response()->json([]);
+            }
+
+            $query->whereIn('s.id', $stationIds);
+            if ($stationId) {
+                if (!in_array((int) $stationId, array_map('intval', $stationIds), true)) {
+                    return response()->json(['message' => 'Station access denied.'], 403);
+                }
+                $query->where('i.station_id', $stationId);
+            }
+        }
         else {
             // koi aur role — kuch na do
             return response()->json([]);

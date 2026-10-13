@@ -72,9 +72,6 @@
         <label for="roleSelect" class="form-label fw-bold">Select Role:</label>
         <select id="roleSelect" class="form-select w-50">
             <option value="">-- Select Role --</option>
-            <option value="2">Manager</option>
-            <option value="3">Cashier</option>
-            <option value="4">Pump Operator</option>
         </select>
     </div>
 
@@ -95,6 +92,19 @@
 $(function() {
     let allPermissions = [];
 
+    $.get('/api/getroles', function(roles) {
+        const roleSelect = $('#roleSelect');
+        roles.forEach(function(role) {
+            roleSelect.append($('<option>', {
+                value: role.id,
+                text: role.name.toUpperCase()
+            }));
+        });
+    }).fail(function(xhr) {
+        console.error('Failed to load roles:', xhr.responseText);
+        toastr.error('Could not load roles. Please refresh the page.');
+    });
+
     // 🔹 Load all permissions on page load
     $.get('/api/getpermissions', function(res) {
         allPermissions = res;
@@ -104,10 +114,10 @@ $(function() {
     // 🔹 Render permission cards with CRUD checkboxes + main switch
    function renderPermissions(data) {
     let html = '';
-    const hideList = ['nozzel-visualization', 'dispenser-visualization', 'tanks-visualization','account_report','expense_sheet','pos'];
+    const readOnlyPermissions = ['nozzel-visualization', 'dispenser-visualization', 'tanks-visualization', 'account_report', 'expense_sheet', 'pos'];
 
     data.forEach(p => {
-        const showCrud = !hideList.includes(p.name);
+        const showCrud = !readOnlyPermissions.includes(p.name);
 
         html += `
         <div class="permission-card" data-id="${p.id}" data-name="${p.name}">
@@ -119,6 +129,11 @@ $(function() {
                     <label class="me-2"><input type="checkbox" class="crud-checkbox form-check-input read"> Read</label>
                     <label class="me-2"><input type="checkbox" class="crud-checkbox form-check-input update"> Update</label>
                     <label><input type="checkbox" class="crud-checkbox form-check-input delete"> Delete</label>
+                </div>
+                ` : ''}
+                ${!showCrud ? `
+                <div class="mt-2">
+                    <label><input type="checkbox" class="crud-checkbox form-check-input read"> Read</label>
                 </div>
                 ` : ''}
             </div>
@@ -170,7 +185,9 @@ $(function() {
 
                 let perm = assignedPermissions.find(p => p.id == id);
                 if (perm) {
-                    card.find('.permission-switch').prop('checked', true);
+                    const hasPermission = perm.create == 1 || perm.read == 1 ||
+                        perm.update == 1 || perm.delete == 1;
+                    card.find('.permission-switch').prop('checked', hasPermission);
                     card.find('.crud-checkbox.create').prop('checked', perm.create ==
                     1);
                     card.find('.crud-checkbox.read').prop('checked', perm.read == 1);

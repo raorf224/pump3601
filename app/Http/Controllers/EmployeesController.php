@@ -3,6 +3,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class EmployeesController extends Controller
 {
@@ -43,6 +45,32 @@ ORDER BY e.created_at DESC;
 
     public function index1($user_id)
     {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+            abort_unless((int) $user->id === (int) $user_id, 403);
+
+            $stationIds = StationAccess::ids($user);
+            if (empty($stationIds)) {
+                return response()->json([]);
+            }
+
+            $placeholders = implode(',', array_fill(0, count($stationIds), '?'));
+            $employees = DB::select(
+                "SELECT e.id AS employee_id, e.role AS employee_role, e.address, e.city, e.region, e.country, e.cnic, e.phone,
+                        e.salary, e.status AS employee_status, e.created_at, e.updated_at,
+                        u.username AS user_name, u.email AS user_email, u.full_name AS user_full_name,
+                        s.name AS station_name, s.location AS station_location, s.user_id as station_user_id
+                 FROM employees e
+                 LEFT JOIN users u ON e.user_id = u.id OR e.user_id = u.stationrow_id
+                 LEFT JOIN stations s ON e.station_id = s.id
+                 WHERE s.id IN ({$placeholders})
+                 ORDER BY e.created_at DESC",
+                $stationIds
+            );
+
+            return response()->json($employees);
+        }
+
         $employees = DB::select(
             'SELECT e.id AS employee_id, e.role AS employee_role, e.address, e.city, e.region, e.country, e.cnic, e.phone, 
                     e.salary, e.status AS employee_status, e.created_at, e.updated_at,

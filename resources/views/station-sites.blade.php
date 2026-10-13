@@ -59,6 +59,8 @@
                             <thead>
                                 <tr>
                                     <th scope="col">Site Name</th>
+                                    <th scope="col">RM</th>
+                                    <th scope="col">TM</th>
                                     <th scope="col">Total Employe</th>
                                     <th scope="col">Overall Tank Capacity</th>
                                     <th scope="col">City</th>
@@ -229,9 +231,7 @@ $(document).ready(function() {
 // ✅ Load all stations
 function loadStations() {
     let apiUrl;
-    if (AUTH_ROLE === 'admin') apiUrl = '/api/stations';
-    else if (AUTH_ROLE === 'employee') apiUrl = `/api/stations_emp/${AUTH_USER_ID}`;
-    else apiUrl = `/api/stations/${AUTH_USER_ID}`;
+    apiUrl = '/api/stations-accessible';
 
     $.ajax({
         url: apiUrl,
@@ -243,7 +243,7 @@ function loadStations() {
         },
         error: function(err) {
             console.error('Error fetching stations:', err);
-            $('#stationsTable tbody').html('<tr><td colspan="6" class="text-center">Failed to load data</td></tr>');
+            $('#stationsTable tbody').html('<tr><td colspan="8" class="text-center">Failed to load data</td></tr>');
         }
     });
 }
@@ -262,9 +262,11 @@ function renderTable() {
         const canDelete = hasPermission('sites', 'delete');
 
         // 👉 View Report Button (NEW)
-        const reportBtn = `<a href="/station-audit/${station.id}" class="btn btn-light-success btn-sm" target="_blank">
+        const reportBtn = hasPermission('audit', 'read')
+            ? `<a href="/station-audit/${station.id}" class="btn btn-light-success btn-sm" target="_blank">
                                 <i class="bi bi-file-text"></i> Report
-                           </a>`;
+                           </a>`
+            : '';
 
         const viewBtn = canRead
             ? `<a href="view-overview1/${station.id}" class="btn btn-light-info btn-sm">
@@ -294,6 +296,12 @@ function renderTable() {
                         ${station.name}
                     </h6>
                     <p class="mb-0 fs-12 text-muted">${station.location}</p>
+                </td>
+                <td>
+                    <div class="fw-medium">${station.rm_name ?? 'Unassigned'}</div>
+                </td>
+                <td>
+                    <div class="fw-medium">${station.tm_name ?? 'Unassigned'}</div>
                 </td>
                 <td>
                     <div class="mt-1 text-muted fs-12">${station.employees_count ?? 0} Employees</div>

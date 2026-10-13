@@ -3,6 +3,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class NozzlesController extends Controller
 {
@@ -46,6 +48,43 @@ class NozzlesController extends Controller
 
     public function index1($user_id)
     {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+            abort_unless((int) $user->id === (int) $user_id, 403);
+            $nozzles = DB::table('nozzles as n')
+                ->leftJoin('tanks as t', function ($join) {
+                    $join->on('n.tank_id', '=', 't.id')
+                        ->orOn('n.tank_id', '=', 't.stationrow_id');
+                })
+                ->leftJoin('dispensers as d', function ($join) {
+                    $join->on('n.dispenser_id', '=', 'd.id')
+                        ->orOn('n.dispenser_id', '=', 'd.stationrow_id');
+                })
+                ->leftJoin('stations as s', 'd.station_id', '=', 's.id')
+                ->whereIn('s.id', StationAccess::ids($user))
+                ->selectRaw("
+                    n.id AS nozzle_id,
+                    n.name AS nozzle_name,
+                    n.status AS nozzle_status,
+                    n.intial_meter_reading,
+                    n.erpcode,
+                    t.name AS tank_name,
+                    d.name AS dispenser_name,
+                    s.name AS station_name,
+                    t.station_id,
+                    COALESCE(
+                        (SELECT closing_reading FROM shift_nozzle_readings WHERE nozzle_id = n.id ORDER BY created_at DESC LIMIT 1),
+                        (SELECT new_reading FROM nozzle_totalizer_resets WHERE nozzle_id = n.id ORDER BY created_at DESC LIMIT 1),
+                        n.intial_meter_reading
+                    ) AS current_reading,
+                    n.updated_at
+                ")
+                ->orderBy('n.name')
+                ->get();
+
+            return response()->json($nozzles);
+        }
+
         $nozzles = DB::select(
             'SELECT 
                 n.id AS nozzle_id, 

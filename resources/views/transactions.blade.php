@@ -310,6 +310,8 @@
                     apiUrl = `/api/transactions/employee/${AUTH_USER_ID}`;
                 } else if (AUTH_ROLE === 'owner') {          // ✅ NAYA
                     apiUrl = `/api/transactions/owner/${AUTH_USER_ID}`;
+                } else if (AUTH_ROLE === 'rm' || AUTH_ROLE === 'tm') {
+                    apiUrl = `/api/user-transactions/${AUTH_USER_ID}`;
                 } else {
                     apiUrl = '/api/transactions';  // fallback (admin jaisa)
                 }

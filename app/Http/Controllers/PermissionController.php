@@ -96,13 +96,16 @@ class PermissionController extends Controller
 }
  public function getpermissionbyuserid($id, $role)
 {
-    if ($role == 'employee') {
+    if (in_array($role, ['employee', 'rm', 'tm'], true)) {
         $user = DB::select("
             SELECT r.*
             FROM users u
-            JOIN employees e ON u.id = e.user_id
-            JOIN roles r ON e.role COLLATE utf8mb4_unicode_ci = r.name COLLATE utf8mb4_unicode_ci
-            WHERE u.id = ?", [$id]
+            JOIN roles r ON r.name COLLATE utf8mb4_unicode_ci = (
+                CASE WHEN u.role = 'employee' THEN (
+                    SELECT e.role FROM employees e WHERE e.user_id = u.id LIMIT 1
+                ) ELSE u.role END
+            ) COLLATE utf8mb4_unicode_ci
+            WHERE u.id = ? AND u.role = ?", [$id, $role]
         );
 
         if (empty($user)) {

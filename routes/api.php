@@ -56,6 +56,9 @@ Route::prefix('overview')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/nozzle-sales/filters', [NozzleSalesDashboardController::class, 'getFilterOptions']);
     Route::get('/nozzle-sales/dashboard-data', [NozzleSalesDashboardController::class, 'getDashboardData']);
+    Route::get('/stations-accessible', [StationController::class, 'accessible']);
+    Route::get('/users/role/{role}', [UserController::class, 'byRole']);
+    Route::get('/account/view-accessible', [TransactionsController::class, 'accountsViewAccessible']);
 });
 
 Route::post('/applogin', [AuthController::class, 'applogin']);
@@ -73,6 +76,7 @@ Route::get('/shifts/station/{stationId}/open', [ReceivedAmountController::class,
 Route::get('/received-amount/data/admin', [ReceivedAmountController::class, 'getDataAdmin']);
 Route::get('/received-amount/data/owner/{user_id}', [ReceivedAmountController::class, 'getDataOwner']);
 Route::get('/received-amount/data/employee/{user_id}', [ReceivedAmountController::class, 'getDataEmployee']);
+Route::get('/received-amount/data/manager/{user_id}', [ReceivedAmountController::class, 'getDataManager'])->middleware('auth');
 // });
 
 ///////////////////////////////// USER //////////////////////////
@@ -350,7 +354,7 @@ Route::get('/transactions/owner/{user_id}', [TransactionsController::class, 'get
 
 Route::put('/transactions/receive/{id}', [TransactionsController::class, 'receiveTransaction']);
 
-Route::get('/sales/expense-sheet', [TransactionsController::class, 'expenseSheet']);
+Route::get('/sales/expense-sheet', [TransactionsController::class, 'expenseSheet'])->middleware('auth');
 Route::get('/account/view', [TransactionsController::class, 'accountsView']);
 Route::get('/account/view/{user_id}', [TransactionsController::class, 'accountsView1']);
 Route::get('/account/emp/{user_id}', [TransactionsController::class, 'show_emp']);
@@ -394,8 +398,8 @@ Route::get('/test-printer', [App\Http\Controllers\PosPrintController::class, 'te
 
 
 ///////////////////////////////////payroll employee ////////////////////////////
-Route::get('/sales/expense-sheet', [TransactionsController::class, 'expenseSheet']);
-Route::get('/sales/expense-sheet/{user_id}', [TransactionsController::class, 'expenseSheet1']);
+Route::get('/sales/expense-sheet', [TransactionsController::class, 'expenseSheet'])->middleware('auth');
+Route::get('/sales/expense-sheet/{user_id}', [TransactionsController::class, 'expenseSheet1'])->middleware('auth');
 
 Route::get('/account/view', [TransactionsController::class, 'accountsView']);
 // Payroll
@@ -487,7 +491,7 @@ Route::get('/permissions/{id}/edit', [PermissionController::class, 'edit']);
 Route::get('/getpermissions', [PermissionController::class, 'get']);
 Route::put('/permissions/{id}', [PermissionController::class, 'update']);
 Route::delete('/permissions/{id}', [PermissionController::class, 'destroy']);
-Route::get('/sidebar/{userId}', [SidebarController::class, 'getSidebar']);
+Route::get('/sidebar/{userId}', [SidebarController::class, 'getSidebar'])->middleware('auth');
 
 Route::get('/get_rolespermission/{id}', [PermissionController::class, 'getrolespermission']);
 Route::get('/getpermissionbyuserid/{id}/{role}', [PermissionController::class, 'getpermissionbyuserid']);
@@ -519,6 +523,7 @@ Route::get('/audit-pdf/{stationId}', [StationController::class, 'generateAuditPd
 Route::get('/driver-credit/admin', [DriverCreditController::class, 'getAdminData']);
 Route::get('/driver-credit/owner/{userId}', [DriverCreditController::class, 'getOwnerData']);
 Route::get('/driver-credit/employee/{userId}', [DriverCreditController::class, 'getEmployeeData']);
+Route::get('/driver-credit/manager/{userId}', [DriverCreditController::class, 'getManagerData'])->middleware('auth');
 Route::post('/driver-credit/receive', [DriverCreditController::class, 'receivePayment']);
 Route::get('/station/{stationId}/bank-accounts', [DriverCreditController::class, 'getBankAccounts']);
 Route::put('/test', function () {

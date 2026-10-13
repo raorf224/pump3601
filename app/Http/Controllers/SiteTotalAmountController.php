@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class SiteTotalAmountController extends Controller
 {
@@ -31,6 +33,31 @@ class SiteTotalAmountController extends Controller
     // Get records for specific user (owner)
     public function getByUser($userId)
     {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+            abort_unless((int) $user->id === (int) $userId, 403);
+
+            $records = DB::table('site_total_ammount as sta')
+                ->leftJoin('stations as s', 'sta.station_id', '=', 's.id')
+                ->leftJoin('accounts as a', function ($join) {
+                    $join->on('sta.account_id', '=', 'a.id')
+                        ->orOn('sta.account_id', '=', 'a.stationrow_id');
+                })
+                ->whereIn('s.id', StationAccess::ids($user))
+                ->select(
+                    'sta.*',
+                    's.name as station_name',
+                    'a.name as account_name',
+                    'a.account_number',
+                    'a.type',
+                    'a.bank_name'
+                )
+                ->orderByDesc('sta.created_at')
+                ->get();
+
+            return response()->json($records);
+        }
+
         $records = DB::select(
             'SELECT sta.*, 
                     s.name as station_name,

@@ -116,6 +116,9 @@
                             <option value="">Select Roles</option>
                             <option value="admin">Admin</option>
                             <option value="owner">Owner</option>
+                            <option value="employee">Employee</option>
+                            <option value="rm">RM</option>
+                            <option value="tm">TM</option>
                         </select>
                     </div>
 

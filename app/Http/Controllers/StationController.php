@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+use App\Support\StationAccess;
 
 
 
@@ -14,6 +17,24 @@ class StationController extends Controller
     {
         $fetch = DB::select('SELECT * FROM stations');
         return response()->json($fetch);
+    }
+
+    private function validateManagerRoles(array $data): void
+    {
+        $errors = [];
+
+        foreach (['rm_user_id' => 'rm', 'tm_user_id' => 'tm'] as $field => $role) {
+            if (!empty($data[$field]) && !DB::table('users')
+                ->where('id', $data[$field])
+                ->where('role', $role)
+                ->exists()) {
+                $errors[$field] = "The selected user must have the {$role} role.";
+            }
+        }
+
+        if ($errors) {
+            throw ValidationException::withMessages($errors);
+        }
     }
 
     public function store(Request $request)
@@ -32,6 +53,8 @@ class StationController extends Controller
         // ✅ Validation rules - products ko nullable rakhen
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
+            'rm_user_id' => 'nullable|integer|exists:users,id',
+            'tm_user_id' => 'nullable|integer|exists:users,id',
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
             'location' => 'nullable|string|max:255',
@@ -46,6 +69,7 @@ class StationController extends Controller
             'products.*.effective_from' => 'nullable|date',
             'products.*.effective_to' => 'nullable|date|after_or_equal:products.*.effective_from',
         ]);
+        $this->validateManagerRoles($validated);
 
         // ✅ Extract lat/lng
         $lat = $request->lat;
@@ -63,6 +87,8 @@ class StationController extends Controller
         // ✅ Create new station
         $stationId = DB::table('stations')->insertGetId([
             'user_id' => $request->user_id,
+            'rm_user_id' => $validated['rm_user_id'] ?? null,
+            'tm_user_id' => $validated['tm_user_id'] ?? null,
             'id' => $request->id,
             'name' => $request->name,
             'phone' => $request->phone,
@@ -156,9 +182,69 @@ class StationController extends Controller
         return response()->json($stations, 200);
     }
 
+    public function accessible()
+    {
+        $user = Auth::user();
+        abort_unless($user, 401);
+
+        $stations = StationAccess::query($user)
+            ->leftJoin('users as rm', 'stations.rm_user_id', '=', 'rm.id')
+            ->leftJoin('users as tm', 'stations.tm_user_id', '=', 'tm.id')
+            ->select(
+                'stations.*',
+                'rm.full_name as rm_name',
+                'tm.full_name as tm_name'
+            )
+            ->selectSub(function ($query) {
+                $query->from('employees')
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('employees.station_id', 'stations.id')
+                    ->where('employees.status', 'active');
+            }, 'employees_count')
+            ->selectSub(function ($query) {
+                $query->from('tanks')
+                    ->selectRaw('COALESCE(SUM(capacity), 0)')
+                    ->whereColumn('tanks.station_id', 'stations.id');
+            }, 'total_capacity')
+            ->orderBy('stations.name')
+            ->get();
+
+        return response()->json($stations);
+    }
+
     // For user to see their stations only
     public function index1($user_id)
     {
+        $currentUser = Auth::user();
+        if ($currentUser && in_array($currentUser->role, ['rm', 'tm'], true)) {
+            abort_unless((int) $currentUser->id === (int) $user_id, 403);
+            $stations = StationAccess::query($currentUser)
+                ->leftJoin('users as owner', 'stations.user_id', '=', 'owner.id')
+                ->select(
+                    'stations.*',
+                    'owner.username',
+                    'owner.full_name',
+                    'owner.email',
+                    'owner.phone',
+                    'owner.role'
+                )
+                ->selectSub(function ($query) {
+                    $query->from('employees')
+                        ->selectRaw('COUNT(*)')
+                        ->whereColumn('employees.station_id', 'stations.id')
+                        ->where('employees.status', 'active');
+                }, 'employees_count')
+                ->selectSub(function ($query) {
+                    $query->from('tanks')
+                        ->selectRaw('COALESCE(SUM(capacity), 0)')
+                        ->whereColumn('tanks.station_id', 'stations.id');
+                }, 'total_capacity')
+                ->orderBy('stations.name')
+                ->get();
+
+            return response()->json($stations, 200);
+        }
+
         $stations = DB::select('
         SELECT s.*, 
             u.username,
@@ -200,19 +286,26 @@ class StationController extends Controller
 
     public function show($id)
     {
+        $user = Auth::user();
+        abort_unless($user, 401);
+
         $station = DB::select('
         SELECT 
             s.*, 
             u.username, 
             u.full_name, 
-            u.email, 
-            u.role
+            u.email,
+            u.role,
+            rm.full_name AS rm_name,
+            tm.full_name AS tm_name
         FROM stations s
         LEFT JOIN users u ON s.user_id = u.id OR  s.user_id = u.stationrow_id
+        LEFT JOIN users rm ON s.rm_user_id = rm.id
+        LEFT JOIN users tm ON s.tm_user_id = tm.id
         WHERE s.id = ?
     ', [$id]);
 
-        if (empty($station)) {
+        if (empty($station) || !StationAccess::query($user)->where('id', $id)->exists()) {
             return response()->json(['message' => 'Station not found'], 404);
         }
 
@@ -251,6 +344,11 @@ class StationController extends Controller
     public function update(Request $request, $id)
     {
         $data = $request->all();
+        $validated = $request->validate([
+            'rm_user_id' => 'nullable|integer|exists:users,id',
+            'tm_user_id' => 'nullable|integer|exists:users,id',
+        ]);
+        $this->validateManagerRoles($validated);
 
         $station = DB::table('stations')->where('id', $id)->first();
         if (!$station) {
@@ -274,6 +372,8 @@ class StationController extends Controller
             'phone' => $data['phone'] ?? $station->phone,
             'location' => $data['location'] ?? $station->location,
             'city' => $data['city'] ?? $station->city,
+            'rm_user_id' => array_key_exists('rm_user_id', $data) ? ($validated['rm_user_id'] ?? null) : $station->rm_user_id,
+            'tm_user_id' => array_key_exists('tm_user_id', $data) ? ($validated['tm_user_id'] ?? null) : $station->tm_user_id,
 			'local' => $request->has('local') ? 1 : 0,
             'lat' => $lat ?? $station->lat,
             'lng' => $lng ?? $station->lng,
@@ -385,6 +485,7 @@ class StationController extends Controller
 
     return response()->json($stations, 200);
 }
+
 	
 public function currentstatus1($stationId)
 {
@@ -1092,4 +1193,3 @@ public function generateAuditPdf($stationId)
 }
 
 }
-

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class EmployeeSalaryManagementController extends Controller
 {
@@ -56,7 +58,11 @@ class EmployeeSalaryManagementController extends Controller
 
 public function index1(Request $request, $user_id)
 {
-    $userId = $user_id; // route parameter
+    $user = Auth::user();
+    $isManager = $user && in_array($user->role, ['rm', 'tm'], true);
+    if ($isManager) {
+        abort_unless((int) $user->id === (int) $user_id, 403);
+    }
 
     $query = DB::table('employe_salary_management as esm')
     ->join('employees as e', function ($join) {
@@ -81,9 +87,6 @@ public function index1(Request $request, $user_id)
         'esm.created_at',
         DB::raw('GROUP_CONCAT(CONCAT(sc.component_name, " (", sc.type, " - ", sc.calculation, " - ", sc.cal_ammount, IF(sc.calculation="Percentage","%","Rs."), ")") SEPARATOR ", ") as components')
     )
-    ->when($userId, function ($q) use ($userId) {
-        return $q->where('s.user_id', $userId);
-    })
     ->groupBy(
         'e.id',
         'emp_user.full_name',
@@ -93,6 +96,12 @@ public function index1(Request $request, $user_id)
         'esm.created_at'
     )
     ->orderByDesc('e.id');
+
+    if ($isManager) {
+        $query->whereIn('s.id', StationAccess::ids($user));
+    } else {
+        $query->where('s.user_id', $user_id);
+    }
 
     if ($request->has('employee_id')) {
         $query->where('e.id', $request->employee_id);
@@ -338,7 +347,13 @@ public function index1(Request $request, $user_id)
 // ✅ Get employees for dropdown
 public function getEmployees_byuserid($user_id)
 {
-    $employees = DB::table('employees as e')
+    $user = Auth::user();
+    $isManager = $user && in_array($user->role, ['rm', 'tm'], true);
+    if ($isManager) {
+        abort_unless((int) $user->id === (int) $user_id, 403);
+    }
+
+    $query = DB::table('employees as e')
     ->join('users as u', function ($join) {
         $join->on('e.user_id', '=', 'u.id')
              ->orOn('e.user_id', '=', 'u.stationrow_id');
@@ -352,9 +367,17 @@ public function getEmployees_byuserid($user_id)
         'e.user_id',
         'e.station_id'
     )
-    ->where('s.user_id', $user_id)
     ->where('e.status', 'active')
-    ->get();
+    ->orderBy('s.name')
+    ->orderBy('u.full_name');
+
+    if ($isManager) {
+        $query->whereIn('s.id', StationAccess::ids($user));
+    } else {
+        $query->where('s.user_id', $user_id);
+    }
+
+    $employees = $query->get();
 
     return response()->json($employees);
 }

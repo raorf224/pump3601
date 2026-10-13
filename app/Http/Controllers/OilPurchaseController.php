@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class OilPurchaseController extends Controller
 {
@@ -49,6 +51,43 @@ END as shortage_paid
     // Get purchases for specific user
     public function index1($user_id)
     {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+            abort_unless((int) $user->id === (int) $user_id, 403);
+            $stationIds = StationAccess::ids($user);
+
+            $oilPurchases = DB::table('oil_purchase as op')
+                ->leftJoin('accounts as a', function ($join) {
+                    $join->on('op.supplier_id', '=', 'a.id')
+                        ->orOn('op.supplier_id', '=', 'a.stationrow_id');
+                })
+                ->leftJoin('stations as s', 'op.station_id', '=', 's.id')
+                ->leftJoin('shifts as sh', function ($join) {
+                    $join->on('op.shift_id', '=', 'sh.id')
+                        ->orOn('op.shift_id', '=', 'sh.stationrow_id');
+                })
+                ->leftJoin('products as p', 'op.product_id', '=', 'p.id')
+                ->whereIn('s.id', $stationIds)
+                ->select([
+                    'op.id', 'op.order_date', 'op.recieving_date', 'op.payment_status',
+                    'op.recieved_qty', 'op.recive_status', 'op.rate', 'op.qty',
+                    'op.invoice_no', 'op.ref_num', 'op.stock_update', 'op.created_at',
+                    'op.updated_at', 'op.supplier_id', 'op.station_id', 'op.shift_id',
+                    'op.product_id', 'a.name as supplier_name', 's.name as station_name',
+                    's.user_id as station_user_id', 'sh.shift_no', 'p.name as product_name',
+                ])
+                ->selectSub(function ($query) {
+                    $query->from('oil_recived_tanks')
+                        ->selectRaw('COALESCE(SUM(shortage), 0)')
+                        ->whereColumn('oil_recived_tanks.oil_purchase_id', 'op.id');
+                }, 'total_shortage_sum')
+                ->selectRaw('CASE WHEN EXISTS (SELECT 1 FROM shortage_ammount_paid_back WHERE oil_purchase_id = op.id AND is_paid = 1) THEN 1 ELSE 0 END AS shortage_paid')
+                ->orderByDesc('op.created_at')
+                ->get();
+
+            return response()->json($oilPurchases);
+        }
+
         $oilPurchases = DB::select(
             'SELECT op.id, op.order_date, op.recieving_date, op.payment_status, 
             op.recieved_qty, op.recive_status, op.rate, op.qty, op.invoice_no, op.ref_num, 

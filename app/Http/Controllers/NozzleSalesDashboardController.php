@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class NozzleSalesDashboardController extends Controller
 {
@@ -21,13 +22,7 @@ class NozzleSalesDashboardController extends Controller
             return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        $stationsQuery = DB::table('stations')->select('id', 'name');
-
-        if ($user->role === 'owner') {
-            $stationsQuery->where('user_id', $user->id);
-        } elseif ($user->role === 'employee') {
-            $stationsQuery->where('id', $user->station_id);
-        }
+        $stationsQuery = StationAccess::query($user)->select('stations.id', 'stations.name');
 
         $stations = $stationsQuery->get();
         $stationIds = $stations->pluck('id')->toArray();
@@ -76,12 +71,8 @@ class NozzleSalesDashboardController extends Controller
             ->leftJoin('users as u', 'snr.collected_from', '=', 'u.id')
             ->leftJoin('stations as st', 'd.station_id', '=', 'st.id');
 
-        // Role Filter
-        if ($user->role === 'owner') {
-            $query->where('st.user_id', $user->id);
-        } elseif ($user->role === 'employee') {
-            $query->where('st.id', $user->station_id);
-        }
+        $accessibleStationIds = StationAccess::query($user)->select('stations.id');
+        $query->whereIn('st.id', $accessibleStationIds);
 
         // Input Filters
         if ($request->filled('station_id')) {
@@ -146,11 +137,7 @@ class NozzleSalesDashboardController extends Controller
             ->leftJoin('dispensers as d', 'n.dispenser_id', '=', 'd.id')
             ->leftJoin('stations as st', 'd.station_id', '=', 'st.id');
 
-        if ($user->role === 'owner') {
-            $todaySalesQuery->where('st.user_id', $user->id);
-        } elseif ($user->role === 'employee') {
-            $todaySalesQuery->where('st.id', $user->station_id);
-        }
+        $todaySalesQuery->whereIn('st.id', $accessibleStationIds);
 
         if ($request->filled('station_id')) {
             $todaySalesQuery->where('st.id', $request->station_id);

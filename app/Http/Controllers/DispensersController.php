@@ -3,6 +3,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Support\StationAccess;
 
 class DispensersController extends Controller
 {
@@ -46,6 +48,36 @@ class DispensersController extends Controller
 
     public function index1($user_id)
     {
+        $user = Auth::user();
+        if ($user && in_array($user->role, ['rm', 'tm'], true)) {
+            abort_unless((int) $user->id === (int) $user_id, 403);
+            $dispensers = DB::table('dispensers as d')
+                ->leftJoin('tank_dispenser as td', function ($join) {
+                    $join->on('d.stationrow_id', '=', 'td.dispenser_id')
+                        ->orOn('d.id', '=', 'td.dispenser_id');
+                })
+                ->leftJoin('tanks as t', function ($join) {
+                    $join->on('td.tank_id', '=', 't.stationrow_id')
+                        ->orOn('td.tank_id', '=', 't.id');
+                })
+                ->leftJoin('stations as s', 'd.station_id', '=', 's.id')
+                ->whereIn('s.id', StationAccess::ids($user))
+                ->select(
+                    'd.id as dispenser_id',
+                    't.id as tank_id',
+                    's.id as station_id',
+                    'd.name as dispenser_name',
+                    'd.status as dispenser_status',
+                    't.name as tank_name',
+                    's.name as station_name',
+                    's.user_id as station_user_id'
+                )
+                ->orderBy('d.name')
+                ->get();
+
+            return response()->json($dispensers);
+        }
+
         $dispensers = DB::select(
             'SELECT d.id AS dispenser_id,t.id as tank_id,s.id as station_id, d.name AS dispenser_name, d.status AS dispenser_status, 
                     t.name AS tank_name, s.name AS station_name, s.user_id as station_user_id
