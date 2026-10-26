@@ -47,6 +47,7 @@ class DashboardController extends Controller
 
             // ✅ Map route → permission
             $pagePermissions = [
+                'main-dashboard' => 'main_dashboard',
                 'sale-report' => 'sale-report',
                 'received-amount' => 'received-amount',
                 'users' => 'users',
