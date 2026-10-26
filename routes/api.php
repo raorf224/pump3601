@@ -45,6 +45,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ReceivedAmountController;
 use App\Http\Controllers\NozzleSalesDashboardController;
 use App\Http\Controllers\OverviewController;
+use App\Http\Controllers\MainDashboardController;
 
 
 Route::prefix('overview')->group(function () {
@@ -54,6 +55,7 @@ Route::prefix('overview')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/main-dashboard', [MainDashboardController::class, 'index']);
     Route::get('/nozzle-sales/filters', [NozzleSalesDashboardController::class, 'getFilterOptions']);
     Route::get('/nozzle-sales/dashboard-data', [NozzleSalesDashboardController::class, 'getDashboardData']);
     Route::get('/stations-accessible', [StationController::class, 'accessible']);

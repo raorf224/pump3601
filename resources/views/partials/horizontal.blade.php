@@ -26,6 +26,13 @@
                     <span class="pe-nav-content">Dashboard</span>
                 </a>
             </li> -->
+            
+            <li class="pe-slide">
+                <a href="{{url('main-dashboard')}}" data-page="main_dashboard" class="pe-nav-link">
+                    <i class="bi-bar-chart-line pe-nav-icon"></i>
+                    <span class="pe-nav-content">Overview</span>
+                </a>
+            </li>
 
             <li class="pe-slide">
                 <a href="{{url('nozzle-sales')}}" data-page="nozzle_sales" class="pe-nav-link">
@@ -33,6 +40,7 @@
                     <span class="pe-nav-content">Dashboard</span>
                 </a>
             </li>
+
 
             <!-- Station Setup -->
             <li class="pe-menu-title">Station Setup</li>
