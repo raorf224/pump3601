@@ -113,7 +113,7 @@
 											<div class="col-md-3">
 												<label class="form-label">&nbsp;</label>
 												<div class="d-grid">
-													<button type="button" class="btn btn-warning" id="save_edit_shift">
+													<button type="button" class="btn btn-warning" id="save_edit_shift" disabled>
 														<span class="spinner-border spinner-border-sm d-none" role="status"
 															id="save_loading"></span>
 														<i class="bi bi-save me-2"></i>Update Shift
@@ -293,8 +293,9 @@
 									<div class="row mt-3" id="bank_transfer_section" style="display: none;">
 										<div class="col-md-12">
 											<div class="card border-primary">
-												<div class="card-header bg-primary text-white">
-													<h6 class="mb-0">Bank Transfer Details</h6>
+											<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+												<h6 class="mb-0">Bank Transfer Details</h6>
+												<button type="button" class="btn btn-light btn-sm" id="add_edit_bank_row"><i class="bi bi-plus-circle me-1"></i> Add Another Bank</button>
 												</div>
 												<div class="card-body">
 													<div class="row">
@@ -325,8 +326,9 @@
 									<div class="row mt-3" id="fuelcard_section" style="display: none;">
 										<div class="col-md-12">
 											<div class="card border-info">
-												<div class="card-header bg-info text-white">
+												<div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
 													<h6 class="mb-0">Fuel Card Details</h6>
+													<button type="button" class="btn btn-light btn-sm" id="add_edit_fuelcard_row"><i class="bi bi-plus-circle me-1"></i> Add Another Fuel Card</button>
 												</div>
 												<div class="card-body">
 													<div class="row">
@@ -354,8 +356,9 @@
 									<div class="row mt-3" id="creditcard_section" style="display: none;">
 										<div class="col-md-12">
 											<div class="card border-warning">
-												<div class="card-header bg-warning text-white">
+												<div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
 													<h6 class="mb-0">Credit Card Details</h6>
+													<button type="button" class="btn btn-light btn-sm" id="add_edit_creditcard_row"><i class="bi bi-plus-circle me-1"></i> Add Another Credit Card</button>
 												</div>
 												<div class="card-body">
 													<div class="row">
@@ -504,6 +507,29 @@
 
 		document.addEventListener("DOMContentLoaded", function () {
 			const shiftId = $("#close_shift_id").val();
+			const editResourceState = {
+				shift: false,
+				tanks: false,
+				nozzles: false,
+				cashFlow: false,
+				failed: false
+			};
+			let isUpdatingShift = false;
+
+			function updateEditButtonState() {
+				const resourcesReady = editResourceState.shift && editResourceState.tanks &&
+					editResourceState.nozzles && editResourceState.cashFlow && !editResourceState.failed;
+				$("#save_edit_shift").prop('disabled', !resourcesReady || $.active > 0 || isUpdatingShift);
+			}
+
+			function markEditResource(name, loaded = true) {
+				editResourceState[name] = loaded;
+				if (!loaded) editResourceState.failed = true;
+				updateEditButtonState();
+			}
+
+			$(document).ajaxStart(updateEditButtonState);
+			$(document).ajaxStop(updateEditButtonState);
 
 			if (!shiftId) {
 				showToast("Shift ID not found! Please go back and try again.", "error");
@@ -588,6 +614,7 @@
 											</div>
 										</div>
 									`);
+						markEditResource('shift');
 
 						// Load tanks and nozzles
 						loadTanksAndNozzlesForEdit(shiftId, shift.station_id);
@@ -628,6 +655,7 @@
 					},
 					error: function (xhr) {
 						console.error("Error fetching shift details:", xhr.responseText);
+						markEditResource('shift', false);
 						showToast("Error loading shift details!", "error");
 					}
 				});
@@ -997,9 +1025,11 @@
 								validateCashDistribution();
 							});
 						}
+						markEditResource('cashFlow');
 					},
 					error: function (xhr) {
 						console.error("Error loading cash flow:", xhr.responseText);
+						markEditResource('cashFlow', false);
 					}
 				});
 			}
@@ -1011,6 +1041,12 @@
 					method: "GET",
 					success: function (tanks) {
 						renderEditTankDips(tanks);
+						markEditResource('tanks');
+					},
+					error: function (xhr) {
+						console.error("Error loading tanks:", xhr.responseText);
+						$("#tank_dips_container").html('<p class="text-danger">Error loading tanks</p>');
+						markEditResource('tanks', false);
 					}
 				});
 
@@ -1020,12 +1056,21 @@
 					method: "GET",
 					success: function (nozzles) {
 						// ✅ Directly use the data from API - no need for extra getShiftNozzleReadings call
+						const invalidRates = !Array.isArray(nozzles) || nozzles.some(nozzle => !(parseFloat(nozzle.rate) > 0));
+						if (invalidRates) {
+							$("#nozzle_readings_container").html('<p class="text-danger">Historical product rate could not be loaded. Shift update is locked.</p>');
+							markEditResource('nozzles', false);
+							showToast("Historical product rate could not be loaded. Shift update is locked.", "error");
+							return;
+						}
 						renderEditNozzleReadings(nozzles);
+						markEditResource('nozzles');
 						setTimeout(() => calculateCashFlowSummary(), 500);
 					},
 					error: function (xhr) {
 						console.error("Error loading nozzles:", xhr.responseText);
 						$("#nozzle_readings_container").html('<p class="text-danger">Error loading nozzles</p>');
+						markEditResource('nozzles', false);
 					}
 				});
 			}
@@ -1699,6 +1744,28 @@
 				autoCalculateDistribution(totalSales);
 			});
 
+			function addEditPaymentRow(type) {
+				const config = {
+					bank: { section: '#bank_transfer_section', row: '.edit-bank-extra-row', select: '#bank_account_select', amount: '#transfer_amount', label: 'Bank Transfer' },
+					fuel: { section: '#fuelcard_section', row: '.edit-fuel-extra-row', select: '#fuelcard_account_select', amount: '#fuelcard_amount', label: 'Fuel Card' },
+					credit: { section: '#creditcard_section', row: '.edit-credit-extra-row', select: '#creditcard_account_select', amount: '#creditcard_amount', label: 'Credit Card' }
+				}[type];
+				const rowNumber = $(config.section).find(config.row).length + 2;
+				const options = $(config.select).html();
+				const rowClass = config.row.substring(1);
+				$(config.section).find('.card-body').append(`
+					<div class="row ${rowClass} mt-3 pt-3 border-top">
+						<div class="col-md-5"><label class="form-label required-label">${config.label} Account #${rowNumber}</label><select class="form-control edit-payment-account">${options}</select></div>
+						<div class="col-md-5"><label class="form-label required-label">Amount</label><input type="number" class="form-control edit-payment-amount" min="0" step="0.01" placeholder="0.00"></div>
+						<div class="col-md-2 d-flex align-items-end"><button type="button" class="btn btn-danger btn-sm remove-edit-payment-row"><i class="bi bi-trash"></i> Remove</button></div>
+					</div>`);
+			}
+
+			$("#add_edit_bank_row").on('click', () => addEditPaymentRow('bank'));
+			$("#add_edit_fuelcard_row").on('click', () => addEditPaymentRow('fuel'));
+			$("#add_edit_creditcard_row").on('click', () => addEditPaymentRow('credit'));
+			$(document).on('click', '.remove-edit-payment-row', function () { $(this).closest('.row').remove(); });
+
 			$("#credit_to_driver_checkbox").on("change", function () {
 				const isChecked = $(this).is(":checked");
 				if (isChecked) {
@@ -1805,74 +1872,20 @@
 			}
 
 			function loadStationsForCreditDriver() {
-				const shiftId = $("#close_shift_id").val();
-
-				$.ajax({
-					url: `/api/shifts/${shiftId}`,
-					method: "GET",
-					success: function (shift) {
-						const currentStationId = shift.station_id;
-
-						$.ajax({
-							url: `/api/stations/${AUTH_USER_ID}`,
-							method: "GET",
-							success: function (stations) {
-								$(".credit-station-select").each(function () {
-									const $select = $(this);
-									$select.empty().append('<option value="">Select Station...</option>');
-									stations.forEach(station => {
-										const selected = (station.id == currentStationId) ? 'selected' : '';
-										$select.append(`<option value="${station.id}" ${selected}>${station.name}</option>`);
-									});
-								});
-							}
-						});
-					}
+				const currentStationId = originalShiftData.station_id;
+				const stationName = originalShiftData.station_name || `Station #${currentStationId}`;
+				$(".credit-station-select").each(function () {
+					const form = $(this).closest('.driver-credit-form');
+					$(this).html(`<option value="${currentStationId}" selected>${stationName}</option>`);
+					loadCustomersForStation(currentStationId, form);
 				});
 			}
 
 			function loadStationsForNewForm(formElement) {
-				const shiftId = $("#close_shift_id").val();
-
-				$.ajax({
-					url: `/api/shifts/${shiftId}`,
-					method: "GET",
-					success: function (shift) {
-						const currentStationId = shift.station_id;
-
-						$.ajax({
-							url: `/api/stations/${AUTH_USER_ID}`,
-							method: "GET",
-							success: function (stations) {
-								const $select = formElement.find('.credit-station-select');
-								$select.empty().append('<option value="">Select Station...</option>');
-								stations.forEach(station => {
-									const selected = (station.id == currentStationId) ? 'selected' : '';
-									$select.append(`<option value="${station.id}" ${selected}>${station.name}</option>`);
-								});
-
-								$select.on('change', function () {
-									const stationId = $(this).val();
-									const form = $(this).closest('.driver-credit-form');
-									if (stationId) {
-										$.ajax({
-											url: `/api/accounts/category/customer`,
-											method: "GET",
-											success: function (customers) {
-												const stationCustomers = customers.filter(c => c.station_id == stationId);
-												const $customerSelect = form.find('.credit-customer-select');
-												$customerSelect.empty().append('<option value="">Select Customer...</option>');
-												stationCustomers.forEach(customer => {
-													$customerSelect.append(`<option value="${customer.id}">${customer.name} - ${customer.phone}</option>`);
-												});
-											}
-										});
-									}
-								});
-							}
-						});
-					}
-				});
+				const currentStationId = originalShiftData.station_id;
+				const stationName = originalShiftData.station_name || `Station #${currentStationId}`;
+				formElement.find('.credit-station-select').html(`<option value="${currentStationId}" selected>${stationName}</option>`);
+				loadCustomersForStation(currentStationId, formElement);
 			}
 
 			$(document).on("click", ".remove-driver-form", function (e) {
@@ -1905,8 +1918,16 @@
 
 			// Save Edit Shift
 			$("#save_edit_shift").on("click", function () {
+				const resourcesReady = editResourceState.shift && editResourceState.tanks &&
+					editResourceState.nozzles && editResourceState.cashFlow && !editResourceState.failed;
+				if (!resourcesReady || $.active > 0 || isUpdatingShift) {
+					showToast("Please wait until all shift resources finish loading.", "error");
+					return;
+				}
+
 				const shiftId = $("#close_shift_id").val();
 				const saveBtn = $(this);
+				isUpdatingShift = true;
 
 				saveBtn.html('<span class="spinner-border spinner-border-sm" role="status"></span> Updating...');
 				saveBtn.prop('disabled', true);
@@ -2049,7 +2070,9 @@
 					contentType: "application/json",
 					data: JSON.stringify(updateData),
 					success: function (response) {
-						saveBtn.html('<i class="bi bi-save me-2"></i>Update Shift').prop('disabled', false);
+						isUpdatingShift = false;
+						saveBtn.html('<i class="bi bi-save me-2"></i>Update Shift');
+						updateEditButtonState();
 						if (response.success) {
 							showToast("Shift updated successfully!", "success");
 							setTimeout(() => {
@@ -2061,7 +2084,9 @@
 					},
 					error: function (xhr) {
 						console.error("Error updating shift:", xhr.responseText);
-						saveBtn.html('<i class="bi bi-save me-2"></i>Update Shift').prop('disabled', false);
+						isUpdatingShift = false;
+						saveBtn.html('<i class="bi bi-save me-2"></i>Update Shift');
+						updateEditButtonState();
 						showToast(xhr.responseJSON?.message || "Error updating shift!", "error");
 					}
 				});
@@ -2171,15 +2196,7 @@
 			const newForm = $("#credit_driver_forms_container .driver-credit-form").last();
 
 			// Load stations for this form
-			loadStationsForExistingForm(newForm, data.station_id, stationId);
-
-			// Load customers after station is selected
-			setTimeout(() => {
-				const stationId = newForm.find('.credit-station-select').val();
-				if (stationId) {
-					loadCustomersForStation(stationId, newForm, data.account_id);
-				}
-			}, 500);
+			loadStationsForExistingForm(newForm, data.station_id, data.station_name, data.account_id);
 
 			// Add change tracking
 			newForm.find('.credit-amount').on('input', function () {
@@ -2242,26 +2259,11 @@
 		}
 
 		// Load stations for existing form
-		function loadStationsForExistingForm(formElement, selectedStationId, currentStationId) {
-			$.ajax({
-				url: `/api/stations/${AUTH_USER_ID}`,
-				method: "GET",
-				success: function (stations) {
-					const $select = formElement.find('.credit-station-select');
-					$select.empty().append('<option value="">Select Station...</option>');
-
-					stations.forEach(station => {
-						const selected = (station.id == selectedStationId) ? 'selected' : '';
-						$select.append(`<option value="${station.id}" ${selected}>${station.name}</option>`);
-					});
-
-					// Store original value for change tracking
-					$select.data('original', selectedStationId);
-				},
-				error: function (xhr) {
-					console.error("Error loading stations:", xhr.responseText);
-				}
-			});
+		function loadStationsForExistingForm(formElement, selectedStationId, selectedStationName, selectedCustomerId) {
+			const $select = formElement.find('.credit-station-select');
+			$select.html(`<option value="${selectedStationId}" selected>${selectedStationName || `Station #${selectedStationId}`}</option>`);
+			$select.data('original', selectedStationId);
+			loadCustomersForStation(selectedStationId, formElement, selectedCustomerId);
 		}
 
 		// Load customers for station
@@ -2355,6 +2357,12 @@
 
 			$("#credit_driver_forms_container").append(formHtml);
 			const newForm = $("#credit_driver_forms_container .driver-credit-form").last();
+			const currentStationId = originalShiftData.station_id;
+			if (currentStationId) {
+				const stationName = originalShiftData.station_name || `Station #${currentStationId}`;
+				newForm.find('.credit-station-select').html(`<option value="${currentStationId}" selected>${stationName}</option>`);
+				loadCustomersForStation(currentStationId, newForm);
+			}
 
 			// Load stations for new form
 			loadStationsForNewForm(newForm);
@@ -2388,43 +2396,11 @@
 
 		// Load stations for new form
 		function loadStationsForNewForm(formElement) {
-			const shiftId = $("#close_shift_id").val();
-
-			$.ajax({
-				url: `/api/shifts/${shiftId}`,
-				method: "GET",
-				success: function (shift) {
-					const currentStationId = shift.station_id;
-
-					$.ajax({
-						url: `/api/stations/${AUTH_USER_ID}`,
-						method: "GET",
-						success: function (stations) {
-							const $select = formElement.find('.credit-station-select');
-							$select.empty().append('<option value="">Select Station...</option>');
-
-							stations.forEach(station => {
-								const selected = (station.id == currentStationId) ? 'selected' : '';
-								$select.append(`<option value="${station.id}" ${selected}>${station.name}</option>`);
-							});
-
-							// Load customers when station changes
-							$select.on('change', function () {
-								const stationId = $(this).val();
-								const form = $(this).closest('.driver-credit-form');
-								if (stationId) {
-									loadCustomersForStation(stationId, form);
-								}
-							});
-
-							// Trigger change to load customers for default station
-							if (currentStationId) {
-								$select.trigger('change');
-							}
-						}
-					});
-				}
-			});
+			const currentStationId = originalShiftData.station_id;
+			const stationName = originalShiftData.station_name || `Station #${currentStationId}`;
+			const $select = formElement.find('.credit-station-select');
+			$select.html(`<option value="${currentStationId}" selected>${stationName}</option>`);
+			loadCustomersForStation(currentStationId, formElement);
 		}
 
 		// Remove driver form handler

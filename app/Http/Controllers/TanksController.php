@@ -318,8 +318,15 @@ SELECT t.*, products.name as product_name , s.id as station_id, s.name as statio
 
     public function getByStation($stationId)
     {
+        $fuelInventory = DB::table('fuel_inventory_layers')
+            ->selectRaw('tank_id, COALESCE(SUM(remaining_qty), 0) as fuel_inventory_liters')
+            ->groupBy('tank_id');
+
         $tanks = DB::table('tanks as t')
             ->leftJoin('products as p', 't.product_id', '=', 'p.id')
+            ->leftJoinSub($fuelInventory, 'inventory', function ($join) {
+                $join->on('inventory.tank_id', '=', 't.id');
+            })
             ->where('t.station_id', $stationId)
             ->where('t.status', 'active')
             ->select(
@@ -328,7 +335,8 @@ SELECT t.*, products.name as product_name , s.id as station_id, s.name as statio
                 't.capacity',
                 't.current_level',
                 't.current_level_mm',
-                'p.name as product_name'
+                'p.name as product_name',
+                DB::raw('COALESCE(inventory.fuel_inventory_liters, 0) as fuel_inventory_liters')
             )
             ->get();
 
@@ -337,8 +345,15 @@ SELECT t.*, products.name as product_name , s.id as station_id, s.name as statio
 
     public function getByStationWithShift($stationId, $shiftId)
     {
+        $fuelInventory = DB::table('fuel_inventory_layers')
+            ->selectRaw('tank_id, COALESCE(SUM(remaining_qty), 0) as fuel_inventory_liters')
+            ->groupBy('tank_id');
+
         $tanks = DB::table('tanks as t')
             ->leftJoin('products as p', 't.product_id', '=', 'p.id')
+            ->leftJoinSub($fuelInventory, 'inventory', function ($join) {
+                $join->on('inventory.tank_id', '=', 't.id');
+            })
             ->leftJoin('tanks_dip as td', function ($join) use ($shiftId) {
                 $join->on('t.id', '=', 'td.tank_id')
                     ->where('td.shift_id', '=', $shiftId);
@@ -355,11 +370,23 @@ SELECT t.*, products.name as product_name , s.id as station_id, s.name as statio
                 'td.dip_mm as shift_dip_mm',
                 'td.dip_in_liters as shift_dip_liters',
                 'td.old_dip_mm',
-                'td.old_dip_liters'
+                'td.old_dip_liters',
+                DB::raw('COALESCE(inventory.fuel_inventory_liters, 0) as fuel_inventory_liters')
             )
             ->get();
 
         return response()->json($tanks);
+    }
+
+    public function getShiftGainLossInputs($shiftId)
+    {
+        $receivedByTank = DB::table('oil_recived_tanks')
+            ->where('shift_id', (int) $shiftId)
+            ->selectRaw('tanks_id as tank_id, COALESCE(SUM(recived_qty), 0) as received_liters')
+            ->groupBy('tanks_id')
+            ->get();
+
+        return response()->json($receivedByTank);
     }
 
 

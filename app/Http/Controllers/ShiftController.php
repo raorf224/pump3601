@@ -124,7 +124,7 @@ class ShiftController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'station_id' => 'required|integer',
+            'station_id' => 'required|integer|exists:stations,id',
             'shift_no' => 'required|in:1,2',
             'shift_incharger' => 'required|integer',
             'start_time' => 'required|date',
@@ -132,6 +132,28 @@ class ShiftController extends Controller
             'status' => 'required|in:open,closed',
             'end_time' => 'nullable|date',
         ]);
+
+        return DB::transaction(function () use ($validated) {
+            // Lock the station row to serialize simultaneous create requests.
+            DB::table('stations')
+                ->where('id', $validated['station_id'])
+                ->lockForUpdate()
+                ->first();
+
+            $requestedStartTime = Carbon::parse($validated['start_time']);
+            $duplicateShift = DB::table('shifts')
+                ->where('station_id', $validated['station_id'])
+                ->where('shift_no', $validated['shift_no'])
+                ->whereDate('start_time', $requestedStartTime->toDateString())
+                ->lockForUpdate()
+                ->first();
+
+            if ($duplicateShift) {
+                return response()->json([
+                    'message' => 'This shift already exists for the selected station and date.',
+                    'shift_id' => $duplicateShift->id,
+                ], 422);
+            }
 
         // ✅ Get the latest shift end time for this station
         $latestShift = DB::table('shifts')
@@ -174,6 +196,7 @@ class ShiftController extends Controller
             'shift_id' => $id,
             'cash_handover' => number_format($cashHandover, 2, '.', '')
         ], 201);
+        });
     }
 
 

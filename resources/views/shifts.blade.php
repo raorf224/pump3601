@@ -209,6 +209,13 @@
 
             const tableBody = $("#shifts_table_body");
             const form = $("#shift_form");
+            const saveShiftButton = form.find('button[type="submit"]');
+            let isShiftSaving = false;
+
+            function setShiftSaving(saving) {
+                isShiftSaving = saving;
+                saveShiftButton.prop('disabled', saving);
+            }
 
             // Load permissions
             $.get(`/api/getpermissionbyuserid/{{Auth::user()->id}}/{{Auth::user()->role}}`, function (permissions) {
@@ -661,6 +668,10 @@
             form.on("submit", function (e) {
                 e.preventDefault();
 
+                if (isShiftSaving) {
+                    return;
+                }
+
                 const shiftId = $("#shift_id").val();
                 const shiftIncharger = $("#shift_incharger").val();
                 const cashHandover = $("#cash_handover").val();
@@ -682,11 +693,14 @@
                     return;
                 }
 
+                setShiftSaving(true);
+
                 // ✅ Check if open shift already exists for this station
                 if (!shiftId) { // Only for new shifts, not for edits
                     checkOpenShift(stationId).then(function (response) {
                         if (response && response.length > 0) {
                             showToast("Cannot create new shift! There is already an open shift for this station. Please close the existing shift first.", "error");
+                            setShiftSaving(false);
                             return;
                         }
                         // Continue with shift creation
@@ -698,6 +712,7 @@
                         } else {
                             console.error("Error checking open shifts:", xhr.responseText);
                             showToast("Error checking shift status!", "error");
+                            setShiftSaving(false);
                         }
                     });
                 } else {
@@ -765,6 +780,9 @@
                             console.error("Error saving shift:", xhr.responseText);
                             showToast("Failed to save shift!", "error");
                         }
+                    },
+                    complete: function () {
+                        setShiftSaving(false);
                     }
                 });
             }

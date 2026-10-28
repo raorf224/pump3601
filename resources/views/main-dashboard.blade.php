@@ -879,6 +879,7 @@
           position: fixed;
           top: 0;
           right: 0;
+          margin-top: 122px;
           height: 100%;
           width: min(720px, 100vw);
           background: var(--card);

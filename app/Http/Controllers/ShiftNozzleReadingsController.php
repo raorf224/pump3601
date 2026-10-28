@@ -279,9 +279,17 @@ class ShiftNozzleReadingsController extends Controller
                 ->lockForUpdate()
                 ->get();
 
-            if ($layers->isEmpty()) {
+            if ($qty > 0 && $layers->isEmpty()) {
                 DB::rollBack();
-                return response()->json(['message' => 'No stock available in FIFO layers']);
+                return response()->json([
+                    'message' => "No stock available in FIFO layers for tank {$tank->name} (Tank ID: {$tank->id}), nozzle {$nozzle->name}, product {$nozzle->product_name}.",
+                    'tank_id' => $tank->id,
+                    'tank_name' => $tank->name,
+                    'nozzle_id' => $nozzle->id,
+                    'nozzle_name' => $nozzle->name,
+                    'product_id' => $productId,
+                    'product_name' => $nozzle->product_name,
+                ], 422);
             }
 
             // ==============================
@@ -408,7 +416,16 @@ class ShiftNozzleReadingsController extends Controller
 
             if ($remainingQty > 0) {
                 DB::rollBack();
-                return response()->json(['message' => 'Not enough stock in FIFO layers'], 400);
+                return response()->json([
+                    'message' => "Not enough FIFO stock for tank {$tank->name} (Tank ID: {$tank->id}), nozzle {$nozzle->name}, product {$nozzle->product_name}. Short by {$remainingQty} liters.",
+                    'tank_id' => $tank->id,
+                    'tank_name' => $tank->name,
+                    'nozzle_id' => $nozzle->id,
+                    'nozzle_name' => $nozzle->name,
+                    'product_id' => $productId,
+                    'product_name' => $nozzle->product_name,
+                    'short_quantity' => $remainingQty,
+                ], 422);
             }
 
             // ==============================

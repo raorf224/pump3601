@@ -13,6 +13,7 @@ use App\Http\Controllers\DispensersController;
 use App\Http\Controllers\NozzlesController;
 use App\Http\Controllers\EmployeesController;
 use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\AtomicShiftCloseController;
 use App\Http\Controllers\NozzleTotalizerResetController;
 use App\Http\Controllers\DriverCreditController;
 use App\Http\Controllers\SiteTotalAmountController;
@@ -264,6 +265,7 @@ Route::get('/open-shifts/{stationId}', [ShiftController::class, 'getOpenShifts']
 Route::get('/shifts/{id}', [ShiftController::class, 'show'])->name('shift.show');
 Route::get('/shift_show/{id}', [ShiftController::class, 'shift_show'])->name('shift_show.show');
 Route::post('/shifts', [ShiftController::class, 'store']);
+Route::post('/shifts/{shiftId}/close-atomic', [AtomicShiftCloseController::class, 'store']);
 Route::put('/shifts/{id}', [ShiftController::class, 'update']);
 
 
@@ -275,6 +277,7 @@ Route::put('/shifts/{id}/update-closed', [ShiftController::class, 'updateClosedS
 // Tank routes
 Route::get('tanks/station/{stationId}', [TanksController::class, 'getByStation']);
 Route::get('tanks/station/{stationId}/shift/{shiftId}', [TanksController::class, 'getByStationWithShift']);
+Route::get('tanks/shift/{shiftId}/gain-loss-inputs', [TanksController::class, 'getShiftGainLossInputs']);
 Route::get('tank-dips/last/{tankId}', [TanksDipController::class, 'getLastDip']);
 Route::post('tank-dips', [TanksDipController::class, 'storeTankDipReadings']);
 
@@ -518,7 +521,7 @@ Route::put('/edit-shift/{shiftId}/update', [EditCloseShiftController::class, 'up
 Route::get('/edit-shift/{shift_id}/bank-transfer', [EditCloseShiftController::class, 'getBankTransferDetails']);
 Route::get('/edit-shift/{shift_id}/fuel-card', [EditCloseShiftController::class, 'getFuelCardDetails']);
 Route::get('/edit-shift/{shift_id}/credit-card', [EditCloseShiftController::class, 'getCreditCardDetails']);
-Route::get('/credit-driver/shift/{shiftId}', [DriverCreditController::class, 'getByShiftId']);
+Route::get('/credit-driver/shift/{shiftId}', [DriverCreditController::class, 'getByShift']);
 Route::get('/currentstatus/{id}', [StationController::class, 'currentstatus'])->name('currentstatus');
 Route::get('/station/{stationId}/audit-pdf', [StationController::class, 'downloadAuditReport']);
 Route::get('/audit-pdf/{stationId}', [StationController::class, 'generateAuditPdf']);

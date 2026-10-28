@@ -342,6 +342,25 @@ class NozzlesController extends Controller
     public function getByStationWithShift($stationId, $shiftId)
 {
     $stationrec = DB::select("select * from stations where id =?", [$stationId]);
+    $stationId = (int) $stationId;
+    $shiftId = (int) $shiftId;
+    $historicalRate = DB::raw("(
+        SELECT ppl.price
+        FROM product_prices_log ppl
+        INNER JOIN product_prices pp ON pp.id = ppl.product_price_id
+        INNER JOIN station_products sp ON sp.id = pp.station_product_id
+        INNER JOIN shifts historical_shift ON historical_shift.id = {$shiftId}
+        WHERE sp.station_id = {$stationId}
+          AND sp.product_id = n.product_id
+          AND ppl.effective_from <= COALESCE(historical_shift.end_time, historical_shift.start_time)
+        ORDER BY
+          CASE WHEN ppl.effective_from <= historical_shift.start_time
+                 AND (ppl.effective_to IS NULL OR ppl.effective_to >= historical_shift.start_time)
+               THEN 0 ELSE 1 END,
+          ppl.effective_from DESC,
+          ppl.id DESC
+        LIMIT 1
+    ) as rate");
     
     if ($stationrec[0]->local == "1") {
         $nozzles = DB::table('nozzles as n')
@@ -366,7 +385,7 @@ class NozzlesController extends Controller
                 'snr.closing_reading',
                 'snr.opening_reading',
                 'snr.testing_reading',
-                'snr.rate',
+                $historicalRate,
                 'snr.created_at as shift_created_at',
                 'snr.updated_at as shift_updated_at'
             )
@@ -394,7 +413,7 @@ class NozzlesController extends Controller
                 'snr.closing_reading',
                 'snr.opening_reading',
                 'snr.testing_reading',
-                'snr.rate',
+                $historicalRate,
                 'snr.created_at as shift_created_at',
                 'snr.updated_at as shift_updated_at'
             )

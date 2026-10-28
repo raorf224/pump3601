@@ -374,6 +374,19 @@ if (isset($data['nozzle_updates']) && !empty($data['nozzle_updates'])) {
             // 7. INSERT new expenses (without deleting old ones)
             if (isset($data['expenses']) && !empty($data['expenses'])) {
                 foreach ($data['expenses'] as $expense) {
+                    $existingExpense = DB::table('transactions')
+                        ->where('station_id', $expense['station_id'])
+                        ->where('shift_id', $shift_id)
+                        ->where('type', 'expense')
+                        ->where('method', 'cash')
+                        ->where('debit', $expense['amount'])
+                        ->where('note', $expense['note'] ?? null)
+                        ->exists();
+
+                    if ($existingExpense) {
+                        continue;
+                    }
+
                     $inserted = DB::insert("
             INSERT INTO transactions 
             (station_id, shift_id, type, debit, credit, method, note, created_at, updated_at)

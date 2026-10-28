@@ -85,7 +85,7 @@
                                             <div class="col-md-3">
                                                 <label class="form-label">&nbsp;</label>
                                                 <div class="d-grid">
-                                                    <button type="button" class="btn btn-primary" id="save_close_shift">
+                                                    <button type="button" class="btn btn-primary" id="save_close_shift" disabled>
                                                         <span class="spinner-border spinner-border-sm d-none" role="status"
                                                             id="save_loading"></span>
                                                         Save & Close Shift
@@ -676,6 +676,28 @@
                                     </div>
 
                                 </div>
+
+                                <div class="card mt-4" id="tank_gain_loss_section">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Tank Gain &amp; Loss</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="tank_gain_loss_loading" class="text-center text-muted">Loading tank gain/loss data...</div>
+                                        <div class="table-responsive" id="tank_gain_loss_table_wrap" style="display:none;">
+                                            <table class="table table-bordered table-sm align-middle">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Tank</th><th>Product</th><th>Opening</th><th>Closing</th>
+                                                        <th>Physical Usage</th><th>Oil Received</th><th>Adjusted Usage</th>
+                                                        <th>Nozzle Sales</th><th>Reset Sales</th><th>Total Sales</th>
+                                                        <th>Variance</th><th>Variance %</th><th>Gain/Loss</th><th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tank_gain_loss_body"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                     </form>
 
                 </div>
@@ -692,6 +714,105 @@
 
         document.addEventListener("DOMContentLoaded", function () {
             const shiftId = $("#close_shift_id").val();
+            const closeResourceState = {
+                shift: false,
+                tanks: false,
+                nozzles: false,
+                cashFlow: false,
+                gainLoss: false,
+                failed: false
+            };
+            const shiftReceivedByTank = new Map();
+            let isAtomicClosing = false;
+            const closeDraftKey = `pump360:close-draft:${AUTH_USER_ID}:${shiftId}`;
+            let closeDraftTimer = null;
+
+            function readCloseDraft() {
+                try { return JSON.parse(localStorage.getItem(closeDraftKey) || '{}'); }
+                catch (error) { console.warn('Unable to read close shift draft:', error); return {}; }
+            }
+
+            function saveCloseReadingsDraft() {
+                const draft = readCloseDraft();
+                draft.tanks = draft.tanks || {};
+                draft.nozzles = draft.nozzles || {};
+                draft.savedAt = new Date().toISOString();
+                if ($('.tank-dip-row').length) {
+                    draft.tanks = {};
+                    $('.tank-dip-row').each(function () {
+                        draft.tanks[String($(this).data('tank-id'))] = {
+                            mm: $(this).find('.tank-dip-mm').val(),
+                            liters: $(this).find('.tank-dip-liters').val()
+                        };
+                    });
+                }
+                if ($('.nozzle-reading-row').length) {
+                    draft.nozzles = {};
+                    $('.nozzle-reading-row').each(function () {
+                        draft.nozzles[String($(this).data('nozzle-id'))] = {
+                            testing: $(this).find('.nozzle-testing').val(),
+                            closing: $(this).find('.nozzle-closing').val()
+                        };
+                    });
+                }
+                try { localStorage.setItem(closeDraftKey, JSON.stringify(draft)); }
+                catch (error) { console.warn('Unable to save close shift draft:', error); }
+            }
+
+            function queueCloseReadingsDraft() {
+                clearTimeout(closeDraftTimer);
+                closeDraftTimer = setTimeout(saveCloseReadingsDraft, 150);
+            }
+
+            function restoreCloseReadingsDraft() {
+                const draft = readCloseDraft();
+                Object.entries(draft.tanks || {}).forEach(([tankId, values]) => {
+                    const row = $(`.tank-dip-row[data-tank-id="${tankId}"]`);
+                    if (!row.length) return;
+                    if (values.mm !== undefined) row.find('.tank-dip-mm').val(values.mm);
+                    if (values.liters !== undefined) row.find('.tank-dip-liters').val(values.liters).trigger('input');
+                });
+                Object.entries(draft.nozzles || {}).forEach(([nozzleId, values]) => {
+                    const row = $(`.nozzle-reading-row[data-nozzle-id="${nozzleId}"]`);
+                    if (!row.length) return;
+                    if (values.testing !== undefined) row.find('.nozzle-testing').val(values.testing);
+                    if (values.closing !== undefined) row.find('.nozzle-closing').val(values.closing).trigger('input');
+                });
+            }
+
+            $(document).on('input change', '.tank-dip-mm, .tank-dip-liters, .nozzle-testing, .nozzle-closing', queueCloseReadingsDraft);
+
+            function updateCloseButtonState() {
+                const resourcesReady = closeResourceState.shift && closeResourceState.tanks &&
+                    closeResourceState.nozzles && closeResourceState.cashFlow && closeResourceState.gainLoss && !closeResourceState.failed;
+                const requestsFinished = $.active === 0;
+                $("#save_close_shift,#save_close_shift1").prop('disabled',
+                    !resourcesReady || !requestsFinished || isAtomicClosing);
+            }
+
+            function markCloseResource(name, loaded = true) {
+                closeResourceState[name] = loaded;
+                if (!loaded) closeResourceState.failed = true;
+                updateCloseButtonState();
+            }
+
+            $(document).ajaxStart(updateCloseButtonState);
+            $(document).ajaxStop(updateCloseButtonState);
+
+            $.ajax({
+                url: getApiUrl(`tanks/shift/${shiftId}/gain-loss-inputs`),
+                method: 'GET',
+                success: function (rows) {
+                    (rows || []).forEach(row => shiftReceivedByTank.set(Number(row.tank_id), parseFloat(row.received_liters) || 0));
+                    markCloseResource('gainLoss');
+                    calculateTankGainLossPreview();
+                },
+                error: function (xhr) {
+                    console.error('Error loading tank gain/loss inputs:', xhr.responseText);
+                    $('#tank_gain_loss_loading').html('<span class="text-danger">Unable to load gain/loss data.</span>');
+                    markCloseResource('gainLoss', false);
+                }
+            });
 
             if (!shiftId) {
                 showToast("Shift ID not found! Please go back and try again.", "error");
@@ -986,11 +1107,12 @@
             // Load shift details
             // Load shift details
             function loadShiftDetails(shiftId) {
-                $.ajax({
+                return $.ajax({
                     url: getApiUrl(`shifts/${shiftId}`),
                     method: "GET",
                     success: function (shift) {
                         $("#shift_start_time").val(shift.start_time);
+                        $("#close_shift_id").data("station-id", shift.station_id);
 
                         // ✅ CONVERT START TIME TO LOCAL PST AND SET TO 23:59 ON SAME DAY
                         const startDateTime = new Date(shift.start_time);
@@ -1034,9 +1156,11 @@
                                     </div>
                                 </div>
                             `);
+                        markCloseResource('shift');
                     },
                     error: function (xhr) {
                         console.error("Error fetching shift details:", xhr.responseText);
+                        markCloseResource('shift', false);
                         showToast("Error loading shift details!", "error");
                     }
                 });
@@ -1127,13 +1251,16 @@
                                 success: function (tanks) {
                                     getLastTankDips(tanks).then(tanksWithDips => {
                                         renderTankDips(tanksWithDips);
+                                        markCloseResource('tanks');
                                     }).catch(error => {
                                         console.error("Error getting tank dips:", error);
+                                        markCloseResource('tanks', false);
                                     });
                                 },
                                 error: function (xhr) {
                                     console.error("Error loading tanks:", xhr.responseText);
                                     $("#tank_dips_container").html('<p class="text-danger">Error loading tanks</p>');
+                                    markCloseResource('tanks', false);
                                 }
                             });
 
@@ -1144,6 +1271,7 @@
                                 success: function (nozzles) {
                                     getLastNozzleReadings(nozzles).then(nozzlesWithReadings => {
                                         renderNozzleReadings(nozzlesWithReadings);
+                                        markCloseResource('nozzles');
 
                                         // Cash flow calculate karo
                                         setTimeout(() => {
@@ -1153,16 +1281,15 @@
                                         resolve();
                                     }).catch(error => {
                                         console.error("Error getting nozzle readings:", error);
-                                        setTimeout(() => {
-                                            calculateCashFlowSummary();
-                                        }, 300);
-                                        resolve();
+                                        markCloseResource('nozzles', false);
+                                        reject(error);
                                     });
                                 },
                                 error: function (xhr) {
                                     console.error("Error loading nozzles:", xhr.responseText);
                                     $("#nozzle_readings_container").html('<p class="text-danger">Error loading nozzles</p>');
-                                    resolve();
+                                    markCloseResource('nozzles', false);
+                                    reject(xhr);
                                 }
                             });
                         },
@@ -1238,15 +1365,18 @@
                     // ✅ IMPORTANT: Tank ka CURRENT LEVEL show karo, na ki capacity
                     const currentLevel = tank.current_level || tank.last_dip_liters || 0;
                     const capacity = tank.capacity || 'N/A';
+                    const fuelInventory = parseFloat(tank.fuel_inventory_liters) || 0;
 
                     container.append(`
-                                                                    <div class="row mb-3 tank-dip-row" data-tank-id="${tank.id}">
+                                                                    <div class="row mb-3 tank-dip-row" data-tank-id="${tank.id}" data-opening-liters="${parseFloat(tank.last_dip_liters || currentLevel) || 0}">
                                                                         <div class="col-md-2">
                                                                             <label class="form-label">Tank Name</label>
                                                                             <input type="text" class="form-control" value="${tank.name}" readonly>
                                                                             <small class="text-muted">Current Level: ${currentLevel} L</small>
                                                                             <br>
                                                                             <small class="text-muted">Capacity: ${capacity} L</small>
+                                                                            <br>
+                                                                            <small class="text-muted">Fuel Inventory: ${fuelInventory.toFixed(2)} L</small>
                                                                         </div>
                                                                         <div class="col-md-2">
                                                                             <label class="form-label">Product</label>
@@ -1283,7 +1413,121 @@
                                                                     </div>
                                                                 `);
                 });
+                restoreCloseReadingsDraft();
+                calculateTankGainLossPreview();
             }
+
+            function calculateTankGainLossPreview() {
+                const body = $('#tank_gain_loss_body');
+                if (!body.length || $('.tank-dip-row').length === 0) return;
+
+                body.empty();
+                $('.tank-dip-row').each(function () {
+                    const tankRow = $(this);
+                    const tankId = Number(tankRow.data('tank-id'));
+                    const opening = parseFloat(tankRow.data('opening-liters')) || 0;
+                    const closingValue = tankRow.find('.tank-dip-liters').val();
+                    const hasClosing = closingValue !== '' && closingValue !== undefined;
+                    const closing = parseFloat(closingValue) || 0;
+                    const received = shiftReceivedByTank.get(tankId) || 0;
+                    const physicalUsage = hasClosing ? opening - closing : 0;
+                    const adjustedUsage = hasClosing ? physicalUsage + received : 0;
+                    let nozzleSales = 0;
+                    let resetSales = 0;
+
+                    $(`.nozzle-reading-row[data-tank-id="${tankId}"]`).each(function () {
+                        nozzleSales += parseFloat($(this).find('.nozzle-total').val()) || 0;
+                        const nozzleId = $(this).data('nozzle-id');
+                        const resetButton = $(`.save-reset-btn[data-nozzle-id="${nozzleId}"]`);
+                        if (resetButton.data('staged') === true) {
+                            resetSales += parseFloat($(`.reset-total-dispensed[data-nozzle-id="${nozzleId}"]`).val()) || 0;
+                        }
+                    });
+
+                    const totalSales = nozzleSales + resetSales;
+                    const variance = hasClosing ? totalSales - adjustedUsage : 0;
+                    let variancePercent = 0;
+                    let showPercent = false;
+                    if (totalSales > 0) {
+                        variancePercent = (variance / totalSales) * 100;
+                        showPercent = true;
+                    } else if (adjustedUsage > 0) {
+                        variancePercent = (variance / adjustedUsage) * 100;
+                        showPercent = true;
+                    }
+
+                    let result = 'BALANCED';
+                    let resultClass = 'secondary';
+                    if (variance > 0.01) { result = 'GAIN'; resultClass = 'success'; }
+                    if (variance < -0.01) { result = 'LOSS'; resultClass = 'danger'; }
+
+                    let status = 'Normal';
+                    let statusClass = 'success';
+                    if (totalSales > 0) {
+                        if (Math.abs(variancePercent) > 1) { status = 'Critical'; statusClass = 'danger'; }
+                        else if (Math.abs(variancePercent) > 0.5) { status = 'Warning'; statusClass = 'warning'; }
+                    } else if (Math.abs(variance) > 0) {
+                        status = 'Warning'; statusClass = 'warning';
+                    }
+
+                    const tankName = tankRow.find('input[type="text"]').eq(0).val() || `Tank #${tankId}`;
+                    const productName = tankRow.find('input[type="text"]').eq(1).val() || 'N/A';
+                    body.append(`<tr>
+                        <td>${tankName}</td><td>${productName}</td><td>${opening.toFixed(2)} L</td>
+                        <td>${hasClosing ? closing.toFixed(2) + ' L' : '<span class="text-muted">Enter dip</span>'}</td>
+                        <td>${physicalUsage.toFixed(2)} L</td><td>${received.toFixed(2)} L</td>
+                        <td>${adjustedUsage.toFixed(2)} L</td><td>${nozzleSales.toFixed(2)} L</td>
+                        <td>${resetSales.toFixed(2)} L</td><td>${totalSales.toFixed(2)} L</td>
+                        <td class="text-${resultClass}">${variance.toFixed(2)} L</td>
+                        <td>${showPercent ? variancePercent.toFixed(2) + '%' : 'N/A'}</td>
+                        <td><span class="badge bg-${resultClass}">${result}</span></td>
+                        <td><span class="badge bg-${statusClass}">${status}</span></td>
+                    </tr>`);
+                });
+
+                $('#tank_gain_loss_loading').hide();
+                $('#tank_gain_loss_table_wrap').show();
+            }
+
+            // Number inputs must not change while the user scrolls the page.
+            $(document).on('wheel', 'input[type="number"]', function () {
+                if (document.activeElement === this) this.blur();
+            });
+
+            // Enter: tank mm -> same tank litres -> next tank mm.
+            $(document).on('keydown', '.tank-dip-mm, .tank-dip-liters', function (event) {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+
+                const row = $(this).closest('.tank-dip-row');
+                let nextInput;
+                if ($(this).hasClass('tank-dip-mm')) {
+                    nextInput = row.find('.tank-dip-liters');
+                } else {
+                    nextInput = row.nextAll('.tank-dip-row').first().find('.tank-dip-mm');
+                }
+
+                if (nextInput && nextInput.length) {
+                    nextInput.trigger('focus').trigger('select');
+                }
+            });
+
+            // Enter: current nozzle closing -> next nozzle closing.
+            $(document).on('keydown', '.nozzle-closing', function (event) {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+
+                const closingInputs = $('.nozzle-closing:visible:not(:disabled)');
+                const currentIndex = closingInputs.index(this);
+                const nextInput = closingInputs.eq(currentIndex + 1);
+                if (nextInput.length) {
+                    nextInput.trigger('focus').trigger('select');
+                }
+            });
+
+            $(document).on('input change', '.tank-dip-liters, .nozzle-closing, .nozzle-testing, .reset-total-dispensed', function () {
+                setTimeout(calculateTankGainLossPreview, 0);
+            });
 
             // ✅ VALIDATION: New dip cannot be greater than current tank level
             $(document).on("input", ".tank-dip-liters", function () {
@@ -1315,7 +1559,7 @@
 
                 nozzles.forEach(nozzle => {
                     container.append(`
-                                                                    <div class="row mb-3 nozzle-reading-row" data-nozzle-id="${nozzle.id}">
+                                                                    <div class="row mb-3 nozzle-reading-row" data-nozzle-id="${nozzle.id}" data-tank-id="${nozzle.tank_id}">
                                                                         <div style="width:14.2%">
                                                                             <label class="form-label">Nozzle Name</label>
                                                                             <input type="text" class="form-control" value="${nozzle.name}" readonly>
@@ -1454,6 +1698,7 @@
                                                                     </div>
                                                                 `);
                 });
+                restoreCloseReadingsDraft();
             }
 
             // ✅ Reset Nozzle Button Click
@@ -1637,6 +1882,16 @@
                     showToast("New reading cannot be less than old reading!", "error");
                     return;
                 }
+
+                $(this)
+                    .data('staged', true)
+                    .removeClass('btn-primary')
+                    .addClass('btn-success')
+                    .html('<i class="bi bi-check-circle me-1"></i> Reset Ready');
+                showToast("Nozzle reset is ready and will be saved with shift closing.", "success");
+                calculateCashFlowSummary();
+                calculateTankGainLossPreview();
+                return;
 
                 const saveBtn = $(this);
                 const originalText = saveBtn.html();
@@ -2197,6 +2452,7 @@
                                                         });
                                                     },
                                                     error: function () {
+                                                        markCloseResource('cashFlow', false);
                                                         resolve({
                                                             product_id: product.product_id,
                                                             product_name: product.product_name,
@@ -2688,6 +2944,7 @@
                 $('#fuel_card').val('0');
                 $('#credit_card').val('0');
                 updateCreditSales();
+                markCloseResource('cashFlow');
             }
 
             // ✅ Render Cash Flow Summary with Page Expenses
@@ -2830,6 +3087,7 @@
                 $('#fuel_card').val('0');
                 $('#credit_card').val('0');
                 updateCreditSales();
+                markCloseResource('cashFlow');
             }
 
             // ✅ Auto-calculate cash flow summary when closing reading changes
@@ -4128,10 +4386,146 @@
                 });
             }
 
+            function submitAtomicShiftClose(button, closingData) {
+                const tankData = [];
+                $(".tank-dip-row").each(function () {
+                    tankData.push({
+                        tank_id: parseInt($(this).data('tank-id')),
+                        dip_mm: parseFloat($(this).find('.tank-dip-mm').val()),
+                        dip_in_liters: parseFloat($(this).find('.tank-dip-liters').val()),
+                        shift_id: parseInt(closingData.shiftId),
+                        from_date: closingData.shiftStartTime,
+                        to_date: closingData.endTime,
+                        remarks: "Shift closing dip reading",
+                        created_by: parseInt(AUTH_USER_ID)
+                    });
+                });
+
+                const nozzleReadings = [];
+                $(".nozzle-reading-row").each(function () {
+                    const nozzleId = $(this).data('nozzle-id');
+                    const closingValue = $(this).find('.nozzle-closing').val();
+                    if (!closingValue || !closingValue.trim()) return;
+
+                    const opening = parseFloat($(this).find('.nozzle-opening').val()) || 0;
+                    const closing = parseFloat(closingValue);
+                    const testing = parseFloat($(this).find('.nozzle-testing').val()) || 0;
+                    const reading = {
+                        shift_id: parseInt(closingData.shiftId),
+                        nozzle_id: parseInt(nozzleId),
+                        opening_reading: opening,
+                        closing_reading: closing,
+                        total_dispensed: Math.max(0, closing - opening - testing),
+                        collected_from: parseInt(AUTH_USER_ID),
+                        testing: testing
+                    };
+                    const imageData = $(`#nozzle_image_data_${nozzleId}`).val();
+                    if (imageData && imageData !== 'null') reading.image = imageData;
+                    nozzleReadings.push(reading);
+                });
+
+                const nozzleResets = [];
+                $(".save-reset-btn").filter(function () {
+                    return $(this).data('staged') === true;
+                }).each(function () {
+                    const nozzleId = $(this).data('nozzle-id');
+                    const resetDate = $(`.reset-date[data-nozzle-id="${nozzleId}"]`).val();
+                    const newReading = parseFloat($(`.reset-new-reading[data-nozzle-id="${nozzleId}"]`).val());
+                    const rate = parseFloat($(`.reset-rate[data-nozzle-id="${nozzleId}"]`).val());
+                    const reason = $(`.reset-reason[data-nozzle-id="${nozzleId}"]`).val();
+                    if (!resetDate || !newReading || !rate || !reason.trim()) return;
+
+                    nozzleResets.push({
+                        nozzle_id: parseInt(nozzleId),
+                        shift_id: parseInt(closingData.shiftId),
+                        reset_date: resetDate,
+                        old_reading: parseFloat($(`.reset-old-reading[data-nozzle-id="${nozzleId}"]`).val()),
+                        new_reading: newReading,
+                        total_dispensed: parseFloat($(`.reset-total-dispensed[data-nozzle-id="${nozzleId}"]`).val()) || 0,
+                        rate: rate,
+                        total_amount: parseFloat($(`.reset-total-amount[data-nozzle-id="${nozzleId}"]`).val()) || 0,
+                        reason: reason,
+                        created_by: parseInt(AUTH_USER_ID)
+                    });
+                });
+
+                const paymentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                const payments = closingData.payments.map(item => ({
+                    station_id: parseInt(closingData.stationId),
+                    account_id: parseInt(item.account_id),
+                    amount: parseFloat(item.amount),
+                    date: paymentDate
+                }));
+
+                const payload = {
+                    end_time: closingData.endTime,
+                    cash_return: closingData.cashReturn,
+                    tank_data: tankData,
+                    nozzle_readings: nozzleReadings,
+                    nozzle_resets: nozzleResets,
+                    payments: payments,
+                    driver_data: closingData.driverCreditData,
+                    expenses: collectExpenseData(closingData.shiftId, closingData.stationId),
+                    cash_flow: {
+                        shift_id: parseInt(closingData.shiftId),
+                        shift_incharge: closingData.shiftInchargeId,
+                        total_cash: closingData.totalSales,
+                        in_hand: closingData.inHand,
+                        in_bank: closingData.inBank,
+                        fuelcard: closingData.fuelcard,
+                        creditcard: closingData.creditcard,
+                        faccountid: closingData.faccountid,
+                        caccountid: closingData.caccountid,
+                        baccountid: closingData.baccountid,
+                        from_date: closingData.shiftStartTime,
+                        to_date: closingData.endTime
+                    }
+                };
+
+                const originalText = button.html();
+                isAtomicClosing = true;
+                button.html('<span class="spinner-border spinner-border-sm" role="status"></span> Saving...');
+                updateCloseButtonState();
+
+                $.ajax({
+                    url: getApiUrl(`shifts/${closingData.shiftId}/close-atomic`),
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function () {
+                        localStorage.removeItem(closeDraftKey);
+                        showToast('Shift closed successfully!', 'success');
+                        setTimeout(() => window.location.href = '/shifts', 2000);
+                    },
+                    error: function (xhr) {
+                        const response = xhr.responseJSON || {};
+                        const firstValidationError = response.errors
+                            ? Object.values(response.errors).flat()[0]
+                            : null;
+                        showToast(firstValidationError || response.message ||
+                            'Shift closing failed. No records were saved.', 'error');
+                    },
+                    complete: function () {
+                        isAtomicClosing = false;
+                        button.html(originalText);
+                        updateCloseButtonState();
+                    }
+                });
+            }
+
             let saveCounter = 0;
 
             // ✅ Save Close Shift with VALIDATION 
             $("#save_close_shift,#save_close_shift1").on("click", function () {
+                if (isAtomicClosing) return;
+
+                const resourcesReady = closeResourceState.shift && closeResourceState.tanks &&
+                    closeResourceState.nozzles && closeResourceState.cashFlow && closeResourceState.gainLoss && !closeResourceState.failed;
+                if (!resourcesReady || $.active > 0) {
+                    showToast("Please wait until all shift resources finish loading.", "error");
+                    return;
+                }
+
                 saveCounter++;
                 console.log(`🔄 Save button clicked ${saveCounter} times`);
 
@@ -4363,6 +4757,30 @@
                     }
                     driverCreditData.push(...collectDriverCreditData(shiftId));
                 }
+
+                if ($('.expense-row').length > 0 && !validateExpenseRows()) {
+                    return;
+                }
+
+                submitAtomicShiftClose($(this), {
+                    shiftId: shiftId,
+                    endTime: endTime,
+                    shiftStartTime: shiftStartTime,
+                    stationId: stationId,
+                    cashReturn: cash_return,
+                    totalSales: totalSales,
+                    inHand: inHand,
+                    inBank: inBank,
+                    fuelcard: fuelcard,
+                    creditcard: creditcard,
+                    faccountid: faccountid,
+                    caccountid: caccountid,
+                    baccountid: baccountid,
+                    shiftInchargeId: shiftInchargeId,
+                    payments: [...bankTransferData, ...fuelCardData, ...creditCardData],
+                    driverCreditData: driverCreditData
+                });
+                return;
 
                 // ✅ ==================== SAVE LOGIC ====================
 
