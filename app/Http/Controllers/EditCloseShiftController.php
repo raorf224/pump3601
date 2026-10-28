@@ -265,6 +265,8 @@ if (isset($data['tank_updates']) && !empty($data['tank_updates'])) {
             // 4. Update nozzle readings
 if (isset($data['nozzle_updates']) && !empty($data['nozzle_updates'])) {
     foreach ($data['nozzle_updates'] as $nozzle) {
+        $this->saveEditedNozzleReading($shift_id, $nozzle, $userId);
+        continue;
         
         // Get current closing reading from database
         $currentReading = DB::select("
@@ -538,6 +540,119 @@ if (isset($data['nozzle_updates']) && !empty($data['nozzle_updates'])) {
             ], 500);
         }
     }
+    private function saveEditedNozzleReading($shiftId, array $input, $userId)
+    {
+        $nozzleId = (int) $input['nozzle_id'];
+        $opening = (float) ($input['opening_reading'] ?? 0);
+        $closing = (float) ($input['closing_reading'] ?? 0);
+        $testing = (float) ($input['testing'] ?? 0);
+        $quantity = $closing - $opening - $testing;
+
+        if ($opening <= 0 || $closing < $opening || $quantity < 0) {
+            throw new \RuntimeException("Invalid meter reading for nozzle {$nozzleId}.");
+        }
+
+        $nozzle = DB::table('nozzles')->where('id', $nozzleId)->lockForUpdate()->first();
+        if (!$nozzle) {
+            throw new \RuntimeException("Nozzle {$nozzleId} not found.");
+        }
+
+        $reading = DB::table('shift_nozzle_readings')
+            ->where('shift_id', $shiftId)
+            ->where('nozzle_id', $nozzleId)
+            ->lockForUpdate()
+            ->first();
+
+        if ($reading) {
+            $consumptions = DB::table('fuel_layer_consumptions')
+                ->where('sale_id', $reading->id)
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($consumptions as $consumption) {
+                DB::table('fuel_inventory_layers')
+                    ->where('id', $consumption->layer_id)
+                    ->increment('remaining_qty', $consumption->qty);
+            }
+            DB::table('fuel_layer_consumptions')->where('sale_id', $reading->id)->delete();
+        }
+
+        $rate = $reading ? (float) $reading->rate : (float) ($input['rate'] ?? 0);
+        if ($rate <= 0) {
+            throw new \RuntimeException("Sale rate is missing for nozzle {$nozzleId}.");
+        }
+
+        $values = [
+            'opening_reading' => $opening,
+            'closing_reading' => $closing,
+            'testing_reading' => $testing,
+            'total_dispensed' => $quantity,
+            'rate' => $rate,
+            'total_amount' => $quantity * $rate,
+            'updated_at' => now(),
+        ];
+
+        if ($reading) {
+            DB::table('shift_nozzle_readings')->where('id', $reading->id)->update($values);
+            $saleId = $reading->id;
+        } else {
+            $shift = DB::table('shifts')->where('id', $shiftId)->first();
+            $saleId = DB::table('shift_nozzle_readings')->insertGetId(array_merge($values, [
+                'shift_id' => $shiftId,
+                'nozzle_id' => $nozzleId,
+                'collected_from' => $userId ?: ($shift->shift_incharger ?? null),
+                'cost_amount' => 0,
+                'profit' => 0,
+                'created_at' => now(),
+            ]));
+        }
+
+        $remaining = $quantity;
+        $totalCost = 0;
+        $layers = DB::table('fuel_inventory_layers')
+            ->where('tank_id', $nozzle->tank_id)
+            ->where('product_id', $nozzle->product_id)
+            ->where('remaining_qty', '>', 0)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($layers as $layer) {
+            if ($remaining <= 0) {
+                break;
+            }
+
+            $used = min((float) $layer->remaining_qty, $remaining);
+            $cost = $used * (float) $layer->rate;
+            $sale = $used * $rate;
+            $totalCost += $cost;
+
+            DB::table('fuel_layer_consumptions')->insert([
+                'layer_id' => $layer->id,
+                'sale_id' => $saleId,
+                'qty' => $used,
+                'cost_rate' => $layer->rate,
+                'sale_rate' => $rate,
+                'cost_amount' => $cost,
+                'sale_amount' => $sale,
+                'profit' => $sale - $cost,
+                'created_at' => now(),
+            ]);
+            DB::table('fuel_inventory_layers')->where('id', $layer->id)->decrement('remaining_qty', $used);
+            $remaining -= $used;
+        }
+
+        if ($remaining > 0.0001) {
+            throw new \RuntimeException("Not enough FIFO stock for nozzle {$nozzleId}; short by {$remaining} liters.");
+        }
+
+        DB::table('shift_nozzle_readings')->where('id', $saleId)->update([
+            'cost_amount' => $totalCost,
+            'profit' => ($quantity * $rate) - $totalCost,
+        ]);
+
+    }
+
     /**
      * Get bank transfer details for shift
      */
