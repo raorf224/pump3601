@@ -651,6 +651,21 @@ if (isset($data['nozzle_updates']) && !empty($data['nozzle_updates'])) {
             'profit' => ($quantity * $rate) - $totalCost,
         ]);
 
+        // Keep the nozzle's live cumulative meter in sync without overwriting it.
+        // Existing row: apply only the edited closing difference.
+        // Missing row: apply the meter movement that was previously skipped.
+        $meterDifference = $reading
+            ? $closing - (float) $reading->closing_reading
+            : $closing - $opening;
+
+        if (abs($meterDifference) > 0.0001) {
+            DB::table('nozzles')->where('id', $nozzleId)->increment(
+                'intial_meter_reading',
+                $meterDifference,
+                ['updated_at' => now()]
+            );
+        }
+
     }
 
     /**
