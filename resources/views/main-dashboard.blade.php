@@ -262,6 +262,13 @@
           height: 250px;
         }
 
+        .chart-box canvas,
+        .drawer-chart canvas {
+          display: block;
+          width: 100% !important;
+          height: 100% !important;
+        }
+
         .chart-box.tall {
           height: 290px;
         }
@@ -1600,18 +1607,40 @@
             },
           };
         }
+        function refreshCharts() {
+          Object.keys(state.chartInstanceByKey).forEach((chartKey) => {
+            const chart = state.chartInstanceByKey[chartKey];
+            if (!chart || typeof chart.resize !== "function") return;
+            chart.resize();
+            chart.update();
+          });
+
+          state.drawerChartInstances.forEach((chart) => {
+            if (chart && typeof chart.resize === "function") {
+              chart.resize();
+              chart.update();
+            }
+          });
+        }
+
         function drawChart(chartKey, spec) {
           const card = document.querySelector(`[data-chart="${chartKey}"]`);
+          const canvas = card.querySelector("canvas");
           const allowedTypes = card.dataset.types.split(",");
           const chartType = state.chartTypeByKey[chartKey] || allowedTypes[0];
           state.chartSpecByKey[chartKey] = spec;
           card.classList.toggle("is-empty", !spec.labels.length);
           if (state.chartInstanceByKey[chartKey])
             state.chartInstanceByKey[chartKey].destroy();
-          state.chartInstanceByKey[chartKey] = new Chart(
-            card.querySelector("canvas"),
-            buildChartConfiguration(chartType, spec),
-          );
+
+          const config = buildChartConfiguration(chartType, spec);
+          state.chartInstanceByKey[chartKey] = new Chart(canvas, config);
+          requestAnimationFrame(refreshCharts);
+
+          if (typeof ResizeObserver !== "undefined") {
+            const observer = new ResizeObserver(() => refreshCharts());
+            observer.observe(card);
+          }
         }
         function installChartTypeSwitches() {
           const labels = { bar: "Bar", line: "Line", pie: "Pie", doughnut: "Donut" };
@@ -1641,6 +1670,9 @@
         }
 
         /* ============================== 6. RENDER THE PAGE ============================== */
+        window.addEventListener("resize", refreshCharts);
+        document.addEventListener("DOMContentLoaded", refreshCharts);
+
         function renderDashboard() {
           const { apiData, viewModel } = state;
           el("dashboardSubtitle").textContent =
@@ -2233,6 +2265,7 @@
           });
           el("detailDrawer").classList.add("on");
           el("drawerOverlay").classList.add("on");
+          requestAnimationFrame(refreshCharts);
         }
         function closeDetailDrawer() {
           el("detailDrawer").classList.remove("on");
