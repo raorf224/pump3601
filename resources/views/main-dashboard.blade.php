@@ -877,17 +877,20 @@
 
         #detailDrawer {
           position: fixed;
-          top: 0;
+          top: calc(var(--pe-app-header-height, 74px) * 1.65);
           right: 0;
-          margin-top: 122px;
-          height: 100%;
+          bottom: 0;
+          height: auto;
           width: min(720px, 100vw);
+          box-sizing: border-box;
           background: var(--card);
           box-shadow: -12px 0 40px rgba(0, 0, 0, 0.2);
           transform: translateX(105%);
           transition: transform 0.25s;
           z-index: 30;
           overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior: contain;
           padding: 20px;
         }
 
@@ -1010,6 +1013,12 @@
 
           .chips {
             grid-template-columns: 1fr 1fr;
+          }
+        }
+
+        @media (max-width: 1199.98px) {
+          #detailDrawer {
+            top: var(--pe-app-header-height, 74px);
           }
         }
 
