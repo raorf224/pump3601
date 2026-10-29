@@ -47,6 +47,8 @@ use App\Http\Controllers\ReceivedAmountController;
 use App\Http\Controllers\NozzleSalesDashboardController;
 use App\Http\Controllers\OverviewController;
 use App\Http\Controllers\MainDashboardController;
+use App\Http\Controllers\ShiftDeletionController;
+use App\Http\Controllers\StationLifecycleController;
 
 
 Route::prefix('overview')->group(function () {
@@ -103,7 +105,10 @@ Route::get('st_products/{id}', [ProductController::class, 'station_products'])->
 Route::get('stations/{id}/products', [StationController::class, 'stations_product'])->name('stations.products');
 
 Route::put('stations/{id}', [StationController::class, 'update'])->name('stations.update');
-Route::delete('stations/{id}', [StationController::class, 'destroy'])->name('stations.destroy');
+Route::middleware('auth')->group(function () {
+    Route::post('stations/{id}/reset', [StationLifecycleController::class, 'reset']);
+    Route::delete('stations/{id}', [StationLifecycleController::class, 'destroy'])->name('stations.destroy');
+});
 Route::patch('stations/{id}/status', [StationController::class, 'updateStatus']);
 Route::get('stations-employee/{user_id}', [StationController::class, 'stationsForEmployee']);
 
@@ -267,6 +272,10 @@ Route::get('/shift_show/{id}', [ShiftController::class, 'shift_show'])->name('sh
 Route::post('/shifts', [ShiftController::class, 'store']);
 Route::post('/shifts/{shiftId}/close-atomic', [AtomicShiftCloseController::class, 'store']);
 Route::put('/shifts/{id}', [ShiftController::class, 'update']);
+Route::middleware('auth')->group(function () {
+    Route::get('/shifts/{shiftId}/delete-preview', [ShiftDeletionController::class, 'preview']);
+    Route::delete('/shifts/{shiftId}', [ShiftDeletionController::class, 'destroy']);
+});
 
 
 Route::get('/shifts/{id}/for-edit', [ShiftController::class, 'getShiftForEdit']);

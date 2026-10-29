@@ -151,6 +151,7 @@
 
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="assets/libs/sweetalert2/sweetalert2.all.js"></script>
 <script type="module" src="assets/js/app.js"></script>
 
 <script src="assets/libs/choices.js/public/assets/scripts/choices.min.js"></script>
@@ -207,18 +208,34 @@ $(document).ready(function() {
     // ✅ Delete Station
     $(document).on('click', '.deleteStation', function() {
         const stationId = $(this).data('id');
-        if (!confirm('Are you sure you want to delete this station?')) return;
+        const stationName = $(this).data('name');
 
-        $.ajax({
-            url: `/api/stations/${stationId}`,
-            method: 'DELETE',
-            success: function() {
-                loadStations();
-                showToast('Station deleted successfully.', 'success');
-            },
-            error: function() {
-                showToast('Failed to delete station.', 'danger');
-            }
+        Swal.fire({
+            title: stationName || 'Site Action',
+            text: 'Choose whether to reset site data or permanently delete the complete site.',
+            icon: 'warning',
+            showDenyButton: true,
+            showCancelButton: true,
+            confirmButtonText: 'Reset This Site',
+            denyButtonText: 'Delete This Site',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#f59e0b',
+            denyButtonColor: '#dc3545'
+        }).then((result) => {
+            if (!result.isConfirmed && !result.isDenied) return;
+
+            const isReset = result.isConfirmed;
+            $.ajax({
+                url: isReset ? `/api/stations/${stationId}/reset` : `/api/stations/${stationId}`,
+                method: isReset ? 'POST' : 'DELETE',
+                success: function(response) {
+                    loadStations();
+                    showToast(response.message, 'success');
+                },
+                error: function(xhr) {
+                    showToast(xhr.responseJSON?.message || 'Site operation failed. No data was changed.', 'danger');
+                }
+            });
         });
     });
 
@@ -279,8 +296,8 @@ function renderTable() {
                </a>` : '';
 
         const deleteBtn = canDelete
-            ? `<button type="button" class="btn btn-light-danger btn-sm deleteStation" data-id="${station.id}">
-                    <i class="ri-delete-bin-line"></i>
+            ? `<button type="button" class="btn btn-light-danger btn-sm deleteStation" data-id="${station.id}" data-name="${station.name}">
+                    <i class="ri-restart-line"></i> Reset / Delete
                </button>` : '';
 
         const statusSwitch = canUpdate

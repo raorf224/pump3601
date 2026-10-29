@@ -139,7 +139,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Shifts Table -->
                     <h5 class="card-title mb-3">Shift Records</h5>
                     <div class="table-responsive">
@@ -239,13 +239,13 @@
                 else if (type === "info") bgClass = "bg-info text-white";
 
                 const toastHtml = `
-            <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">${message}</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
 
                 $("#toastContainer").append(toastHtml);
                 const toastElement = document.getElementById(toastId);
@@ -569,26 +569,30 @@
                         actionButtons += `<span class="badge bg-secondary ms-1">Closed</span>`;
                     }
 
+                    if (AUTH_ROLE === 'admin' && hasPermission('shifts', 'delete')) {
+                        actionButtons += `<button class="btn btn-sm btn-danger delete-shift-btn ms-1" data-id="${id}">Delete</button>`;
+                    }
+
                     // If no actions allowed
                     if (!actionButtons) {
                         actionButtons = `<span class="text-muted small">No actions</span>`;
                     }
 
                     tableBody.append(`
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${stationName}</td>
-                        <td>${shiftType}</td>
-                        <td>${shiftIncharger}</td>
-                        <td>${cash_handover}</td>
-                        <td>${cash_return}</td>
-                        <td>${start}</td>
-                        <td>${end}</td>
-                        <td><span class="badge bg-${status === 'open' ? 'success' : 'secondary'}">${status}</span></td>
-                        <td>${created}</td>
-                        <td class="text-center">${actionButtons}</td>
-                    </tr>
-                `);
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${stationName}</td>
+                            <td>${shiftType}</td>
+                            <td>${shiftIncharger}</td>
+                            <td>${cash_handover}</td>
+                            <td>${cash_return}</td>
+                            <td>${start}</td>
+                            <td>${end}</td>
+                            <td><span class="badge bg-${status === 'open' ? 'success' : 'secondary'}">${status}</span></td>
+                            <td>${created}</td>
+                            <td class="text-center">${actionButtons}</td>
+                        </tr>
+                    `);
                 });
             }
             // ✅ Load All Shifts (role-aware)
@@ -831,6 +835,71 @@
 
                 // Redirect to close shift page - FIXED URL
                 window.location.href = "/close?shift_id=" + shiftId;
+            });
+
+            tableBody.on("click", ".delete-shift-btn", function () {
+                const shiftId = parseInt($(this).data("id"), 10);
+                const button = $(this);
+
+                button.prop("disabled", true).text("Checking...");
+
+                $.ajax({
+                    url: getApiUrl(`shifts/${shiftId}/delete-preview`),
+                    method: "GET",
+                    success: function (preview) {
+                        if (!preview.can_delete) {
+                            showToast(preview.message || "This shift cannot be deleted.", "error");
+                            return;
+                        }
+
+                        const affected = Object.entries(preview.counts || {})
+                            .filter(([, count]) => Number(count) > 0)
+                            .map(([name, count]) => `${name.replaceAll('_', ' ')}: ${count}`)
+                            .join("\n");
+
+                        const message = [
+                            `PERMANENT SHIFT DELETE`,
+                            `Station: ${preview.shift.station}`,
+                            `Shift: #${preview.shift.id} (${preview.shift.start_time})`,
+                            affected ? `\nAffected records:\n${affected}` : "",
+                            `\nType ${preview.confirmation} to confirm:`
+                        ].filter(Boolean).join("\n");
+
+                        const confirmation = window.prompt(message);
+                        if (confirmation !== preview.confirmation) {
+                            if (confirmation !== null) {
+                                showToast("Confirmation did not match. Nothing was deleted.", "error");
+                            }
+                            return;
+                        }
+
+                        button.text("Deleting...");
+                        $.ajax({
+                            url: getApiUrl(`shifts/${shiftId}`),
+                            method: "DELETE",
+                            contentType: "application/json",
+                            data: JSON.stringify({ confirmation }),
+                            success: function (response) {
+                                showToast(response.message || "Shift deleted successfully.", "success");
+                                loadShifts();
+                            },
+                            error: function (xhr) {
+                                showToast(xhr.responseJSON?.message || "Shift deletion failed. Nothing was deleted.", "error");
+                            },
+                            complete: function () {
+                                button.prop("disabled", false).text("Delete");
+                            }
+                        });
+                    },
+                    error: function (xhr) {
+                        showToast(xhr.responseJSON?.message || "Unable to check this shift.", "error");
+                    },
+                    complete: function () {
+                        if (button.text() === "Checking...") {
+                            button.prop("disabled", false).text("Delete");
+                        }
+                    }
+                });
             });
 
             // ✅ Filter variables
