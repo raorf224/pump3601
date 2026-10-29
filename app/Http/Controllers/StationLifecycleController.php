@@ -36,6 +36,14 @@ class StationLifecycleController extends Controller
 
             if ($deleteStation) {
                 DB::table('stations')->where('id', $stationId)->delete();
+            } else {
+                // A reset must never unassign the site's regional/territory managers.
+                // Restore the locked station values in case any cleanup-side FK/trigger
+                // cleared them while operational data was being removed.
+                DB::table('stations')->where('id', $stationId)->update([
+                    'rm_user_id' => $station->rm_user_id,
+                    'tm_user_id' => $station->tm_user_id,
+                ]);
             }
 
             DB::commit();
