@@ -251,16 +251,23 @@ class ShiftNozzleReadingsController extends Controller
             // ==============================
             $qty = 0;
 
-            if (!empty($validatedData['closing_reading'])) {
-                // $qty = $validatedData['closing_reading'] - $validatedData['opening_reading'];
-                $testing = $validatedData['testing'] ?? 0;
+            if (isset($validatedData['closing_reading'])) {
+                $openingReading = (float) $validatedData['opening_reading'];
+                $closingReading = (float) $validatedData['closing_reading'];
+                $testing = (float) ($validatedData['testing'] ?? 0);
 
-                $qty = ($validatedData['closing_reading'] - $validatedData['opening_reading']) - ($validatedData['testing'] ?? 0);
-
-
-                if ($qty < 0) {
-                    return response()->json(['message' => 'Closing reading must be greater than opening'], 400);
+                if ($closingReading < $openingReading) {
+                    return response()->json([
+                        'message' => "Closing reading must be equal to or greater than opening reading for nozzle {$nozzle->name} (Nozzle ID: {$nozzle->id}). Opening: {$openingReading}, Closing: {$closingReading}.",
+                        'nozzle_id' => $nozzle->id,
+                        'nozzle_name' => $nozzle->name,
+                        'opening_reading' => $openingReading,
+                        'closing_reading' => $closingReading,
+                    ], 400);
                 }
+
+                // Match the close page calculation: testing cannot make sale quantity negative.
+                $qty = max(0, ($closingReading - $openingReading) - $testing);
             }
 
             // ✅ total_amount calculate karo
