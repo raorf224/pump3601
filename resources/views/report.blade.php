@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -168,6 +168,11 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
+        .layer-list {
+            max-height: 480px;
+            overflow-y: auto;
+        }
+
         .layer-product { font-weight: 700; font-size: 14px; color: #1a1a2e; }
         .layer-detail { font-size: 12.5px; color: #6c757d; margin-top: 2px; }
         .layer-qty { font-weight: 700; color: #1a237e; font-size: 15px; }
@@ -175,6 +180,40 @@
         .text-profit { color: #00c853; font-weight: 700; }
         .text-loss   { color: #d50000; font-weight: 700; }
         .empty-state { text-align: center; color: #9aa0ac; padding: 30px 0; font-size: 13.5px; }
+
+        .dataTables_wrapper {
+            width: 100%;
+            padding: 12px 15px;
+            color: #495057;
+            font-size: 12px;
+        }
+
+        .dataTables_wrapper .dataTables_length label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .dataTables_wrapper .dataTables_length select {
+            display: inline-block;
+            width: auto;
+            min-width: 64px;
+            margin: 0;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            display: inline-block;
+            width: auto;
+            min-width: 160px;
+            margin-left: 6px;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .pagination {
+            justify-content: flex-end;
+            margin: 8px 0 0;
+        }
     </style>
 @endsection
 
@@ -344,7 +383,7 @@
                             </button>
                         @endif
                     </div>
-                    <div class="section-body">
+                    <div class="section-body layer-list">
                         @forelse(array_slice($fifoLayers, 0, $settings['fifoDisplayLimit']) as $layer)
                             <div class="layer-card d-flex justify-content-between align-items-center">
                                 <div>
@@ -367,7 +406,7 @@
                         <h5><i class="fas fa-truck text-primary me-2"></i>Recent Purchases & Receives</h5>
                     </div>
                     <div class="section-body p-0">
-                        <div class="table-responsive" style="max-height: 420px;">
+                        <div class="table-responsive">
                             <table class="table table-dashboard mb-0" id="purchasesDataTable">
                                 <thead>
                                     <tr>
@@ -479,8 +518,8 @@
 
 @section('js')
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
