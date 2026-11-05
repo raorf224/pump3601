@@ -297,7 +297,7 @@
             </div>
             <div class="section-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-dashboard mb-0">
+                    <table class="table table-dashboard mb-0" id="tankPerformanceDataTable">
                         <thead>
                             <tr>
                                 <th>Station</th>
@@ -310,7 +310,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($tankPerformance as $row)
+                            @foreach($tankPerformance as $row)
                                 <tr>
                                     <td>{{ $row->station_name }}</td>
                                     <td>{{ $row->tank_name }}</td>
@@ -325,9 +325,7 @@
                                         </span>
                                     </td>
                                 </tr>
-                            @empty
-                                <tr><td colspan="7" class="empty-state">No volume records found for selected filters.</td></tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -370,7 +368,7 @@
                     </div>
                     <div class="section-body p-0">
                         <div class="table-responsive" style="max-height: 420px;">
-                            <table class="table table-dashboard mb-0">
+                            <table class="table table-dashboard mb-0" id="purchasesDataTable">
                                 <thead>
                                     <tr>
                                         <th>Recv. Date</th>
@@ -383,7 +381,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($purchases as $p)
+                                    @foreach($purchases as $p)
                                         <tr>
                                             <td>{{ \Carbon\Carbon::parse($p->recieving_date)->format('d M Y') }}</td>
                                             <td>{{ $p->station_name ?? 'N/A' }}</td>
@@ -397,9 +395,7 @@
                                                 </span>
                                             </td>
                                         </tr>
-                                    @empty
-                                        <tr><td colspan="7" class="empty-state">No purchases found for this period.</td></tr>
-                                    @endforelse
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -431,7 +427,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($transactions as $t)
+                            @foreach($transactions as $t)
                                 <tr>
                                     <td>{{ $t->id }}</td>
                                     <td>{{ \Carbon\Carbon::parse($t->transaction_date)->format('Y-m-d H:i') }}</td>
@@ -441,9 +437,7 @@
                                     <td>{{ $t->product_name }}</td>
                                     <td class="fw-bold text-primary">{{ number_format($t->qty, 2) }} {{ $settings['unit'] }}</td>
                                 </tr>
-                            @empty
-                                <tr><td colspan="7" class="empty-state">No transactions available for this period.</td></tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -514,6 +508,26 @@
 
             $('#filter_station').on('change', filterTanksByStation);
             filterTanksByStation();
+
+            const tableOptions = {
+                paging: true,
+                pageLength: 10,
+                lengthMenu: [[10, 20, 30, -1], [10, 20, 30, 'All']],
+                order: []
+            };
+
+            $('#tankPerformanceDataTable').DataTable({
+                ...tableOptions,
+                language: { emptyTable: 'No volume records found for selected filters.' }
+            });
+            $('#purchasesDataTable').DataTable({
+                ...tableOptions,
+                language: { emptyTable: 'No purchases found for this period.' }
+            });
+            $('#limitedDataTable').DataTable({
+                ...tableOptions,
+                language: { emptyTable: 'No transactions available for this period.' }
+            });
 
             // ---- Volume Trend Chart ----
             const trendLabels = @json(collect($salesTrend)->pluck('sale_date'));
@@ -612,12 +626,10 @@
                                     <td class="fw-bold">${item.qty} ${unit}</td>
                                 </tr>`;
                             });
-                            $('#modalTableBody').html(rows || '<tr><td colspan="7" class="text-center">No records.</td></tr>');
+                            $('#modalTableBody').html(rows);
                             $('#unlimitedDataTable').DataTable({
-                                paging: true,
-                                pageLength: 10,
-                                lengthMenu: [[10, 20, 30, -1], [10, 20, 30, 'All']],
-                                order: []
+                                ...tableOptions,
+                                language: { emptyTable: 'No records.' }
                             });
                         }
                     }
