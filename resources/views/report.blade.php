@@ -411,7 +411,7 @@
         {{-- 7. RECENT TRANSACTIONS (VOLUME ONLY) --}}
         <div class="section-card">
             <div class="section-header">
-                <h5><i class="fas fa-list text-primary me-2"></i>Recent Dispensed Transactions (Latest {{ $settings['recentTxLimit'] }})</h5>
+                <h5><i class="fas fa-list text-primary me-2"></i>Dispensed Transactions</h5>
                 <button class="btn btn-sm btn-outline-primary" id="btnShowMore" data-bs-toggle="modal" data-bs-target="#unlimitedDataModal">
                     <i class="fas fa-expand"></i> Show All
                 </button>
@@ -492,7 +492,6 @@
     <script>
         $(document).ready(function () {
             const unit = @json($settings['unit']);
-            const recentTxLimit = @json($settings['recentTxLimit']);
             const chartColors = @json($settings['chartColors']);
 
             // ---- Filter Tank dropdown by Station ----
@@ -515,8 +514,6 @@
 
             $('#filter_station').on('change', filterTanksByStation);
             filterTanksByStation();
-
-            $('#limitedDataTable').DataTable({ pageLength: recentTxLimit, lengthChange: false, order: [] });
 
             // ---- Volume Trend Chart ----
             const trendLabels = @json(collect($salesTrend)->pluck('sale_date'));
@@ -616,7 +613,12 @@
                                 </tr>`;
                             });
                             $('#modalTableBody').html(rows || '<tr><td colspan="7" class="text-center">No records.</td></tr>');
-                            $('#unlimitedDataTable').DataTable({ paging: true, pageLength: 50, order: [] });
+                            $('#unlimitedDataTable').DataTable({
+                                paging: true,
+                                pageLength: 10,
+                                lengthMenu: [[10, 20, 30, -1], [10, 20, 30, 'All']],
+                                order: []
+                            });
                         }
                     }
                 });

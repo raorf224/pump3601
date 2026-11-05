@@ -13,7 +13,6 @@ class ReportController extends Controller
      */
     protected string $unit;
     protected int $defaultDays;
-    protected int $recentTxLimit;
     protected int $purchaseLimit;
     protected int $fifoDisplayLimit;
     protected array $chartColors;
@@ -23,7 +22,6 @@ class ReportController extends Controller
         // Purely Volume-based dynamic settings (No monetary currency)
         $this->unit             = config('reports.unit', 'L');
         $this->defaultDays      = (int) config('reports.default_days', 30);
-        $this->recentTxLimit    = (int) config('reports.recent_tx_limit', 25);
         $this->purchaseLimit    = (int) config('reports.purchase_limit', 50);
         $this->fifoDisplayLimit = (int) config('reports.fifo_display_limit', 20);
         $this->chartColors      = config('reports.chart_colors', ['#1a237e', '#0091ea', '#00c853', '#ff6d00', '#6a1b9a', '#d50000']);
@@ -50,14 +48,13 @@ class ReportController extends Controller
         $tankPerformance = $this->getTankVolumeGainLoss($stationId, $tankId, $fromDate, $toDate);
         $fifoLayers      = $this->getFifoLayers($stationId, $tankId);
         $purchases       = $this->getPurchaseHistory($stationId, $tankId, $fromDate, $toDate, $this->purchaseLimit);
-        $transactions    = $this->getRecentTransactions($stationId, $tankId, $fromDate, $toDate, $this->recentTxLimit);
+        $transactions    = $this->getRecentTransactions($stationId, $tankId, $fromDate, $toDate, null);
         $salesTrend      = $this->getVolumeTrend($stationId, $tankId, $fromDate, $toDate);
         $productSplit    = $this->getProductWiseVolume($stationId, $tankId, $fromDate, $toDate);
 
         // System Settings Array
         $settings = [
             'unit'              => $this->unit,
-            'recentTxLimit'     => $this->recentTxLimit,
             'fifoDisplayLimit'  => $this->fifoDisplayLimit,
             'chartColors'       => $this->chartColors,
         ];
