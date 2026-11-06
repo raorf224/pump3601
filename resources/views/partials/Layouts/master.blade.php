@@ -13,7 +13,7 @@
     <script type="module" src="{{ asset('assets/js/layout-setup.js') }}"></script>
 
     <!-- App favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('pump360.png') }}">
+    <link rel="shortcut icon" href="https://png.pngtree.com/png-vector/20230410/ourmid/pngtree-petroal-pump-vector-png-image_6689654.png">
 
     @yield('css')
     @include('partials.head-css')
