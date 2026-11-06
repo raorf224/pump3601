@@ -509,6 +509,9 @@
                     </table>
                 </div>
                 <div class="modal-footer">
+                    <span class="me-auto text-muted" id="transactionPageStatus"></span>
+                    <button type="button" class="btn btn-outline-primary" id="transactionPrevious">Previous</button>
+                    <button type="button" class="btn btn-outline-primary" id="transactionNext">Next</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -635,12 +638,15 @@
                 }
             });
 
-            // ---- Show All Transactions Modal (AJAX) ----
-            $('#unlimitedDataModal').on('show.bs.modal', function () {
+            // ---- All Transactions Modal (server-paginated to protect browser memory) ----
+            let transactionPage = 1;
+
+            function loadTransactionPage(page) {
                 if ($.fn.DataTable.isDataTable('#unlimitedDataTable')) {
-                    $('#unlimitedDataTable').DataTable().destroy();
+                    $('#unlimitedDataTable').DataTable().clear().destroy();
                 }
                 $('#modalTableBody').html('<tr><td colspan="7" class="text-center">Loading...</td></tr>');
+                $('#transactionPrevious, #transactionNext').prop('disabled', true);
 
                 $.ajax({
                     url: "{{ route('report.fetchUnlimitedData') }}",
@@ -649,7 +655,9 @@
                         station_id: $('#filter_station').val(),
                         tank_id: $('#filter_tank').val(),
                         from_date: $('#filter_from_date').val(),
-                        to_date: $('#filter_to_date').val()
+                        to_date: $('#filter_to_date').val(),
+                        page: page,
+                        per_page: 100
                     },
                     success: function (response) {
                         if (response.status === 'success') {
@@ -668,11 +676,37 @@
                             $('#modalTableBody').html(rows);
                             $('#unlimitedDataTable').DataTable({
                                 ...tableOptions,
+                                pageLength: 25,
+                                lengthMenu: [[25, 50, 100], [25, 50, 100]],
                                 language: { emptyTable: 'No records.' }
                             });
+
+                            const pagination = response.pagination;
+                            transactionPage = pagination.page;
+                            $('#transactionPageStatus').text(
+                                `Page ${pagination.page} of ${pagination.last_page} (${pagination.total.toLocaleString()} records)`
+                            );
+                            $('#transactionPrevious').prop('disabled', pagination.page <= 1);
+                            $('#transactionNext').prop('disabled', pagination.page >= pagination.last_page);
                         }
+                    },
+                    error: function () {
+                        $('#modalTableBody').html('<tr><td colspan="7" class="text-center text-danger">Unable to load transactions.</td></tr>');
+                        $('#transactionPageStatus').text('');
                     }
                 });
+            }
+
+            $('#unlimitedDataModal').on('show.bs.modal', function () {
+                loadTransactionPage(1);
+            });
+
+            $('#transactionPrevious').on('click', function () {
+                if (transactionPage > 1) loadTransactionPage(transactionPage - 1);
+            });
+
+            $('#transactionNext').on('click', function () {
+                loadTransactionPage(transactionPage + 1);
             });
         });
     </script>

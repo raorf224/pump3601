@@ -48,7 +48,8 @@ class ReportController extends Controller
         $tankPerformance = $this->getTankVolumeGainLoss($stationId, $tankId, $fromDate, $toDate);
         $fifoLayers      = $this->getFifoLayers($stationId, $tankId);
         $purchases       = $this->getPurchaseHistory($stationId, $tankId, $fromDate, $toDate, $this->purchaseLimit);
-        $transactions    = $this->getRecentTransactions($stationId, $tankId, $fromDate, $toDate, null);
+        // Keep the initial HTML/Datatable small. Full history is loaded page-by-page in the modal.
+        $transactions    = $this->getRecentTransactions($stationId, $tankId, $fromDate, $toDate, 25);
         $salesTrend      = $this->getVolumeTrend($stationId, $tankId, $fromDate, $toDate);
         $productSplit    = $this->getProductWiseVolume($stationId, $tankId, $fromDate, $toDate);
 
@@ -87,7 +88,19 @@ class ReportController extends Controller
         $fromDate  = $request->input('from_date', Carbon::now()->subDays($this->defaultDays)->format('Y-m-d'));
         $toDate    = $request->input('to_date', Carbon::now()->format('Y-m-d'));
 
-        $rows = $this->getRecentTransactions($stationId, $tankId, $fromDate, $toDate, null);
+        $perPage = min(max((int) $request->input('per_page', 100), 25), 200);
+        $page = max((int) $request->input('page', 1), 1);
+        $total = $this->getRecentTransactionCount($stationId, $tankId, $fromDate, $toDate);
+        $lastPage = max((int) ceil($total / $perPage), 1);
+        $page = min($page, $lastPage);
+        $rows = $this->getRecentTransactions(
+            $stationId,
+            $tankId,
+            $fromDate,
+            $toDate,
+            $perPage,
+            ($page - 1) * $perPage
+        );
 
         $formatted = array_map(function ($row) {
             return [
@@ -104,6 +117,12 @@ class ReportController extends Controller
         return response()->json([
             'status' => 'success',
             'data'   => $formatted,
+            'pagination' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'last_page' => $lastPage,
+            ],
         ]);
     }
 
@@ -318,7 +337,7 @@ class ReportController extends Controller
         return DB::select($sql, $params);
     }
 
-    private function getRecentTransactions($stationId, $tankId, $fromDate, $toDate, ?int $limit = 25)
+    private function getRecentTransactions($stationId, $tankId, $fromDate, $toDate, ?int $limit = 25, int $offset = 0)
     {
         $sql = "SELECT
                     snr.id,
@@ -340,9 +359,26 @@ class ReportController extends Controller
         if ($tankId)    { $sql .= " AND t.id = ?"; $params[] = $tankId; }
 
         $sql .= " ORDER BY snr.created_at DESC";
-        if ($limit) { $sql .= " LIMIT " . (int) $limit; }
+        if ($limit) {
+            $sql .= " LIMIT " . (int) $limit . " OFFSET " . max($offset, 0);
+        }
 
         return DB::select($sql, $params);
+    }
+
+    private function getRecentTransactionCount($stationId, $tankId, $fromDate, $toDate): int
+    {
+        $sql = "SELECT COUNT(*) AS aggregate
+                FROM shift_nozzle_readings snr
+                JOIN nozzles n ON snr.nozzle_id = n.id
+                JOIN tanks t ON n.tank_id = t.id
+                WHERE DATE(snr.created_at) BETWEEN ? AND ?";
+        $params = [$fromDate, $toDate];
+
+        if ($stationId) { $sql .= " AND t.station_id = ?"; $params[] = $stationId; }
+        if ($tankId)    { $sql .= " AND t.id = ?"; $params[] = $tankId; }
+
+        return (int) (DB::selectOne($sql, $params)->aggregate ?? 0);
     }
 
     private function getVolumeTrend($stationId, $tankId, $fromDate, $toDate)
