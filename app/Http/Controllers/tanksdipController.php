@@ -744,6 +744,26 @@ public function getLastDip(Request $request, $tankId)
         }
 
         // ✅ 3. Agar tanks_dip mein koi record nahi hai, toh tanks table se current level lein
+        // First-ever shift: use the dip captured during initial tank setup.
+        $initialSetupDip = DB::table('tanks_dip')
+            ->where('tank_id', $tankId)
+            ->whereNull('shift_id')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->select('dip_mm', 'dip_in_liters', 'created_at as dip_created_at')
+            ->first();
+
+        if ($initialSetupDip) {
+            return response()->json([
+                'dip_mm' => $initialSetupDip->dip_mm,
+                'dip_in_liters' => $initialSetupDip->dip_in_liters,
+                'source' => 'initial_setup',
+                'dip_time' => $initialSetupDip->dip_created_at,
+                'shift_id' => null,
+                'shift_start_time' => null,
+            ]);
+        }
+
         $tank = DB::table('tanks')
             ->where('id', $tankId)
             ->select(
