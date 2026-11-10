@@ -1261,7 +1261,7 @@
                                 url: getApiUrl(`tanks/station/${stationId}`),
                                 method: "GET",
                                 success: function (tanks) {
-                                    getLastTankDips(tanks).then(tanksWithDips => {
+                                    getLastTankDips(tanks, shiftId).then(tanksWithDips => {
                                         renderTankDips(tanksWithDips);
                                         markCloseResource('tanks');
                                     }).catch(error => {
@@ -1314,16 +1314,16 @@
             }
 
             // ✅ Get last tank dips for all tanks
-            function getLastTankDips(tanks) {
+            function getLastTankDips(tanks, shiftId) {
                 const promises = tanks.map(tank => {
                     return new Promise((resolve) => {
                         $.ajax({
-                            url: getApiUrl(`tank-dips/last/${tank.id}`),
+                            url: getApiUrl(`tank-dips/last/${tank.id}?shift_id=${encodeURIComponent(shiftId)}`),
                             method: "GET",
                             success: function (lastDip) {
                                 // ✅ Use tank-dips API for last dip, but keep current_level from tanks API
-                                tank.last_dip_mm = lastDip?.dip_mm || tank.current_level_mm || 0;
-                                tank.last_dip_liters = lastDip?.dip_in_liters || tank.current_level || 0;
+                                tank.last_dip_mm = lastDip?.dip_mm ?? tank.current_level_mm ?? 0;
+                                tank.last_dip_liters = lastDip?.dip_in_liters ?? tank.current_level ?? 0;
                                 resolve(tank);
                             },
                             error: function () {
@@ -1375,12 +1375,13 @@
 
                 tanks.forEach(tank => {
                     // ✅ IMPORTANT: Tank ka CURRENT LEVEL show karo, na ki capacity
-                    const currentLevel = tank.current_level || tank.last_dip_liters || 0;
+                    const currentLevel = Number(tank.current_level ?? tank.last_dip_liters ?? 0);
+                    const lastDipLiters = Number(tank.last_dip_liters ?? currentLevel);
                     const capacity = tank.capacity || 'N/A';
                     const fuelInventory = parseFloat(tank.fuel_inventory_liters) || 0;
 
                     container.append(`
-                                                                        <div class="row mb-3 tank-dip-row" data-tank-id="${tank.id}" data-opening-liters="${parseFloat(tank.last_dip_liters || currentLevel) || 0}">
+                                                                        <div class="row mb-3 tank-dip-row" data-tank-id="${tank.id}" data-opening-liters="${lastDipLiters}">
                                                                             <div class="col-md-2">
                                                                                 <label class="form-label">Tank Name</label>
                                                                                 <input type="text" class="form-control" value="${tank.name}" readonly>
@@ -1401,7 +1402,7 @@
                                                                             </div>
                                                                             <div class="col-md-2">
                                                                                 <label class="form-label">Last Dip (Liters)</label>
-                                                                                <input type="number" class="form-control" value="${tank.last_dip_liters || currentLevel}" readonly>
+                                                                                <input type="number" class="form-control" value="${lastDipLiters}" readonly>
                                                                                 <small class="text-muted">Previous reading</small>
                                                                             </div>
                                                                             <div class="col-md-2">

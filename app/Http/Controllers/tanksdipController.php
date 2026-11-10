@@ -694,17 +694,40 @@ class tanksdipController extends Controller
         }
     }
 
-public function getLastDip($tankId)
+public function getLastDip(Request $request, $tankId)
 {
     try {
         // ✅ 1. Tanks_dip table se last dip aur timestamp lein (priority 1)
-        $lastDip = DB::table('tanks_dip')
-            ->where('tank_id', $tankId)
-            ->orderBy('created_at', 'desc')
+        $currentShift = null;
+        if ($request->filled('shift_id')) {
+            $currentShift = DB::table('shifts')
+                ->where('id', (int) $request->input('shift_id'))
+                ->first();
+        }
+
+        // Opening comes from the latest previous closed shift, never a newer draft row.
+        $lastDipQuery = DB::table('tanks_dip as td')
+            ->join('shifts as s', 's.id', '=', 'td.shift_id')
+            ->where('td.tank_id', $tankId)
+            ->where('s.status', 'closed');
+
+        if ($currentShift) {
+            $lastDipQuery
+                ->where('s.station_id', $currentShift->station_id)
+                ->where('s.id', '<>', $currentShift->id)
+                ->where('s.start_time', '<', $currentShift->start_time);
+        }
+
+        $lastDip = $lastDipQuery
+            ->orderByDesc('s.start_time')
+            ->orderByDesc('s.id')
+            ->orderByDesc('td.id')
             ->select(
-                'dip_mm',
-                'dip_in_liters',
-                'created_at as dip_created_at'
+                'td.dip_mm',
+                'td.dip_in_liters',
+                'td.created_at as dip_created_at',
+                'td.shift_id',
+                's.start_time as shift_start_time'
             )
             ->first();
 
@@ -713,8 +736,10 @@ public function getLastDip($tankId)
             return response()->json([
                 'dip_mm' => $lastDip->dip_mm,
                 'dip_in_liters' => $lastDip->dip_in_liters,
-                'source' => 'tanks_dip_table',
-                'dip_time' => $lastDip->dip_created_at
+                'source' => 'previous_closed_shift',
+                'dip_time' => $lastDip->dip_created_at,
+                'shift_id' => $lastDip->shift_id,
+                'shift_start_time' => $lastDip->shift_start_time
             ]);
         }
 
