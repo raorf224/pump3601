@@ -80,8 +80,23 @@ class tanksdipController extends Controller
             }
 
             // ✅ GET PREVIOUS DIP READING FROM tanks_dip TABLE
+            $shiftId = isset($tankReading['shift_id']) ? (int) $tankReading['shift_id'] : null;
+            $existingShiftReading = $shiftId
+                ? DB::table('tanks_dip')
+                    ->where('shift_id', $shiftId)
+                    ->where('tank_id', $tankReading['tank_id'])
+                    ->orderBy('id')
+                    ->lockForUpdate()
+                    ->first()
+                : null;
+
             $previousReading = DB::table('tanks_dip')
                 ->where('tank_id', $tankReading['tank_id'])
+                ->when($shiftId, function ($query) use ($shiftId) {
+                    $query->where(function ($query) use ($shiftId) {
+                        $query->whereNull('shift_id')->orWhere('shift_id', '<>', $shiftId);
+                    });
+                })
                 ->orderBy('to_date', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->first();
@@ -123,6 +138,11 @@ class tanksdipController extends Controller
             }
 
 
+            if ($existingShiftReading) {
+                $oldDipLiters = $existingShiftReading->old_dip_liters ?? $oldDipLiters;
+                $oldDipMm = $existingShiftReading->old_dip_mm ?? $oldDipMm;
+            }
+
             $fromDate = $tankReading['from_date'];
             $toDate = $tankReading['to_date'];
 
@@ -131,7 +151,7 @@ class tanksdipController extends Controller
 
             $reading = [
                 'tank_id' => $tankReading['tank_id'],
-                'shift_id' => $tankReading['shift_id'] ?? null,
+                'shift_id' => $shiftId,
                 
                 // ✅ CURRENT/NEW DIP READINGS
                 'dip_mm' => $currentDipMm,
@@ -149,11 +169,26 @@ class tanksdipController extends Controller
                 'tanks_dip_image' => $imagePath, 
 
                 'created_by' => $tankReading['created_by'],
-                'created_at' => now()
+                'created_at' => now(),
+                'updated_at' => now()
             ];
 
             // Insert into tanks_dip table
-            $readingId = DB::table('tanks_dip')->insertGetId($reading);
+            if ($existingShiftReading) {
+                $updateReading = $reading;
+                unset($updateReading['created_at']);
+
+                if ($imagePath === null) {
+                    unset($updateReading['tanks_dip_image']);
+                }
+
+                DB::table('tanks_dip')
+                    ->where('id', $existingShiftReading->id)
+                    ->update($updateReading);
+                $readingId = $existingShiftReading->id;
+            } else {
+                $readingId = DB::table('tanks_dip')->insertGetId($reading);
+            }
             
             // ✅ IMPORTANT: UPDATE TANK'S CURRENT LEVEL WITH NEW DIP READING
             // Jab dip liya jata hai, toh wahi tank ka current level ban jata hai
