@@ -812,38 +812,247 @@ END as shortage_paid
     // Delete an oil purchase
     public function destroy($id)
     {
-        // Check if the oil purchase exists
-        $oilPurchase = DB::select('SELECT * FROM oil_purchase WHERE id = ?', [$id]);
-        if (empty($oilPurchase)) {
-            return response()->json(['message' => 'Oil purchase not found'], 404);
-        }
-
         DB::beginTransaction();
 
         try {
-            // Get purchase details before deleting
-            $purchase = $oilPurchase[0];
-
-            // If stock was updated, revert the tank level
-            if ($purchase->stock_update == 1 && $purchase->recieved_qty && $purchase->tank_id) {
-                DB::update(
-                    'UPDATE tanks SET current_level = GREATEST(current_level - ?, 0) WHERE id = ?',
-                    [$purchase->recieved_qty, $purchase->tank_id]
-                );
+            $purchase = DB::table('oil_purchase')->where('id', $id)->lockForUpdate()->first();
+            if (!$purchase) {
+                DB::rollBack();
+                return response()->json(['message' => 'Oil purchase not found'], 404);
             }
 
-            // Delete the purchase
-            DB::delete('DELETE FROM oil_purchase WHERE id = ?', [$id]);
+            $receipts = DB::table('oil_recived_tanks')
+                ->where('oil_purchase_id', $id)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+            $payments = DB::table('ammount_paid')
+                ->where('oil_purchase_id', $id)
+                ->lockForUpdate()
+                ->get();
+            $shortagePayments = DB::table('shortage_ammount_paid_back')
+                ->where('oil_purchase_id', $id)
+                ->lockForUpdate()
+                ->get();
+
+            $layers = collect();
+            $claimedLayerIds = [];
+            foreach ($receipts as $receipt) {
+                $layer = $this->resolveReceiptLayer($purchase, $receipt, $claimedLayerIds);
+                $consumed = (float) DB::table('fuel_layer_consumptions')
+                    ->where('layer_id', $layer->id)
+                    ->sum('qty');
+                $originalQty = (float) $layer->remaining_qty + $consumed;
+
+                if (abs($originalQty - (float) $receipt->recived_qty) > 0.01) {
+                    throw new \RuntimeException(
+                        "Inventory layer {$layer->id} quantity does not match oil receipt {$receipt->id}.",
+                        409
+                    );
+                }
+                if ($consumed > 0.01) {
+                    throw new \RuntimeException(
+                        "Oil purchase cannot be deleted: {$consumed} L from layer {$layer->id} has already been dispensed.",
+                        409
+                    );
+                }
+
+                $layers->push($layer);
+                $claimedLayerIds[] = (int) $layer->id;
+            }
+
+            $balanceRecordIds = $this->purchaseBalanceRecordIds(
+                $purchase,
+                $payments,
+                $shortagePayments
+            );
+
+            foreach ($receipts->groupBy('tanks_id') as $tankId => $tankReceipts) {
+                $receivedQty = (float) $tankReceipts->sum('recived_qty');
+                $tank = DB::table('tanks')->where('id', $tankId)->lockForUpdate()->first();
+                if (!$tank) {
+                    throw new \RuntimeException("Tank {$tankId} for this purchase is missing.", 409);
+                }
+                if ((float) $tank->current_level + 0.01 < $receivedQty) {
+                    throw new \RuntimeException(
+                        "Tank {$tank->name} has only {$tank->current_level} L; {$receivedQty} L purchase receipt cannot be reversed safely.",
+                        409
+                    );
+                }
+
+                DB::table('tanks')->where('id', $tankId)->update([
+                    'current_level' => DB::raw('current_level - ' . $receivedQty),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $this->reversePurchaseBalances($balanceRecordIds);
+
+            if ($layers->isNotEmpty()) {
+                DB::table('fuel_inventory_layers')->whereIn('id', $layers->pluck('id'))->delete();
+            }
+            DB::table('shortage_ammount_paid_back')->where('oil_purchase_id', $id)->delete();
+            DB::table('ammount_paid')->where('oil_purchase_id', $id)->delete();
+            DB::table('oil_recived_tanks')->where('oil_purchase_id', $id)->delete();
+            DB::table('oil_purchase')->where('id', $id)->delete();
 
             DB::commit();
 
-            return response()->json(['message' => 'Oil purchase deleted successfully']);
-        } catch (\Exception $e) {
+            Log::warning('Oil purchase reversed and deleted', [
+                'oil_purchase_id' => (int) $id,
+                'receipts_deleted' => $receipts->count(),
+                'layers_deleted' => $layers->count(),
+                'payments_deleted' => $payments->count(),
+                'shortage_payments_deleted' => $shortagePayments->count(),
+            ]);
+
+            return response()->json([
+                'message' => 'Oil purchase and all related stock records deleted successfully',
+                'summary' => [
+                    'receipts_deleted' => $receipts->count(),
+                    'layers_deleted' => $layers->count(),
+                    'payments_deleted' => $payments->count(),
+                    'shortage_payments_deleted' => $shortagePayments->count(),
+                ],
+            ]);
+        } catch (\Throwable $e) {
             DB::rollBack();
+            Log::error('Failed to reverse oil purchase deletion', [
+                'oil_purchase_id' => (int) $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $status = $e instanceof \RuntimeException && $e->getCode() === 409 ? 409 : 500;
             return response()->json([
                 'message' => 'Failed to delete oil purchase',
                 'error' => $e->getMessage()
-            ], 500);
+            ], $status);
+        }
+    }
+
+    private function resolveReceiptLayer(object $purchase, object $receipt, array $claimedLayerIds): object
+    {
+        $linked = DB::table('fuel_inventory_layers')
+            ->where('oil_received_tank_id', $receipt->id)
+            ->where('oil_purchase_id', $purchase->id)
+            ->whereNotIn('id', $claimedLayerIds ?: [0])
+            ->lockForUpdate()
+            ->get();
+
+        if ($linked->count() === 1) {
+            return $linked->first();
+        }
+        if ($linked->count() > 1) {
+            throw new \RuntimeException("Multiple inventory layers are linked to oil receipt {$receipt->id}.", 409);
+        }
+
+        // Legacy layers have no source IDs. Match conservatively and never guess.
+        $legacy = DB::table('fuel_inventory_layers')
+            ->whereNull('oil_purchase_id')
+            ->whereNull('oil_received_tank_id')
+            ->where('tank_id', $receipt->tanks_id)
+            ->where('product_id', $purchase->product_id)
+            ->where('rate', $purchase->rate)
+            ->where('created_at', $receipt->created_at)
+            ->whereNotIn('id', $claimedLayerIds ?: [0])
+            ->lockForUpdate()
+            ->get();
+
+        $matches = $legacy->filter(function ($layer) use ($receipt) {
+            $consumed = (float) DB::table('fuel_layer_consumptions')
+                ->where('layer_id', $layer->id)
+                ->sum('qty');
+            return abs(((float) $layer->remaining_qty + $consumed) - (float) $receipt->recived_qty) <= 0.01;
+        })->values();
+
+        if ($matches->count() !== 1) {
+            throw new \RuntimeException(
+                "Exact legacy inventory layer for oil receipt {$receipt->id} could not be identified safely.",
+                409
+            );
+        }
+
+        return $matches->first();
+    }
+
+    private function purchaseBalanceRecordIds(object $purchase, $payments, $shortagePayments)
+    {
+        $events = collect();
+
+        foreach ($payments->where('method', 'bank')->whereNotNull('account_id') as $payment) {
+            $delta = strtolower((string) $payment->type) === 'credit'
+                ? (float) $payment->ammount
+                : -(float) $payment->ammount;
+            $events->push((object) [
+                'account_id' => $payment->account_id,
+                'created_at' => $payment->created_at,
+                'delta' => $delta,
+                'label' => "purchase payment {$payment->id}",
+            ]);
+        }
+
+        $shortagePayments
+            ->whereNotNull('account_id')
+            ->groupBy(fn ($row) => $row->account_id . '|' . $row->created_at)
+            ->each(function ($rows) use ($events) {
+                $first = $rows->first();
+                $events->push((object) [
+                    'account_id' => $first->account_id,
+                    'created_at' => $first->created_at,
+                    'delta' => (float) $rows->sum('total_amount'),
+                    'label' => 'shortage payment ' . $rows->pluck('id')->implode(','),
+                ]);
+            });
+
+        $ids = collect();
+        foreach ($events as $event) {
+            $timestamp = strtotime($event->created_at);
+            $candidates = DB::table('site_total_ammount')
+                ->where('station_id', $purchase->station_id)
+                ->where('account_id', $event->account_id)
+                ->whereBetween('created_at', [
+                    date('Y-m-d H:i:s', $timestamp - 2),
+                    date('Y-m-d H:i:s', $timestamp + 2),
+                ])
+                ->whereNotIn('id', $ids->all() ?: [0])
+                ->lockForUpdate()
+                ->get()
+                ->filter(fn ($row) => abs(
+                    ((float) $row->amount - (float) $row->previous_amount) - $event->delta
+                ) <= 0.01)
+                ->values();
+
+            if ($candidates->count() !== 1) {
+                throw new \RuntimeException(
+                    "Bank balance entry for {$event->label} could not be identified safely.",
+                    409
+                );
+            }
+            $ids->push($candidates->first()->id);
+        }
+
+        return $ids->unique()->sort()->values();
+    }
+
+    private function reversePurchaseBalances($recordIds): void
+    {
+        $records = DB::table('site_total_ammount')
+            ->whereIn('id', $recordIds)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($records as $record) {
+            $delta = (float) $record->amount - (float) $record->previous_amount;
+            DB::table('site_total_ammount')
+                ->where('station_id', $record->station_id)
+                ->where('account_id', $record->account_id)
+                ->where('id', '>', $record->id)
+                ->update([
+                    'amount' => DB::raw('amount - ' . $delta),
+                    'previous_amount' => DB::raw('previous_amount - ' . $delta),
+                ]);
+            DB::table('site_total_ammount')->where('id', $record->id)->delete();
         }
     }
 
@@ -1093,13 +1302,15 @@ END as shortage_paid
             // Insert into fuel_inventory_layers
             DB::insert(
                 'INSERT INTO fuel_inventory_layers
-                    (tank_id, product_id, remaining_qty, rate)
-                VALUES (?, ?, ?, ?)',
+                    (tank_id, product_id, remaining_qty, rate, oil_purchase_id, oil_received_tank_id)
+                VALUES (?, ?, ?, ?, ?, ?)',
                 [
                     $tank['tank_id'],
                     $purchase->product_id,
                     $quantity,
-                    $purchase->rate
+                    $purchase->rate,
+                    $id,
+                    $lastReceiveId
                 ]
             );
         }
@@ -1401,13 +1612,15 @@ END as shortage_paid
                 // Insert into fuel_inventory_layers
                 DB::insert(
                     'INSERT INTO fuel_inventory_layers
-            (tank_id, product_id, remaining_qty, rate)
-            VALUES (?, ?, ?, ?)',
+            (tank_id, product_id, remaining_qty, rate, oil_purchase_id, oil_received_tank_id)
+            VALUES (?, ?, ?, ?, ?, ?)',
                     [
                         $tank['tank_id'],
                         $purchase->product_id,
                         $quantity,
-                        $purchase->rate
+                        $purchase->rate,
+                        $id,
+                        $lastReceiveId
                     ]
                 );
             }
@@ -1686,13 +1899,15 @@ END as shortage_paid
                 // Insert into fuel_inventory_layers
                 DB::insert(
                     'INSERT INTO fuel_inventory_layers
-                (tank_id, product_id, remaining_qty, rate)
-                VALUES (?, ?, ?, ?)',
+                (tank_id, product_id, remaining_qty, rate, oil_purchase_id, oil_received_tank_id)
+                VALUES (?, ?, ?, ?, ?, ?)',
                     [
                         $tank['tank_id'],
                         $purchase->product_id,
                         $quantity,
-                        $purchase->rate
+                        $purchase->rate,
+                        $id,
+                        $lastReceiveId
                     ]
                 );
             }
