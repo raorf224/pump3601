@@ -49,6 +49,7 @@ use App\Http\Controllers\OverviewController;
 use App\Http\Controllers\MainDashboardController;
 use App\Http\Controllers\ShiftDeletionController;
 use App\Http\Controllers\StationLifecycleController;
+use App\Http\Controllers\NozzleDisplayOrderController;
 
 
 Route::prefix('overview')->group(function () {
@@ -64,6 +65,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/stations-accessible', [StationController::class, 'accessible']);
     Route::get('/users/role/{role}', [UserController::class, 'byRole']);
     Route::get('/account/view-accessible', [TransactionsController::class, 'accountsViewAccessible']);
+    Route::get('/nozzle-display-orders/{stationId}', [NozzleDisplayOrderController::class, 'show']);
+    Route::put('/nozzle-display-orders/{stationId}', [NozzleDisplayOrderController::class, 'update']);
 });
 
 Route::post('/applogin', [AuthController::class, 'applogin']);

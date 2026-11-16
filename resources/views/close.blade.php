@@ -29,6 +29,25 @@
             margin-top: 20px;
             border-left: 4px solid #0d6efd;
         }
+
+        .nozzle-arrangement-active {
+            border: 2px dashed #f97316;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fffaf5;
+        }
+
+        .nozzle-arrangement-active .nozzle-reading-row {
+            cursor: move;
+            border: 1px solid #e5e7eb;
+            border-radius: 7px;
+            padding: 10px 4px;
+            background: #fff;
+        }
+
+        .nozzle-reading-row.nozzle-dragging { opacity: .45; border-color: #f97316; }
+        .nozzle-arrange-tools { display: none; }
+        .nozzle-arrangement-active .nozzle-arrange-tools { display: flex; }
     </style>
 @endsection
 
@@ -125,9 +144,18 @@
                         <div class="card mb-4">
                             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Nozzle Readings</h6>
-                                <div class="loading-spinner" id="nozzle_loading">
-                                    <div class="spinner-border spinner-border-sm" role="status"></div>
-                                    <span class="ms-2">Loading nozzles...</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="loading-spinner" id="nozzle_loading">
+                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                        <span class="ms-2">Loading nozzles...</span>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="arrange_nozzles" disabled>
+                                        <i class="bi bi-list-ul me-1"></i> Arrange Nozzles
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-sm d-none" id="save_nozzle_arrangement">
+                                        <i class="bi bi-check-circle me-1"></i> Save Arrangement
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm d-none" id="cancel_nozzle_arrangement">Cancel</button>
                                 </div>
                             </div>
                             <div class="card-body">
@@ -736,6 +764,9 @@
             };
             const shiftReceivedByTank = new Map();
             let isAtomicClosing = false;
+            let isNozzleArrangementMode = false;
+            let activeNozzleStationId = null;
+            let nozzleOrderBeforeArrange = [];
             const closeDraftKey = `pump360:close-draft:${AUTH_USER_ID}:${shiftId}`;
             let closeDraftTimer = null;
 
@@ -799,7 +830,7 @@
                     closeResourceState.nozzles && closeResourceState.cashFlow && closeResourceState.gainLoss && !closeResourceState.failed;
                 const requestsFinished = $.active === 0;
                 $("#save_close_shift,#save_close_shift1").prop('disabled',
-                    !resourcesReady || !requestsFinished || isAtomicClosing);
+                    !resourcesReady || !requestsFinished || isAtomicClosing || isNozzleArrangementMode);
             }
 
             function markCloseResource(name, loaded = true) {
@@ -1255,6 +1286,7 @@
                         method: "GET",
                         success: function (shift) {
                             const stationId = shift.station_id;
+                            activeNozzleStationId = Number(stationId);
 
                             // Load tanks
                             $.ajax({
@@ -1282,15 +1314,13 @@
                                 method: "GET",
                                 success: function (nozzles) {
                                     getLastNozzleReadings(nozzles).then(nozzlesWithReadings => {
-                                        renderNozzleReadings(nozzlesWithReadings);
-                                        markCloseResource('nozzles');
-
-                                        // Cash flow calculate karo
-                                        setTimeout(() => {
-                                            calculateCashFlowSummary();
-                                        }, 300);
-
-                                        resolve();
+                                        loadSavedNozzleOrder(stationId).then(savedOrder => {
+                                            renderNozzleReadings(applySavedNozzleOrder(nozzlesWithReadings, savedOrder));
+                                            $("#arrange_nozzles").prop('disabled', false);
+                                            markCloseResource('nozzles');
+                                            setTimeout(() => calculateCashFlowSummary(), 300);
+                                            resolve();
+                                        });
                                     }).catch(error => {
                                         console.error("Error getting nozzle readings:", error);
                                         markCloseResource('nozzles', false);
@@ -1311,6 +1341,31 @@
                         }
                     });
                 });
+            }
+
+            function loadSavedNozzleOrder(stationId) {
+                return new Promise(resolve => {
+                    $.ajax({
+                        url: getApiUrl(`nozzle-display-orders/${stationId}`),
+                        method: "GET",
+                        success: order => resolve(Array.isArray(order) ? order.map(Number) : []),
+                        error: xhr => {
+                            console.warn("Unable to load saved nozzle arrangement; using default order.", xhr.responseText);
+                            resolve([]);
+                        }
+                    });
+                });
+            }
+
+            function applySavedNozzleOrder(nozzles, savedOrder) {
+                if (!savedOrder.length) return nozzles;
+                const positions = new Map(savedOrder.map((id, index) => [Number(id), index]));
+                return nozzles.map((nozzle, defaultIndex) => ({ nozzle, defaultIndex }))
+                    .sort((a, b) => {
+                        const ap = positions.has(Number(a.nozzle.id)) ? positions.get(Number(a.nozzle.id)) : Number.MAX_SAFE_INTEGER;
+                        const bp = positions.has(Number(b.nozzle.id)) ? positions.get(Number(b.nozzle.id)) : Number.MAX_SAFE_INTEGER;
+                        return ap - bp || a.defaultIndex - b.defaultIndex;
+                    }).map(item => item.nozzle);
             }
 
             // ✅ Get last tank dips for all tanks
@@ -1574,6 +1629,13 @@
                 nozzles.forEach(nozzle => {
                     container.append(`
                                                                         <div class="row mb-3 nozzle-reading-row" data-nozzle-id="${nozzle.id}" data-tank-id="${nozzle.tank_id}">
+                                                                            <div class="col-12 nozzle-arrange-tools justify-content-between align-items-center mb-2">
+                                                                                <span class="fw-semibold text-primary"><i class="bi bi-grip-vertical me-1"></i>${nozzle.name} — ${nozzle.dispenser_name || 'N/A'}</span>
+                                                                                <div class="btn-group btn-group-sm">
+                                                                                    <button type="button" class="btn btn-outline-secondary move-nozzle-up" title="Move up"><i class="bi bi-arrow-up"></i></button>
+                                                                                    <button type="button" class="btn btn-outline-secondary move-nozzle-down" title="Move down"><i class="bi bi-arrow-down"></i></button>
+                                                                                </div>
+                                                                            </div>
                                                                             <div style="width:14.2%">
                                                                                 <label class="form-label">Nozzle Name</label>
                                                                                 <input type="text" class="form-control" value="${nozzle.name}" readonly>
@@ -1716,6 +1778,111 @@
             }
 
             // ✅ Reset Nozzle Button Click
+            function setCloseFormDisabledForArrangement(disabled) {
+                const controls = $("#close_shift_form").find(":input, button").not("#arrange_nozzles,#save_nozzle_arrangement,#cancel_nozzle_arrangement");
+                if (disabled) {
+                    controls.each(function () {
+                        $(this).data('nozzle-arrange-was-disabled', $(this).prop('disabled'));
+                        $(this).prop('disabled', true);
+                    });
+                } else {
+                    controls.each(function () {
+                        $(this).prop('disabled', Boolean($(this).data('nozzle-arrange-was-disabled')));
+                        $(this).removeData('nozzle-arrange-was-disabled');
+                    });
+                    updateCloseButtonState();
+                }
+            }
+
+            function currentNozzleOrder() {
+                return $("#nozzle_readings_container .nozzle-reading-row").map(function () {
+                    return Number($(this).data('nozzle-id'));
+                }).get();
+            }
+
+            function leaveNozzleArrangementMode() {
+                isNozzleArrangementMode = false;
+                $("#nozzle_readings_container").removeClass('nozzle-arrangement-active');
+                $(".nozzle-reading-row").attr('draggable', 'false').removeClass('nozzle-dragging');
+                $("#save_nozzle_arrangement,#cancel_nozzle_arrangement").addClass('d-none');
+                $("#arrange_nozzles").removeClass('d-none');
+                setCloseFormDisabledForArrangement(false);
+            }
+
+            $("#arrange_nozzles").on('click', function () {
+                if (isNozzleArrangementMode || !$(".nozzle-reading-row").length) return;
+                saveCloseReadingsDraft();
+                nozzleOrderBeforeArrange = currentNozzleOrder();
+                isNozzleArrangementMode = true;
+                setCloseFormDisabledForArrangement(true);
+                $("#nozzle_readings_container").addClass('nozzle-arrangement-active');
+                $(".nozzle-reading-row").attr('draggable', 'true');
+                $(this).addClass('d-none');
+                $("#save_nozzle_arrangement,#cancel_nozzle_arrangement").removeClass('d-none').prop('disabled', false);
+                showToast("Drag nozzles or use arrow buttons, then save the arrangement.", "success");
+            });
+
+            $(document).on('click', '.move-nozzle-up,.move-nozzle-down', function () {
+                if (!isNozzleArrangementMode) return;
+                const row = $(this).closest('.nozzle-reading-row');
+                if ($(this).hasClass('move-nozzle-up')) {
+                    const previous = row.prev('.nozzle-reading-row');
+                    if (previous.length) previous.before(row);
+                } else {
+                    const next = row.next('.nozzle-reading-row');
+                    if (next.length) next.after(row);
+                }
+            });
+
+            let draggedNozzleRow = null;
+            $(document).on('dragstart', '.nozzle-reading-row', function (event) {
+                if (!isNozzleArrangementMode) return event.preventDefault();
+                draggedNozzleRow = this;
+                $(this).addClass('nozzle-dragging');
+                event.originalEvent.dataTransfer.effectAllowed = 'move';
+            });
+            $(document).on('dragover', '.nozzle-reading-row', function (event) {
+                if (!isNozzleArrangementMode || !draggedNozzleRow || draggedNozzleRow === this) return;
+                event.preventDefault();
+                const rectangle = this.getBoundingClientRect();
+                if (event.originalEvent.clientY < rectangle.top + rectangle.height / 2) this.before(draggedNozzleRow);
+                else this.after(draggedNozzleRow);
+            });
+            $(document).on('dragend', '.nozzle-reading-row', function () {
+                $(this).removeClass('nozzle-dragging');
+                draggedNozzleRow = null;
+            });
+
+            $("#cancel_nozzle_arrangement").on('click', function () {
+                const rows = new Map();
+                $(".nozzle-reading-row").each(function () { rows.set(Number($(this).data('nozzle-id')), this); });
+                nozzleOrderBeforeArrange.forEach(id => {
+                    if (rows.has(id)) $("#nozzle_readings_container").append(rows.get(id));
+                });
+                leaveNozzleArrangementMode();
+            });
+
+            $("#save_nozzle_arrangement").on('click', function () {
+                if (!isNozzleArrangementMode || !activeNozzleStationId) return;
+                const saveButton = $(this).prop('disabled', true);
+                $("#cancel_nozzle_arrangement").prop('disabled', true);
+                $.ajax({
+                    url: getApiUrl(`nozzle-display-orders/${activeNozzleStationId}`),
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ nozzle_ids: currentNozzleOrder() }),
+                    success: response => {
+                        leaveNozzleArrangementMode();
+                        showToast(response.message || "Nozzle arrangement saved successfully.", "success");
+                    },
+                    error: xhr => {
+                        saveButton.prop('disabled', false);
+                        $("#cancel_nozzle_arrangement").prop('disabled', false);
+                        showToast(xhr.responseJSON?.message || "Unable to save nozzle arrangement.", "error");
+                    }
+                });
+            });
+
             $(document).on("click", ".reset-nozzle-btn", function (e) {
                 e.preventDefault();
                 e.stopPropagation();
