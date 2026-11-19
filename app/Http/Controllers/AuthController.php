@@ -40,7 +40,11 @@ class AuthController extends Controller
                 return back()->withErrors(['login' => 'Your account is inactive.']);
             }
 
-            return redirect()->intended('/station-sites');
+            if (in_array(strtolower((string) Auth::user()->role), ['admin', 'owner'], true)) {
+                return redirect('/main-dashboard');
+            }
+
+            return redirect('/station-sites');
         }
 
         return back()->withErrors([
