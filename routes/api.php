@@ -50,6 +50,7 @@ use App\Http\Controllers\MainDashboardController;
 use App\Http\Controllers\ShiftDeletionController;
 use App\Http\Controllers\StationLifecycleController;
 use App\Http\Controllers\NozzleDisplayOrderController;
+use App\Http\Controllers\StationTankSalesController;
 
 
 Route::prefix('overview')->group(function () {
@@ -70,6 +71,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::post('/applogin', [AuthController::class, 'applogin']);
+Route::get('/station-tank-sales', [StationTankSalesController::class, 'show']);
 // ✅ Payment Details Routes
 Route::post('/site-total-amount/payment', [SiteTotalAmountController::class, 'storePaymentDetails']);
 Route::get('/site-total-amount/current/amount/{stationId}/{accountId}', [SiteTotalAmountController::class, 'CurrentAmount']);
