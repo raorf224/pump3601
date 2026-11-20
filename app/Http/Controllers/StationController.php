@@ -56,6 +56,7 @@ class StationController extends Controller
             'rm_user_id' => 'nullable|integer|exists:users,id',
             'tm_user_id' => 'nullable|integer|exists:users,id',
             'name' => 'required|string|max:255',
+            'sap' => 'nullable|string|max:45',
             'phone' => 'nullable|string|max:20',
             'location' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
@@ -91,6 +92,7 @@ class StationController extends Controller
             'tm_user_id' => $validated['tm_user_id'] ?? null,
             'id' => $request->id,
             'name' => $request->name,
+            'sap' => $request->filled('sap') ? trim($validated['sap']) : null,
             'phone' => $request->phone,
             'location' => $request->location,
             'city' => $request->city,
@@ -347,6 +349,7 @@ class StationController extends Controller
         $validated = $request->validate([
             'rm_user_id' => 'nullable|integer|exists:users,id',
             'tm_user_id' => 'nullable|integer|exists:users,id',
+            'sap' => 'nullable|string|max:45',
         ]);
         $this->validateManagerRoles($validated);
 
@@ -369,6 +372,9 @@ class StationController extends Controller
         // ✅ Update station info
         DB::table('stations')->where('id', $id)->update([
             'name' => $data['name'] ?? $station->name,
+            'sap' => array_key_exists('sap', $data)
+                ? ($request->filled('sap') ? trim($validated['sap']) : null)
+                : $station->sap,
             'phone' => $data['phone'] ?? $station->phone,
             'location' => $data['location'] ?? $station->location,
             'city' => $data['city'] ?? $station->city,

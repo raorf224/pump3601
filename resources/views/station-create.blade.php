@@ -56,6 +56,11 @@
                                         <input type="text" name="name" class="form-control" required>
                                     </div>
                                     <div class="col-md-6">
+                                        <label class="form-label">SAP Code</label>
+                                        <input type="text" id="sap" name="sap" class="form-control" maxlength="45"
+                                            placeholder="Enter SAP code">
+                                    </div>
+                                    <div class="col-md-6">
                                         <label class="form-label">Phone Number</label>
                                         <input type="text" id="phone" name="phone" class="form-control">
                                     </div>
@@ -192,6 +197,7 @@
 
             // Fill form fields
             $("input[name='name']").val(s.name);
+            $("#sap").val(s.sap || '');
             $("#phone").val(s.phone || '');
             $("#location").val(s.location || '');
             $("#city").val(s.city || '');
@@ -394,6 +400,7 @@
             rm_user_id: $("#rm_user_id").val() || null,
             tm_user_id: $("#tm_user_id").val() || null,
             name: $("input[name='name']").val(),
+            sap: $("#sap").val().trim() || null,
             phone: $("#phone").val(),
             location: $("#location").val(),
             city: $("#city").val(),
