@@ -24,7 +24,7 @@ class SiteTotalAmountController extends Controller
              FROM site_total_ammount sta
              LEFT JOIN stations s ON sta.station_id = s.id
              LEFT JOIN accounts a ON sta.account_id = a.id OR sta.account_id = a.stationrow_id 
-             ORDER BY sta.created_at DESC'
+             ORDER BY sta.created_at DESC, sta.id DESC'
         );
 
         return response()->json($records);
@@ -53,6 +53,7 @@ class SiteTotalAmountController extends Controller
                     'a.bank_name'
                 )
                 ->orderByDesc('sta.created_at')
+                ->orderByDesc('sta.id')
                 ->get();
 
             return response()->json($records);
@@ -70,7 +71,7 @@ class SiteTotalAmountController extends Controller
              LEFT JOIN stations s ON sta.station_id = s.id
              LEFT JOIN accounts a ON sta.account_id = a.id OR sta.account_id = a.stationrow_id
              WHERE s.user_id = ?
-             ORDER BY sta.created_at DESC',
+             ORDER BY sta.created_at DESC, sta.id DESC',
             [$userId]
         );
 
@@ -105,7 +106,7 @@ public function getByEmployee($userId)
          LEFT JOIN stations s ON sta.station_id = s.id
          LEFT JOIN accounts a ON sta.account_id = a.id OR sta.account_id = a.stationrow_id
          WHERE sta.station_id = ?
-         ORDER BY sta.created_at DESC',
+         ORDER BY sta.created_at DESC, sta.id DESC',
         [$stationId]
     );
 
@@ -132,7 +133,7 @@ public function getByEmployee($userId)
             'SELECT amount as previous_amount 
              FROM site_total_ammount 
              WHERE station_id = ? AND account_id = ? 
-             ORDER BY created_at DESC 
+             ORDER BY created_at DESC, id DESC 
              LIMIT 1',
             [$request->station_id, $request->account_id]
         );
@@ -296,7 +297,7 @@ public function storePaymentDetails(Request $request)
             'SELECT amount as current_balance 
              FROM site_total_ammount 
              WHERE station_id = ? AND account_id = ? 
-             ORDER BY created_at DESC 
+             ORDER BY created_at DESC, id DESC 
              LIMIT 1',
             [$request->station_id, $request->account_id]
         );

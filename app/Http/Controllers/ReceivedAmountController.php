@@ -169,8 +169,8 @@ class ReceivedAmountController extends Controller
                     INNER JOIN stations st ON s.station_id = st.id
                     LEFT JOIN accounts a ON scf.caccountid = a.id
                     WHERE scf.caccountid IS NOT NULL 
-                      AND scf.caccountid > 0
-                      AND scf.creditcard > 0";
+                    AND scf.caccountid > 0
+                    AND scf.creditcard > 0";
         }
     }
 
@@ -182,7 +182,7 @@ class ReceivedAmountController extends Controller
         $validated = $request->validate([
             'cash_flow_id' => 'required|integer|exists:shift_cash_flow,id',
             'payment_type' => 'required|in:fuel,credit',
-            'shift_id' => 'required|integer|exists:shifts,id',
+            'shift_id' => 'nullable|integer|exists:shifts,id',
             'account_id' => 'required|integer|exists:accounts,id',
             'amount' => 'required|numeric|min:0',
             'mdr_percentage' => 'nullable|numeric|min:0'
@@ -206,8 +206,9 @@ class ReceivedAmountController extends Controller
                 return response()->json(['message' => 'Payment already received'], 400);
             }
 
-            // Get station_id from shift
-            $shift = DB::table('shifts')->where('id', $validated['shift_id'])->first();
+            // Resolve shift context (bulk receive does not require selecting an open shift)
+            $effectiveShiftId = $validated['shift_id'] ?? $cashFlow->shift_id;
+            $shift = DB::table('shifts')->where('id', $effectiveShiftId)->first();
             if (!$shift) {
                 return response()->json(['message' => 'Shift not found'], 404);
             }
@@ -221,11 +222,11 @@ class ReceivedAmountController extends Controller
             // ✅ ONLY INSERT MDR as EXPENSE in transactions table
             if ($mdrAmount > 0) {
                 $paymentTypeText = $validated['payment_type'] === 'fuel' ? 'Fuel Card' : 'Credit Card';
-                
+
                 DB::table('transactions')->insert([
                     'station_id' => $shift->station_id,
                     'account_id' => $validated['account_id'],
-                    'shift_id' => $validated['shift_id'],
+                    'shift_id' => $effectiveShiftId,
                     'type' => 'expense',
                     'debit' => $mdrAmount,
                     'credit' => 0.00,

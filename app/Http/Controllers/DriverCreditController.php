@@ -303,65 +303,68 @@ public function receivePayment(Request $request)
         $request->validate([
             'driver_credit_id' => 'required|integer',
             'station_id' => 'required|integer',
-            'shift_id' => 'required|integer',
+            'shift_id' => 'nullable|integer|exists:shifts,id',
             'payment_method' => 'required|in:cash,bank',
             'amount' => 'required|numeric|min:0',
-            'bank_account_id' => 'required_if:payment_method,bank|integer|exists:accounts,id'
+            'bank_account_id' => 'nullable|required_if:payment_method,bank|integer|exists:accounts,id'
         ]);
-        
+
         $credit = DB::select("
-            SELECT id, is_paid, stationrow_id, account_id 
-            FROM credit_driver 
-            WHERE id = ? 
+            SELECT id, is_paid, stationrow_id, account_id
+            FROM credit_driver
+            WHERE id = ?
             LIMIT 1
         ", [$request->driver_credit_id]);
-        
+
         if (empty($credit)) {
             return response()->json(['message' => 'Driver credit record not found'], 404);
         }
-        
+
         if ($credit[0]->is_paid == 1) {
             return response()->json(['message' => 'This credit has already been paid'], 400);
         }
-        
-        $shift = DB::select("
-            SELECT id, shift_no, status 
-            FROM shifts 
-            WHERE id = ? 
-            LIMIT 1
-        ", [$request->shift_id]);
-        
-        if (empty($shift)) {
-            return response()->json(['message' => 'Shift not found'], 404);
+
+        $shiftData = null;
+        if (!empty($request->shift_id)) {
+            $shift = DB::select("
+                SELECT id, shift_no, status
+                FROM shifts
+                WHERE id = ?
+                LIMIT 1
+            ", [$request->shift_id]);
+
+            if (empty($shift)) {
+                return response()->json(['message' => 'Shift not found'], 404);
+            }
+
+            $shiftData = $shift[0];
         }
-        
-        $shiftData = $shift[0];
-        
+
         DB::beginTransaction();
-        
+
         if ($request->payment_method == 'bank') {
             $bankAccountId = $request->bank_account_id;
-            
+
             $lastRecord = DB::select("
-                SELECT amount 
+                SELECT amount
                 FROM site_total_ammount 
                 WHERE station_id = ? AND account_id = ?
-                ORDER BY id DESC 
+                ORDER BY id DESC
                 LIMIT 1
             ", [$request->station_id, $bankAccountId]);
-            
+
             $previousAmount = !empty($lastRecord) ? $lastRecord[0]->amount : 0;
             $newAmount = $previousAmount + $request->amount;
-            
+
             DB::insert("
                 INSERT INTO site_total_ammount (
-                    station_id, 
-                    account_id, 
-                    amount, 
-                    previous_amount, 
-                    date, 
-                    created_by, 
-                    created_at, 
+                    station_id,
+                    account_id,
+                    amount,
+                    previous_amount,
+                    date,
+                    created_by,
+                    created_at,
                     updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ", [
@@ -375,33 +378,33 @@ public function receivePayment(Request $request)
                 date('Y-m-d H:i:s')
             ]);
         }
-        
-        // Update credit_driver with is_paid=1, shift_id, and method
+
+        // Update credit_driver with is_paid=1, shift_id (optional), and method
         DB::update("
-            UPDATE credit_driver 
-            SET is_paid = 1, 
-                shift_id = ?, 
-                method = ?, 
+            UPDATE credit_driver
+            SET is_paid = 1,
+                shift_id = ?,
+                method = ?,
                 bank_acc_id = ?,
-                updated_at = ? 
+                updated_at = ?
             WHERE id = ?
         ", [
-            $request->shift_id, 
-            $request->payment_method, 
-            $request ->bank_account_id,
-            date('Y-m-d H:i:s'), 
+            $request->shift_id ?: null,
+            $request->payment_method,
+            $request->bank_account_id ?: null,
+            date('Y-m-d H:i:s'),
             $request->driver_credit_id
         ]);
-        
+
         DB::commit();
-        
+
         return response()->json([
             'message' => 'Driver credit payment received successfully',
             'payment_method' => $request->payment_method,
             'amount' => $request->amount,
-            'shift_no' => $shiftData->shift_no
+            'shift_no' => $shiftData ? $shiftData->shift_no : null
         ]);
-        
+
     } catch (\Exception $e) {
         DB::rollBack();
         return response()->json(['message' => 'Failed to receive payment: ' . $e->getMessage()], 500);
