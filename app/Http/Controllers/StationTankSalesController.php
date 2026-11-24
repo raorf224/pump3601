@@ -14,6 +14,7 @@ class StationTankSalesController extends Controller
         $validated = $request->validate([
             'sap' => ['required', 'string', 'max:45'],
             'tank_id' => ['nullable', 'integer'],
+            'erpcode' => ['nullable', 'string', 'max:45'],
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
         ]);
@@ -42,6 +43,7 @@ class StationTankSalesController extends Controller
             ->select(
                 't.id',
                 't.name',
+                't.erpcode',
                 't.capacity',
                 't.current_level',
                 't.current_level_mm',
@@ -64,12 +66,14 @@ class StationTankSalesController extends Controller
             ],
             'filters' => [
                 'tank_id' => isset($validated['tank_id']) ? (int) $validated['tank_id'] : null,
+                'erpcode' => isset($validated['erpcode']) && trim((string) $validated['erpcode']) !== '' ? trim((string) $validated['erpcode']) : null,
                 'from' => $from?->toDateTimeString(),
                 'to' => $to?->toDateTimeString(),
             ],
             'tanks' => $tanks->map(fn ($tank) => [
                 'id' => (int) $tank->id,
                 'name' => $tank->name,
+                'erpcode' => $tank->erpcode !== null && $tank->erpcode !== '' ? $tank->erpcode : null,
                 'product_id' => $tank->product_id !== null ? (int) $tank->product_id : null,
                 'product_name' => $tank->product_name,
                 'capacity' => (float) $tank->capacity,
@@ -79,14 +83,27 @@ class StationTankSalesController extends Controller
             'sales' => null,
         ];
 
-        if (!isset($validated['tank_id'])) {
-            return response()->json($response);
+        $tank = null;
+        $tankId = null;
+        if (isset($validated['tank_id'])) {
+            $tankId = (int) $validated['tank_id'];
+            $tank = $tanks->firstWhere('id', $tankId);
+            if (!$tank) {
+                return response()->json(['message' => 'Selected tank does not belong to this station.'], 404);
+            }
+        } elseif (!empty($validated['erpcode'])) {
+            $erpcode = trim((string) $validated['erpcode']);
+            $tank = $tanks->first(function ($t) use ($erpcode) {
+                return $t->erpcode !== null && strcasecmp((string) $t->erpcode, $erpcode) === 0;
+            });
+            if (!$tank) {
+                return response()->json(['message' => 'Selected tank does not belong to this station.'], 404);
+            }
+            $tankId = (int) $tank->id;
         }
 
-        $tankId = (int) $validated['tank_id'];
-        $tank = $tanks->firstWhere('id', $tankId);
-        if (!$tank) {
-            return response()->json(['message' => 'Selected tank does not belong to this station.'], 404);
+        if ($tank === null || $tankId === null) {
+            return response()->json($response);
         }
 
         $baseQuery = $this->salesQuery((int) $station->id, $tankId, $isLocal, $from, $to);
@@ -122,6 +139,7 @@ class StationTankSalesController extends Controller
             'tank' => [
                 'id' => (int) $tank->id,
                 'name' => $tank->name,
+                'erpcode' => $tank->erpcode !== null && $tank->erpcode !== '' ? $tank->erpcode : null,
                 'product_id' => $tank->product_id !== null ? (int) $tank->product_id : null,
                 'product_name' => $tank->product_name,
             ],
@@ -146,7 +164,8 @@ class StationTankSalesController extends Controller
             ->join('nozzles as n', 'snr.nozzle_id', '=', $isLocal ? 'n.stationrow_id' : 'n.id')
             ->join('tanks as t', 'n.tank_id', '=', $isLocal ? 't.stationrow_id' : 't.id')
             ->where('s.station_id', $stationId)
-            ->where('t.id', $tankId);
+            ->where('t.id', $tankId)
+            ->whereRaw('IFNULL(snr.is_pushed, 0) <> 1');
 
         if ($from) {
             $query->where('s.start_time', '>=', $from->toDateTimeString());
