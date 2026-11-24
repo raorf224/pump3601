@@ -1506,8 +1506,7 @@
                     $(`.nozzle-reading-row[data-tank-id="${tankId}"]`).each(function () {
                         nozzleSales += parseFloat($(this).find('.nozzle-total').val()) || 0;
                         const nozzleId = $(this).data('nozzle-id');
-                        const resetButton = $(`.save-reset-btn[data-nozzle-id="${nozzleId}"]`);
-                        if (resetButton.data('staged') === true) {
+                        if ($(`#reset-fields-${nozzleId}`).is(':visible')) {
                             resetSales += parseFloat($(`.reset-total-dispensed[data-nozzle-id="${nozzleId}"]`).val()) || 0;
                         }
                     });
@@ -1762,12 +1761,10 @@
                                                                                                 rows="2" placeholder="Enter reason for nozzle reset" required>Nozzle reset during shift closing</textarea>
                                                                                     </div>
                                                                                     <div class="col-md-12">
-                                                                                        <button class="btn btn-success btn-sm save-reset-btn" data-nozzle-id="${nozzle.id}">
-                                                                                            Save Reset
-                                                                                        </button>
-                                                                                        <button class="btn btn-secondary btn-sm cancel-reset-btn ms-2" data-nozzle-id="${nozzle.id}">
+                                                                                        <button class="btn btn-secondary btn-sm cancel-reset-btn" data-nozzle-id="${nozzle.id}">
                                                                                             Cancel
                                                                                         </button>
+                                                                                        <small class="text-muted ms-2">Reset will be saved when shift is closed.</small>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
@@ -2145,18 +2142,22 @@
                     $(`.reset-total-dispensed[data-nozzle-id="${nozzleId}"]`).val(totalDispensed.toFixed(2));
                     $(`.reset-total-amount[data-nozzle-id="${nozzleId}"]`).val(totalAmount.toFixed(2));
 
-                    // ✅ IMPORTANT: CASH FLOW MAI BHI UPDATE KARO
                     setTimeout(() => {
+                        calculateTankGainLossPreview();
                         calculateCashFlowSummary();
                     }, 100);
                 } else {
                     $(`.reset-total-dispensed[data-nozzle-id="${nozzleId}"]`).val('');
                     $(`.reset-total-amount[data-nozzle-id="${nozzleId}"]`).val('');
+                    setTimeout(() => {
+                        calculateTankGainLossPreview();
+                        calculateCashFlowSummary();
+                    }, 100);
                 }
             }
 
             // ✅ Auto-calculate when new reading or rate changes
-            $(document).on("input", ".reset-new-reading, .reset-rate", function () {
+            $(document).on("input", ".reset-new-reading, .reset-old-reading, .reset-rate", function () {
                 const nozzleId = $(this).data('nozzle-id');
                 calculateResetAmount(nozzleId);
             });
@@ -2609,11 +2610,20 @@
                                                             const closing = parseFloat(closingInput.val()) || 0;
                                                             const testing = parseFloat($(`.nozzle-testing[name="nozzle_testing[${nozzle.id}]"]`).val()) || 0;
 
+                                                            const resetContainer = $(`#reset-fields-${nozzle.id}`);
+                                                            const resetDispensed = resetContainer.is(':visible')
+                                                                ? (parseFloat($(`.reset-total-dispensed[data-nozzle-id="${nozzle.id}"]`).val()) || 0)
+                                                                : 0;
+
                                                             if (!closingInput.val()) return;
 
                                                             if (closing >= opening) {
                                                                 const volume = closing - opening;
-                                                                totalVolume += volume;
+                                                                totalVolume += volume + resetDispensed;
+                                                                testingLiters += testing;
+                                                                testingAmount += testing * rate;
+                                                            } else if (resetDispensed > 0) {
+                                                                totalVolume += resetDispensed;
                                                                 testingLiters += testing;
                                                                 testingAmount += testing * rate;
                                                             }
@@ -2816,11 +2826,20 @@
                                                             const closing = parseFloat(closingInput.val()) || 0;
                                                             const testing = parseFloat($(`.nozzle-testing[name="nozzle_testing[${nozzle.id}]"]`).val()) || 0;
 
+                                                            const resetContainer = $(`#reset-fields-${nozzle.id}`);
+                                                            const resetDispensed = resetContainer.is(':visible')
+                                                                ? (parseFloat($(`.reset-total-dispensed[data-nozzle-id="${nozzle.id}"]`).val()) || 0)
+                                                                : 0;
+
                                                             if (!closingInput.val()) return;
 
                                                             if (closing >= opening) {
                                                                 const volume = closing - opening;
-                                                                totalVolume += volume;
+                                                                totalVolume += volume + resetDispensed;
+                                                                testingLiters += testing;
+                                                                testingAmount += testing * rate;
+                                                            } else if (resetDispensed > 0) {
+                                                                totalVolume += resetDispensed;
                                                                 testingLiters += testing;
                                                                 testingAmount += testing * rate;
                                                             }
@@ -4606,21 +4625,28 @@
                 });
 
                 const nozzleResets = [];
-                $(".save-reset-btn").filter(function () {
-                    return $(this).data('staged') === true;
-                }).each(function () {
-                    const nozzleId = $(this).data('nozzle-id');
+                $('.reset-fields-container:visible').each(function () {
+                    const container = $(this);
+                    const idAttr = container.attr('id') || '';
+                    const nozzleId = idAttr.replace('reset-fields-', '');
+                    if (!nozzleId) return;
+
                     const resetDate = $(`.reset-date[data-nozzle-id="${nozzleId}"]`).val();
-                    const newReading = parseFloat($(`.reset-new-reading[data-nozzle-id="${nozzleId}"]`).val());
-                    const rate = parseFloat($(`.reset-rate[data-nozzle-id="${nozzleId}"]`).val());
-                    const reason = $(`.reset-reason[data-nozzle-id="${nozzleId}"]`).val();
-                    if (!resetDate || !newReading || !rate || !reason.trim()) return;
+                    const oldReadingRaw = $(`.reset-old-reading[data-nozzle-id="${nozzleId}"]`).val();
+                    const newReadingRaw = $(`.reset-new-reading[data-nozzle-id="${nozzleId}"]`).val();
+                    const rateRaw = $(`.reset-rate[data-nozzle-id="${nozzleId}"]`).val();
+                    const reason = ($(`.reset-reason[data-nozzle-id="${nozzleId}"]`).val() || '').trim();
+                    if (!resetDate || newReadingRaw === '' || newReadingRaw === null || newReadingRaw === undefined || oldReadingRaw === '' || rateRaw === '' || !reason) return;
+
+                    const oldReading = parseFloat(oldReadingRaw) || 0;
+                    const newReading = parseFloat(newReadingRaw) || 0;
+                    const rate = parseFloat(rateRaw) || 0;
 
                     nozzleResets.push({
                         nozzle_id: parseInt(nozzleId),
                         shift_id: parseInt(closingData.shiftId),
                         reset_date: resetDate,
-                        old_reading: parseFloat($(`.reset-old-reading[data-nozzle-id="${nozzleId}"]`).val()),
+                        old_reading: oldReading,
                         new_reading: newReading,
                         total_dispensed: parseFloat($(`.reset-total-dispensed[data-nozzle-id="${nozzleId}"]`).val()) || 0,
                         rate: rate,
@@ -5071,17 +5097,22 @@
 
                 // 4. Save Nozzle Resets
                 const nozzleResetData = [];
-                $(".save-reset-btn").each(function () {
-                    const nozzleId = $(this).data('nozzle-id');
+                $('.reset-fields-container:visible').each(function () {
+                    const container = $(this);
+                    const idAttr = container.attr('id') || '';
+                    const nozzleId = idAttr.replace('reset-fields-', '');
+                    if (!nozzleId) return;
+
                     const resetDate = $(`.reset-date[data-nozzle-id="${nozzleId}"]`).val();
-                    const oldReading = parseFloat($(`.reset-old-reading[data-nozzle-id="${nozzleId}"]`).val());
-                    const newReading = parseFloat($(`.reset-new-reading[data-nozzle-id="${nozzleId}"]`).val());
+                    const oldReading = parseFloat($(`.reset-old-reading[data-nozzle-id="${nozzleId}"]`).val()) || 0;
+                    const newReadingRaw = $(`.reset-new-reading[data-nozzle-id="${nozzleId}"]`).val();
+                    const newReading = parseFloat(newReadingRaw);
                     const rate = parseFloat($(`.reset-rate[data-nozzle-id="${nozzleId}"]`).val());
                     const totalDispensed = parseFloat($(`.reset-total-dispensed[data-nozzle-id="${nozzleId}"]`).val()) || 0;
                     const totalAmount = parseFloat($(`.reset-total-amount[data-nozzle-id="${nozzleId}"]`).val()) || 0;
-                    const reason = $(`.reset-reason[data-nozzle-id="${nozzleId}"]`).val();
+                    const reason = ($(`.reset-reason[data-nozzle-id="${nozzleId}"]`).val() || '').trim();
 
-                    if (resetDate && newReading && rate && reason.trim()) {
+                    if (resetDate && newReadingRaw !== '' && !isNaN(newReading) && !isNaN(rate) && reason) {
                         nozzleResetData.push({
                             nozzle_id: parseInt(nozzleId),
                             shift_id: parseInt(shiftId),
