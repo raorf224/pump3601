@@ -194,7 +194,10 @@ class ShiftDeletionController extends Controller
             DB::table('attendance')->where('shift_id', $shiftId)->delete();
             DB::table('shortage_ammount_paid_back')->where('shift_id', $shiftId)->delete();
             DB::table('ammount_paid')->where('shift_id', $shiftId)->delete();
-            DB::table('product_prices')->where('shift_id', $shiftId)->delete();
+            DB::table('product_prices')->where('shift_id', $shiftId)->update([
+                'shift_id' => null,
+                'updated_at' => now(),
+            ]);
             DB::table('oil_recived_tanks')->where('shift_id', $shiftId)->delete();
 
             foreach ($purchaseIds as $purchaseId) {
