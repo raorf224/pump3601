@@ -1893,10 +1893,7 @@
 
                 // console.log("Reset button clicked:", { nozzleId, nozzleName, openingReading, productName, productId, shiftId });
 
-                // Hide all other reset fields first
-                $(".reset-fields-container").hide();
-
-                // Show reset fields for this nozzle
+                // Show reset fields for this nozzle (keep other nozzle reset panels open until user cancels them)
                 const resetContainer = $(`#reset-fields-${nozzleId}`);
                 resetContainer.slideDown();
 
