@@ -72,6 +72,7 @@ Route::middleware('auth')->group(function () {
 
 Route::post('/applogin', [AuthController::class, 'applogin']);
 Route::get('/station-tank-sales', [StationTankSalesController::class, 'show']);
+Route::post('/station-tank-sales/push', [StationTankSalesController::class, 'updatePushStatus']);
 // ✅ Payment Details Routes
 Route::post('/site-total-amount/payment', [SiteTotalAmountController::class, 'storePaymentDetails']);
 Route::get('/site-total-amount/current/amount/{stationId}/{accountId}', [SiteTotalAmountController::class, 'CurrentAmount']);

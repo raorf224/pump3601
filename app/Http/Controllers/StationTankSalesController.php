@@ -42,6 +42,7 @@ class StationTankSalesController extends Controller
             ->where('t.status', 'active')
             ->select(
                 't.id',
+                't.stationrow_id',
                 't.name',
                 't.erpcode',
                 't.capacity',
@@ -155,6 +156,141 @@ class StationTankSalesController extends Controller
         ];
 
         return response()->json($response);
+    }
+
+    public function updatePushStatus(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'sap' => ['nullable', 'string', 'max:45'],
+            'sap_code' => ['nullable', 'string', 'max:45'],
+            'tank_id' => ['nullable', 'integer'],
+            'erpcode' => ['nullable', 'string', 'max:45'],
+            'tank_erp' => ['nullable', 'string', 'max:45'],
+            'from' => ['required', 'date'],
+            'to' => ['required', 'date', 'after_or_equal:from'],
+        ]);
+
+        $sap = trim((string) ($validated['sap_code'] ?? $validated['sap'] ?? ''));
+        if ($sap === '') {
+            return response()->json(['message' => 'sap_code is required.'], 422);
+        }
+
+        $stations = DB::table('stations')
+            ->where('sap', $sap)
+            ->where('status', 1)
+            ->get();
+
+        if ($stations->isEmpty()) {
+            return response()->json(['message' => 'No active station found for the supplied SAP code.'], 404);
+        }
+
+        if ($stations->count() > 1) {
+            return response()->json(['message' => 'SAP code is assigned to more than one station.'], 409);
+        }
+
+        $station = $stations->first();
+        [$from, $to] = $this->dateRange($validated);
+        $isLocal = (int) $station->local === 1;
+
+        $tanks = DB::table('tanks as t')
+            ->where('t.station_id', $station->id)
+            ->where('t.status', 'active')
+            ->select('t.id', 't.stationrow_id', 't.name', 't.erpcode', 't.product_id')
+            ->orderBy('t.id')
+            ->get();
+
+        $tank = null;
+        $tankId = null;
+        if (isset($validated['tank_id'])) {
+            $tankId = (int) $validated['tank_id'];
+            $tank = $tanks->firstWhere('id', $tankId);
+            if (!$tank) {
+                return response()->json(['message' => 'Selected tank does not belong to this station.'], 404);
+            }
+        } else {
+            $erpcode = trim((string) ($validated['tank_erp'] ?? $validated['erpcode'] ?? ''));
+            if ($erpcode === '') {
+                return response()->json(['message' => 'tank_id or tank_erp/erpcode is required.'], 422);
+            }
+            $tank = $tanks->first(function ($t) use ($erpcode) {
+                return $t->erpcode !== null && strcasecmp((string) $t->erpcode, $erpcode) === 0;
+            });
+            if (!$tank) {
+                return response()->json(['message' => 'Selected tank does not belong to this station.'], 404);
+            }
+            $tankId = (int) $tank->id;
+        }
+
+        $shiftJoin = $isLocal ? 's.stationrow_id' : 's.id';
+        $nozzleJoin = $isLocal ? 'n.stationrow_id' : 'n.id';
+        $tankJoin = $isLocal ? 't.stationrow_id' : 't.id';
+        $fromStr = $from->toDateTimeString();
+        $toStr = $to->toDateTimeString();
+
+        $nozzleCount = DB::table('nozzles as n')
+            ->join('tanks as t', 'n.tank_id', '=', $tankJoin)
+            ->where('n.station_id', $station->id)
+            ->where('t.id', $tankId)
+            ->distinct()
+            ->count('n.id');
+
+        $result = DB::transaction(function () use ($shiftJoin, $nozzleJoin, $tankJoin, $fromStr, $toStr, $station, $tankId) {
+            $affected = DB::update(
+                "UPDATE shift_nozzle_readings snr
+                 JOIN shifts s ON snr.shift_id = {$shiftJoin}
+                 JOIN nozzles n ON snr.nozzle_id = {$nozzleJoin}
+                 JOIN tanks t ON n.tank_id = {$tankJoin}
+                 SET snr.is_pushed = CASE
+                        WHEN s.start_time >= ? AND s.start_time <= ? THEN 1
+                        ELSE 0
+                     END,
+                     snr.updated_at = NOW()
+                 WHERE s.station_id = ?
+                   AND t.id = ?",
+                [$fromStr, $toStr, $station->id, $tankId]
+            );
+
+            $counts = DB::table('shift_nozzle_readings as snr')
+                ->join('shifts as s', "snr.shift_id", '=', $shiftJoin)
+                ->join('nozzles as n', "snr.nozzle_id", '=', $nozzleJoin)
+                ->join('tanks as t', 'n.tank_id', '=', $tankJoin)
+                ->where('s.station_id', $station->id)
+                ->where('t.id', $tankId)
+                ->selectRaw('COUNT(*) as total_records')
+                ->selectRaw("SUM(CASE WHEN snr.is_pushed = 1 THEN 1 ELSE 0 END) as pushed_records")
+                ->selectRaw("SUM(CASE WHEN snr.is_pushed = 0 OR snr.is_pushed IS NULL THEN 1 ELSE 0 END) as not_pushed_records")
+                ->first();
+
+            return [
+                'affected_rows' => $affected,
+                'total_records' => (int) ($counts->total_records ?? 0),
+                'pushed_records' => (int) ($counts->pushed_records ?? 0),
+                'not_pushed_records' => (int) ($counts->not_pushed_records ?? 0),
+            ];
+        });
+
+        return response()->json([
+            'message' => 'Nozzle readings push status updated successfully.',
+            'station' => [
+                'id' => (int) $station->id,
+                'sap' => $station->sap,
+                'name' => $station->name,
+            ],
+            'tank' => [
+                'id' => (int) $tank->id,
+                'name' => $tank->name,
+                'erpcode' => $tank->erpcode !== null && $tank->erpcode !== '' ? $tank->erpcode : null,
+            ],
+            'filters' => [
+                'from' => $from->toDateTimeString(),
+                'to' => $to->toDateTimeString(),
+            ],
+            'nozzle_count' => $nozzleCount,
+            'affected_rows' => $result['affected_rows'],
+            'total_records' => $result['total_records'],
+            'pushed_records' => $result['pushed_records'],
+            'not_pushed_records' => $result['not_pushed_records'],
+        ]);
     }
 
     private function salesQuery(int $stationId, int $tankId, bool $isLocal, ?Carbon $from, ?Carbon $to)
