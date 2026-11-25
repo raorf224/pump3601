@@ -422,7 +422,7 @@ class TransactionsController extends Controller
 
         // ✅ ROLE BASED FILTERING
         // Agar user_id diya hai aur user admin nahi hai toh sirf uski stations dikhao
-        if ($userId && $userId !== '') {
+        if ($userId && $userId !== '' && !($user && in_array($user->role, ['admin', 'rm', 'tm'], true))) {
             $query .= " AND stations.user_id = ?";
             $params[] = $userId;
         }

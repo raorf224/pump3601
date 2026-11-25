@@ -218,7 +218,7 @@ class StationController extends Controller
     public function index1($user_id)
     {
         $currentUser = Auth::user();
-        if ($currentUser && in_array($currentUser->role, ['rm', 'tm'], true)) {
+        if ($currentUser && in_array($currentUser->role, ['rm', 'tm', 'admin'], true)) {
             abort_unless((int) $currentUser->id === (int) $user_id, 403);
             $stations = StationAccess::query($currentUser)
                 ->leftJoin('users as owner', 'stations.user_id', '=', 'owner.id')
