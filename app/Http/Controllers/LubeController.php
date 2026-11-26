@@ -332,7 +332,12 @@ class LubeController extends Controller
                 })
 
                 ->join('employees as e', 'e.station_id', '=', 's.id')
-                ->select('d.*', 's.name as station_name', 'a.name as account_name')
+                ->select(
+                    'd.*',
+                    's.name as station_name',
+                    'a.name as account_name',
+                    DB::raw('(SELECT COALESCE(SUM(ll.line_amount + ll.tax_amount), 0) FROM lube_lines ll WHERE ll.document_id = d.id) as total_amount')
+                )
                 ->where('e.user_id', $id)
                 ->get();
 
@@ -848,6 +853,59 @@ class LubeController extends Controller
         ], 500);
     }
 }
+
+    public function getInventoryByStation(Request $request)
+    {
+        $stationId = $request->query('stationId', $request->query('station_id'));
+        $validator = Validator::make(
+            ['station_id' => $stationId],
+            ['station_id' => ['required', 'integer', 'exists:stations,id']]
+        );
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Invalid station_id.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $inventory = DB::table('lube_inventory as i')
+                ->join('products as p', 'i.product_id', '=', 'p.id')
+                ->join('stations as s', 'i.station_id', '=', 's.id')
+                ->select(
+                    'i.product_id',
+                    'i.station_id',
+                    's.name as station_name',
+                    'p.name as product_name',
+                    'p.category',
+                    'i.quantity as current_stock',
+                    'i.avg_buying_price',
+                    'i.total_purchased',
+                    'i.total_sold',
+                    'i.last_updated as last_purchase_date',
+                    DB::raw("'Packs' as unit")
+                )
+                ->where('i.station_id', $stationId)
+                ->where('p.category', 'lubricants')
+                ->orderBy('s.name')
+                ->orderBy('p.name')
+                ->get();
+
+            foreach ($inventory as $item) {
+                $item->status = $item->current_stock <= 0 ? 'Out of Stock' :
+                    ($item->current_stock < 50 ? 'Low Stock' : 'In Stock');
+            }
+
+            return response()->json($inventory);
+        } catch (\Exception $e) {
+            Log::error('Public station inventory error: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Failed to get station inventory.',
+            ], 500);
+        }
+    }
 
     /**
      * ✅ Create or update inventory from initial setup

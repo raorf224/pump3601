@@ -224,6 +224,7 @@ Route::get('/driver-credits/shifts/{shiftId}', [DriverCreditController::class, '
 Route::middleware('web')->prefix('lubes')->group(function () {
     // Specific routes FIRST
     Route::get('/inventory', [LubeController::class, 'getInventory']);
+    Route::get('/inventory/by-station', [LubeController::class, 'getInventoryByStation']);
     Route::post('/check-stock', [LubeController::class, 'checkStock']);
     Route::get('/owner/{id}', [LubeController::class, 'getByOwner']);
     Route::get('/employee/{id}', [LubeController::class, 'getByEmployee']);

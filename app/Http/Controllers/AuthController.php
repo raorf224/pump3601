@@ -73,7 +73,15 @@ public function applogin(Request $request)
             u.created_at,
             u.updated_at,
             u.stationrow_id,
-            u.station_id,
+            CASE
+                WHEN u.role = 'employee' THEN (
+                    SELECT e.station_id
+                    FROM employees e
+                    WHERE e.user_id = u.id AND e.status = 'active'
+                    LIMIT 1
+                )
+                ELSE u.station_id
+            END AS station_id,
             IF(
                 u.role = 'employee',
                 (SELECT s2.user_id FROM stations s2 
