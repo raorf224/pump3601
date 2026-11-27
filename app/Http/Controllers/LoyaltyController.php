@@ -217,8 +217,6 @@ class LoyaltyController extends Controller
 
     public function storeCustomer(Request $request): JsonResponse
     {
-        $this->authorizeLoyaltyPermission($request, 'create', 'loyalty_customers');
-
         return $this->createCustomerRecord($this->validateCustomer($request));
     }
 
@@ -379,7 +377,12 @@ class LoyaltyController extends Controller
                 'max:191',
                 Rule::unique('loyalty_customers', 'email')->ignore($id),
             ],
-            'device_id' => ['required', 'string', 'max:191'],
+            'device_id' => [
+                'required',
+                'string',
+                'max:191',
+                Rule::unique('loyalty_customers', 'device_id')->ignore($id),
+            ],
             'type' => ['required', 'in:new,referral'],
             'referral_number' => ['nullable', 'string', 'max:100'],
             'status' => ['required', 'in:active,inactive'],
@@ -729,7 +732,7 @@ class LoyaltyController extends Controller
             'phone' => ['required', 'string', 'max:30', 'unique:loyalty_customers,phone'],
             'email' => ['required', 'email', 'max:191', 'unique:loyalty_customers,email'],
             'password' => ['required', 'string', 'min:6', 'max:255'],
-            'device_id' => ['required', 'string', 'max:191'],
+            'device_id' => ['required', 'string', 'max:191', 'unique:loyalty_customers,device_id'],
             'type' => ['required', 'in:new,referral'],
             'referral_number' => ['nullable', 'string', 'max:100'],
             'status' => ['sometimes', 'in:active,inactive'],
@@ -739,48 +742,48 @@ class LoyaltyController extends Controller
     private function createCustomerRecord(array $validated): JsonResponse
     {
         $customerId = DB::transaction(function () use ($validated) {
-            $now = now();
-            $customerId = DB::table('loyalty_customers')->insertGetId([
-                'player_id' => $validated['player_id'],
-                'name' => $validated['name'],
-                'phone' => $validated['phone'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'device_id' => $validated['device_id'],
-                'type' => $validated['type'],
-                'referral_number' => $validated['type'] === 'referral'
-                    ? ($validated['referral_number'] ?? null)
-                    : null,
-                'status' => $validated['status'] ?? 'active',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+                $now = now();
+                $customerId = DB::table('loyalty_customers')->insertGetId([
+                    'player_id' => $validated['player_id'],
+                    'name' => $validated['name'],
+                    'phone' => $validated['phone'],
+                    'email' => $validated['email'],
+                    'password' => Hash::make($validated['password']),
+                    'device_id' => $validated['device_id'],
+                    'type' => $validated['type'],
+                    'referral_number' => $validated['type'] === 'referral'
+                        ? ($validated['referral_number'] ?? null)
+                        : null,
+                    'status' => $validated['status'] ?? 'active',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
 
-            $couponFor = ['all', 'welcome'];
-            if ($validated['type'] === 'referral') {
-                $couponFor[] = 'referall';
-            }
+                $couponFor = ['all', 'welcome'];
+                if ($validated['type'] === 'referral') {
+                    $couponFor[] = 'referall';
+                }
 
-            $couponIds = DB::table('coupons')
-                ->where('status', 'active')
-                ->whereDate('valid_to', '>=', $now->toDateString())
-                ->whereIn('coupon_for', $couponFor)
-                ->pluck('id');
+                $couponIds = DB::table('coupons')
+                    ->where('status', 'active')
+                    ->whereDate('valid_to', '>=', $now->toDateString())
+                    ->whereIn('coupon_for', $couponFor)
+                    ->pluck('id');
 
-            if ($couponIds->isNotEmpty()) {
-                DB::table('loyalty_customer_coupons')->insert(
-                    $couponIds->map(function ($couponId) use ($customerId, $now) {
-                        return [
-                            'customer_id' => $customerId,
-                            'coupon_id' => $couponId,
-                            'is_used' => '0',
-                            'assigned_at' => $now,
-                            'created_at' => $now,
-                            'updated_at' => $now,
-                        ];
-                    })->all()
-                );
-            }
+                if ($couponIds->isNotEmpty()) {
+                    DB::table('loyalty_customer_coupons')->insert(
+                        $couponIds->map(function ($couponId) use ($customerId, $now) {
+                            return [
+                                'customer_id' => $customerId,
+                                'coupon_id' => $couponId,
+                                'is_used' => '0',
+                                'assigned_at' => $now,
+                                'created_at' => $now,
+                                'updated_at' => $now,
+                            ];
+                        })->all()
+                    );
+                }
 
             return $customerId;
         });
