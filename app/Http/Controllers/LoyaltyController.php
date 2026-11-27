@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -204,6 +205,19 @@ class LoyaltyController extends Controller
 
     public function customer(Request $request, int $id): JsonResponse
     {
+        if ($this->authenticatedLoyaltyCustomerId($request) === $id) {
+            $customer = $this->customerDetailsQuery()
+                ->where('id', $id)
+                ->first();
+
+            if (!$customer || $customer->status !== 'active') {
+                $request->session()->forget('loyalty_customer_id');
+                abort(401, 'Customer session is no longer valid.');
+            }
+
+            return response()->json(['data' => $customer]);
+        }
+
         $this->authorizeLoyaltyPermission($request, 'read', 'loyalty_customers');
 
         $customer = $this->customerDetailsQuery()
@@ -591,6 +605,7 @@ class LoyaltyController extends Controller
         $validated = $request->validate([
             'identifier' => ['required', 'string', 'max:191'],
             'password' => ['required', 'string'],
+            'device_name' => ['nullable', 'string', 'max:100'],
         ]);
 
         $customer = DB::table('loyalty_customers')
@@ -614,6 +629,21 @@ class LoyaltyController extends Controller
             ], 403);
         }
 
+        $request->session()->regenerate(true);
+        $request->session()->put('loyalty_customer_id', (int) $customer->id);
+
+        $plainTextToken = Str::random(80);
+        $expiresAt = now()->addDays(90);
+        DB::table('loyalty_customer_access_tokens')->insert([
+            'customer_id' => (int) $customer->id,
+            'token_hash' => hash('sha256', $plainTextToken),
+            'name' => $validated['device_name'] ?? 'loyalty-app',
+            'last_used_at' => now(),
+            'expires_at' => $expiresAt,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $customerDetails = $this->customerDetailsQuery()
             ->where('id', $customer->id)
             ->first();
@@ -621,38 +651,60 @@ class LoyaltyController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Login successful.',
+            'access_token' => $plainTextToken,
+            'token_type' => 'Bearer',
+            'expires_at' => $expiresAt->toDateTimeString(),
             'data' => $customerDetails,
         ]);
     }
 
     public function customerDetailsForApp(Request $request, int $id): JsonResponse
     {
-        $validated = $request->validate([
-            'password' => ['required', 'string'],
-        ]);
-
         $customer = DB::table('loyalty_customers')
             ->where('id', $id)
             ->first();
 
-        abort_unless(
-            $customer && Hash::check($validated['password'], $customer->password),
-            401,
-            'Invalid customer ID or password.'
-        );
+        abort_unless($customer !== null, 404, 'Customer not found.');
+
+        $sessionCustomerId = $this->authenticatedLoyaltyCustomerId($request);
+        if ($sessionCustomerId === $id) {
+            abort_unless($customer->status === 'active', 401, 'Customer session is no longer valid.');
+        } else {
+            $validated = $request->validate([
+                'password' => ['required', 'string'],
+            ]);
+
+            abort_unless(
+                Hash::check($validated['password'], $customer->password),
+                401,
+                'Invalid customer ID or password.'
+            );
+        }
 
         unset($customer->password);
 
         return response()->json(['data' => $customer]);
     }
 
-    public function customerCouponsForApp(int $id): JsonResponse
+    public function customerCouponsForApp(Request $request, int $id): JsonResponse
     {
-        if (!DB::table('loyalty_customers')->where('id', $id)->exists()) {
+        abort_unless(
+            $this->authenticatedLoyaltyCustomerId($request) === $id,
+            401,
+            'Unauthenticated customer session.'
+        );
+
+        $customer = DB::table('loyalty_customers')
+            ->where('id', $id)
+            ->where('status', 'active')
+            ->first();
+
+        if (!$customer) {
+            $request->session()->forget('loyalty_customer_id');
             return response()->json([
                 'success' => false,
-                'message' => 'Customer not found.',
-            ], 404);
+                'message' => 'Customer session is no longer valid.',
+            ], 401);
         }
 
         $today = now()->toDateString();
@@ -694,6 +746,56 @@ class LoyaltyController extends Controller
             'success' => true,
             'data' => $coupons,
         ]);
+    }
+
+    public function logoutCustomer(Request $request): JsonResponse
+    {
+        $this->revokePresentedCustomerToken($request);
+        $request->session()->forget('loyalty_customer_id');
+        $request->session()->regenerate(true);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Customer logged out successfully.',
+        ]);
+    }
+
+    private function authenticatedLoyaltyCustomerId(Request $request): ?int
+    {
+        $plainTextToken = $request->bearerToken();
+        if ($plainTextToken) {
+            $token = DB::table('loyalty_customer_access_tokens')
+                ->where('token_hash', hash('sha256', $plainTextToken))
+                ->where(function ($query) {
+                    $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                })
+                ->first();
+
+            if (!$token) {
+                return null;
+            }
+
+            DB::table('loyalty_customer_access_tokens')
+                ->where('id', $token->id)
+                ->update(['last_used_at' => now(), 'updated_at' => now()]);
+
+            return (int) $token->customer_id;
+        }
+
+        $sessionCustomerId = (int) $request->session()->get('loyalty_customer_id');
+        return $sessionCustomerId > 0 ? $sessionCustomerId : null;
+    }
+
+    private function revokePresentedCustomerToken(Request $request): void
+    {
+        $plainTextToken = $request->bearerToken();
+        if (!$plainTextToken) {
+            return;
+        }
+
+        DB::table('loyalty_customer_access_tokens')
+            ->where('token_hash', hash('sha256', $plainTextToken))
+            ->delete();
     }
 
     public function changeCustomerPassword(Request $request, int $id): JsonResponse

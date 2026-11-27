@@ -4,6 +4,10 @@
 @section('title-sub', 'Loyalty')
 @section('pagetitle', 'Assign Coupons')
 
+@section('css')
+<link rel="stylesheet" href="{{ asset('assets/libs/choices.js/public/assets/styles/choices.min.css') }}">
+@endsection
+
 @section('content')
 <div id="layout-wrapper">
     <div class="container-fluid mt-4">
@@ -17,8 +21,7 @@
                 <form id="couponAssignmentForm" class="row g-3">
                     <div class="col-lg-5">
                         <label for="assignmentCustomer" class="form-label">Active customers</label>
-                        <select id="assignmentCustomer" class="form-select" multiple size="8" required>
-                        </select>
+                        <select id="assignmentCustomer" class="form-select" multiple required></select>
                         <div class="d-flex gap-2 mt-2">
                             <button id="selectAllCustomers" type="button" class="btn btn-sm btn-outline-primary">
                                 Select All Customers
@@ -30,8 +33,15 @@
                     </div>
                     <div class="col-lg-5">
                         <label for="assignmentCoupon" class="form-label">Specific coupons</label>
-                        <select id="assignmentCoupon" class="form-select" multiple size="8" required disabled>
-                        </select>
+                        <select id="assignmentCoupon" class="form-select" multiple required></select>
+                        <div class="d-flex gap-2 mt-2">
+                            <button id="selectAllCoupons" type="button" class="btn btn-sm btn-outline-primary">
+                                Select All Coupons
+                            </button>
+                            <button id="clearCoupons" type="button" class="btn btn-sm btn-outline-secondary">
+                                Clear
+                            </button>
+                        </div>
                     </div>
                     <div class="col-lg-2 d-flex align-items-end">
                         <button id="assignCouponButton" type="submit" class="btn btn-primary w-100" disabled>
@@ -48,7 +58,7 @@
 
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">Specific Coupons Assigned to Selected Customer</h5>
+                <h5 class="mb-0">Specific Coupons Assigned to Selected Customers</h5>
             </div>
             <div class="card-body table-responsive">
                 <table class="table table-striped align-middle">
@@ -74,10 +84,12 @@
 @endsection
 
 @section('js')
+<script src="{{ asset('assets/libs/choices.js/public/assets/scripts/choices.min.js') }}"></script>
 <script>
     const assignmentOptionsApiUrl = "{{ url('/api/loyalty/coupons/assign/options') }}";
     const assignmentsApiUrl = "{{ url('/api/loyalty/coupons/assignments') }}";
     const assignCouponsApiUrl = "{{ url('/api/loyalty/coupons/assign') }}";
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     const assignmentForm = document.getElementById('couponAssignmentForm');
     const customerSelect = document.getElementById('assignmentCustomer');
     const couponSelect = document.getElementById('assignmentCoupon');
@@ -86,10 +98,16 @@
     const assignButton = document.getElementById('assignCouponButton');
     const selectAllCustomersButton = document.getElementById('selectAllCustomers');
     const clearCustomersButton = document.getElementById('clearCustomers');
+    const selectAllCouponsButton = document.getElementById('selectAllCoupons');
+    const clearCouponsButton = document.getElementById('clearCoupons');
     let activeCustomers = [];
     let availableCoupons = [];
     let assignedSpecificCoupons = [];
     let canAssignCoupons = false;
+    let customerChoices = null;
+    let couponChoices = null;
+    let suppressCustomerChange = false;
+    let suppressCouponChange = false;
 
     function appendCell(row, value) {
         const cell = document.createElement('td');
@@ -112,6 +130,9 @@
     }
 
     function renderCustomers() {
+        if (customerChoices) {
+            customerChoices.destroy();
+        }
         customerSelect.replaceChildren();
         activeCustomers.forEach(customer => {
             customerSelect.add(new Option(`${customer.name} (ID: ${customer.id})`, customer.id));
@@ -119,6 +140,14 @@
         if (activeCustomers.length === 0) {
             customerSelect.add(new Option('No active customers available', ''));
         }
+        customerSelect.disabled = activeCustomers.length === 0;
+        customerChoices = new Choices(customerSelect, {
+            removeItemButton: true,
+            searchEnabled: true,
+            shouldSort: false,
+            itemSelectText: '',
+            placeholderValue: 'Select customers'
+        });
     }
 
     function selectedCustomerIds() {
@@ -130,6 +159,10 @@
     }
 
     function renderAvailableCoupons() {
+        const previouslySelectedCoupons = new Set(selectedCouponIds());
+        if (couponChoices) {
+            couponChoices.destroy();
+        }
         couponSelect.replaceChildren();
         const selectedCustomers = new Set(selectedCustomerIds());
         const assignedCustomersByCoupon = new Map();
@@ -154,6 +187,7 @@
                 coupon.id
             );
             option.disabled = selectedCustomers.size > 0 && alreadyAssigned.size === selectedCustomers.size;
+            option.selected = previouslySelectedCoupons.has(String(coupon.id)) && !option.disabled;
             couponSelect.add(option);
         });
 
@@ -161,7 +195,19 @@
             couponSelect.add(new Option('No active specific coupons available', ''));
         }
 
-        couponSelect.disabled = !canAssignCoupons || selectedCustomers.size === 0 || availableCoupons.length === 0;
+        couponSelect.disabled = !canAssignCoupons || availableCoupons.length === 0;
+        couponChoices = new Choices(couponSelect, {
+            removeItemButton: true,
+            searchEnabled: true,
+            shouldSort: false,
+            itemSelectText: '',
+            placeholderValue: 'Select coupons'
+        });
+        const selectableCoupons = Array.from(couponSelect.options)
+            .filter(option => option.value && !option.disabled);
+        selectAllCouponsButton.disabled = !canAssignCoupons || selectableCoupons.length === 0;
+        clearCouponsButton.disabled = selectedCouponIds().length === 0;
+        clearCustomersButton.disabled = selectedCustomerIds().length === 0;
         assignButton.disabled = !canAssignCoupons
             || selectedCustomers.size === 0
             || selectedCouponIds().length === 0;
@@ -207,7 +253,8 @@
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
             },
             body: JSON.stringify({ customer_ids: customerIds }),
             credentials: 'same-origin'
@@ -230,7 +277,7 @@
             assignButton.classList.toggle('d-none', !canAssignCoupons);
             document.getElementById('assignmentPermissionNote').classList.toggle('d-none', canAssignCoupons);
             selectAllCustomersButton.disabled = activeCustomers.length === 0;
-            clearCustomersButton.disabled = activeCustomers.length === 0;
+            clearCustomersButton.disabled = true;
 
             renderCustomers();
             renderAvailableCoupons();
@@ -240,7 +287,11 @@
     }
 
     customerSelect.addEventListener('change', async () => {
+        if (suppressCustomerChange) {
+            return;
+        }
         assignmentMessage.className = 'alert d-none';
+        assignButton.disabled = true;
         try {
             await loadAssignedCoupons();
         } catch (error) {
@@ -249,17 +300,44 @@
     });
 
     selectAllCustomersButton.addEventListener('click', async () => {
-        Array.from(customerSelect.options).forEach(option => {
-            option.selected = Boolean(option.value);
-        });
-        customerSelect.dispatchEvent(new Event('change'));
+        suppressCustomerChange = true;
+        customerChoices.setChoiceByValue(activeCustomers.map(customer => String(customer.id)));
+        suppressCustomerChange = false;
+        customerSelect.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
     clearCustomersButton.addEventListener('click', () => {
-        Array.from(customerSelect.options).forEach(option => {
-            option.selected = false;
-        });
-        customerSelect.dispatchEvent(new Event('change'));
+        suppressCustomerChange = true;
+        customerChoices.removeActiveItems();
+        suppressCustomerChange = false;
+        customerSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    selectAllCouponsButton.addEventListener('click', () => {
+        const couponIds = Array.from(couponSelect.options)
+            .filter(option => option.value && !option.disabled)
+            .map(option => option.value);
+        suppressCouponChange = true;
+        couponChoices.setChoiceByValue(couponIds);
+        suppressCouponChange = false;
+        couponSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    clearCouponsButton.addEventListener('click', () => {
+        suppressCouponChange = true;
+        couponChoices.removeActiveItems();
+        suppressCouponChange = false;
+        couponSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    couponSelect.addEventListener('change', () => {
+        if (suppressCouponChange) {
+            return;
+        }
+        assignButton.disabled = !canAssignCoupons
+            || selectedCustomerIds().length === 0
+            || selectedCouponIds().length === 0;
+        clearCouponsButton.disabled = selectedCouponIds().length === 0;
     });
 
     assignmentForm.addEventListener('submit', async event => {
@@ -274,7 +352,8 @@
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
                 },
                 credentials: 'same-origin',
                 body: JSON.stringify({ customer_ids: customerIds, coupon_ids: couponIds })

@@ -138,7 +138,7 @@
                         </a>
                     </li>
                     <li class="pe-slide">
-                        <a href="{{ url('api/loyalty/coupons/assign/page') }}" data-page="loyalty_coupon_assignments"
+                        <a href="{{ url('loyalty-coupon-assignments') }}" data-page="loyalty_coupon_assignments"
                             class="pe-nav-link">
                             <i class="bi bi-person-check pe-nav-icon"></i>
                             <span class="pe-nav-content">Assign Coupons</span>

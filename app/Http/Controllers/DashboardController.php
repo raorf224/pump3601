@@ -50,7 +50,7 @@ class DashboardController extends Controller
                 'main-dashboard' => 'main_dashboard',
                 'loyalty-coupons' => 'loyalty_coupons',
                 'loyalty-customers' => 'loyalty_customers',
-                'loyalty-coupon-assignment' => 'loyalty_coupon_assignments',
+                'loyalty-coupon-assignments' => 'loyalty_coupon_assignments',
                 'sale-report' => 'sale-report',
                 'received-amount' => 'received-amount',
                 'users' => 'users',
