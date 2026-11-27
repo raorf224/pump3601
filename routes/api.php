@@ -65,6 +65,7 @@ Route::post('/loyalty/coupons', [LoyaltyController::class, 'storeCoupon']);
 Route::put('/loyalty/coupons/{id}', [LoyaltyController::class, 'updateCoupon']);
 Route::patch('/loyalty/coupons/{id}/status', [LoyaltyController::class, 'updateCouponStatus']);
 Route::get('/loyalty/coupons/assign/page', [LoyaltyController::class, 'couponAssignmentPage']);
+Route::get('/loyalty/coupons/assign/options', [LoyaltyController::class, 'couponAssignmentOptions']);
 Route::post('/loyalty/coupons/assign', [LoyaltyController::class, 'assignSpecificCoupons']);
 Route::post('/loyalty/coupons/assignments', [LoyaltyController::class, 'specificCouponAssignments']);
 Route::post('/loyalty/customers/{customerId}/coupons/assign', [LoyaltyController::class, 'assignSpecificCoupon']);

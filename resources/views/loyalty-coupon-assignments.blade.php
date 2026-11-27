@@ -75,11 +75,9 @@
 
 @section('js')
 <script>
-    const couponsApiUrl = "{{ url('/api/loyalty/coupons') }}";
-    const customersApiUrl = "{{ url('/api/loyalty/customers') }}";
+    const assignmentOptionsApiUrl = "{{ url('/api/loyalty/coupons/assign/options') }}";
     const assignmentsApiUrl = "{{ url('/api/loyalty/coupons/assignments') }}";
     const assignCouponsApiUrl = "{{ url('/api/loyalty/coupons/assign') }}";
-    const today = @json(now()->toDateString());
     const assignmentForm = document.getElementById('couponAssignmentForm');
     const customerSelect = document.getElementById('assignmentCustomer');
     const couponSelect = document.getElementById('assignmentCoupon');
@@ -221,22 +219,14 @@
 
     async function loadAssignmentData() {
         try {
-            const [customerResponse, couponResponse] = await Promise.all([
-                fetch(customersApiUrl, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' }),
-                fetch(couponsApiUrl, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
-            ]);
-            const [customerResult, couponResult] = await Promise.all([
-                readJson(customerResponse),
-                readJson(couponResponse)
-            ]);
+            const result = await readJson(await fetch(assignmentOptionsApiUrl, {
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            }));
 
-            activeCustomers = customerResult.data.filter(customer => customer.status === 'active');
-            availableCoupons = couponResult.data.filter(coupon =>
-                coupon.coupon_for === 'specific'
-                && coupon.status === 'active'
-                && coupon.valid_to >= today
-            );
-            canAssignCoupons = customerResult.can_update === true && couponResult.can_update === true;
+            activeCustomers = result.data.customers;
+            availableCoupons = result.data.coupons;
+            canAssignCoupons = result.can_assign === true;
             assignButton.classList.toggle('d-none', !canAssignCoupons);
             document.getElementById('assignmentPermissionNote').classList.toggle('d-none', canAssignCoupons);
             selectAllCustomersButton.disabled = activeCustomers.length === 0;

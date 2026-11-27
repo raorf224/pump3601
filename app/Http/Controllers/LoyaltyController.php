@@ -13,16 +13,47 @@ class LoyaltyController extends Controller
 {
     public function customerPage(Request $request): View
     {
-        $this->authorizeLoyaltyPermission($request, 'read');
+        $this->authorizeLoyaltyPermission($request, 'read', 'loyalty_customers');
 
         return view('loyalty-customers');
     }
 
     public function couponAssignmentPage(Request $request): View
     {
-        $this->authorizeLoyaltyPermission($request, 'read');
+        $this->authorizeLoyaltyPermission($request, 'read', 'loyalty_coupon_assignments');
 
         return view('loyalty-coupon-assignments');
+    }
+
+    public function couponAssignmentOptions(Request $request): JsonResponse
+    {
+        $this->authorizeLoyaltyPermission($request, 'read', 'loyalty_coupon_assignments');
+
+        $today = now()->toDateString();
+        $customers = DB::table('loyalty_customers')
+            ->where('status', 'active')
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get();
+        $coupons = DB::table('coupons')
+            ->where('coupon_for', 'specific')
+            ->where('status', 'active')
+            ->whereDate('valid_to', '>=', $today)
+            ->select(['id', 'name', 'coupon_type', 'value', 'valid_from', 'valid_to'])
+            ->orderBy('name')
+            ->get();
+
+        return response()->json([
+            'data' => [
+                'customers' => $customers,
+                'coupons' => $coupons,
+            ],
+            'can_assign' => $this->hasLoyaltyPermission(
+                $request,
+                'update',
+                'loyalty_coupon_assignments'
+            ),
+        ]);
     }
 
     public function coupons(Request $request): JsonResponse
@@ -145,7 +176,7 @@ class LoyaltyController extends Controller
 
     public function customers(Request $request): JsonResponse
     {
-        $this->authorizeLoyaltyPermission($request, 'read');
+        $this->authorizeLoyaltyPermission($request, 'read', 'loyalty_customers');
 
         $customers = DB::table('loyalty_customers')
             ->select([
@@ -166,14 +197,14 @@ class LoyaltyController extends Controller
 
         return response()->json([
             'data' => $customers,
-            'can_create' => $this->hasLoyaltyPermission($request, 'create'),
-            'can_update' => $this->hasLoyaltyPermission($request, 'update'),
+            'can_create' => $this->hasLoyaltyPermission($request, 'create', 'loyalty_customers'),
+            'can_update' => $this->hasLoyaltyPermission($request, 'update', 'loyalty_customers'),
         ]);
     }
 
     public function customer(Request $request, int $id): JsonResponse
     {
-        $this->authorizeLoyaltyPermission($request, 'read');
+        $this->authorizeLoyaltyPermission($request, 'read', 'loyalty_customers');
 
         $customer = $this->customerDetailsQuery()
             ->where('id', $id)
@@ -186,7 +217,7 @@ class LoyaltyController extends Controller
 
     public function storeCustomer(Request $request): JsonResponse
     {
-        $this->authorizeLoyaltyPermission($request, 'create');
+        $this->authorizeLoyaltyPermission($request, 'create', 'loyalty_customers');
 
         return $this->createCustomerRecord($this->validateCustomer($request));
     }
@@ -323,7 +354,7 @@ class LoyaltyController extends Controller
 
     public function updateCustomer(Request $request, int $id): JsonResponse
     {
-        $this->authorizeLoyaltyPermission($request, 'update');
+        $this->authorizeLoyaltyPermission($request, 'update', 'loyalty_customers');
 
         $customer = DB::table('loyalty_customers')->where('id', $id);
         abort_unless($customer->exists(), 404, 'Customer not found.');
@@ -373,7 +404,7 @@ class LoyaltyController extends Controller
 
     public function updateCustomerStatus(Request $request, int $id): JsonResponse
     {
-        $this->authorizeLoyaltyPermission($request, 'update');
+        $this->authorizeLoyaltyPermission($request, 'update', 'loyalty_customers');
 
         $validated = $request->validate([
             'status' => ['required', 'in:active,inactive'],
@@ -402,7 +433,7 @@ class LoyaltyController extends Controller
 
     public function assignSpecificCoupons(Request $request): JsonResponse
     {
-        $this->authorizeLoyaltyPermission($request, 'update');
+        $this->authorizeLoyaltyPermission($request, 'update', 'loyalty_coupon_assignments');
 
         $validated = $request->validate([
             'customer_ids' => ['required', 'array', 'min:1'],
@@ -497,7 +528,7 @@ class LoyaltyController extends Controller
 
     public function specificCouponAssignments(Request $request): JsonResponse
     {
-        $this->authorizeLoyaltyPermission($request, 'read');
+        $this->authorizeLoyaltyPermission($request, 'read', 'loyalty_coupon_assignments');
 
         $validated = $request->validate([
             'customer_ids' => ['required', 'array', 'min:1'],
@@ -782,20 +813,26 @@ class LoyaltyController extends Controller
             ]);
     }
 
-    private function authorizeLoyaltyPermission(Request $request, string $action): void
-    {
+    private function authorizeLoyaltyPermission(
+        Request $request,
+        string $action,
+        string $permission = 'loyalty_coupons'
+    ): void {
         $user = $request->user();
         abort_unless($user, 401, 'Unauthenticated.');
 
         abort_unless(
-            $this->hasLoyaltyPermission($request, $action),
+            $this->hasLoyaltyPermission($request, $action, $permission),
             403,
             'You do not have permission to access Loyalty.'
         );
     }
 
-    private function hasLoyaltyPermission(Request $request, string $action): bool
-    {
+    private function hasLoyaltyPermission(
+        Request $request,
+        string $action,
+        string $permission = 'loyalty_coupons'
+    ): bool {
         $user = $request->user();
         if (!$user || !in_array($action, ['read', 'create', 'update'], true)) {
             return false;
@@ -818,7 +855,7 @@ class LoyaltyController extends Controller
         return DB::table('role_has_permissions as rp')
             ->join('permissions as p', 'p.id', '=', 'rp.permission_id')
             ->where('rp.role_id', $roleId)
-            ->where('p.name', 'loyalty_coupons')
+            ->where('p.name', $permission)
             ->where("rp.{$action}", 1)
             ->exists();
     }
