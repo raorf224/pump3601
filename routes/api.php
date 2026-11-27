@@ -46,6 +46,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ReceivedAmountController;
 use App\Http\Controllers\NozzleSalesDashboardController;
 use App\Http\Controllers\OverviewController;
+use App\Http\Controllers\LoyaltyController;
 use App\Http\Controllers\MainDashboardController;
 use App\Http\Controllers\ShiftDeletionController;
 use App\Http\Controllers\StationLifecycleController;
@@ -58,6 +59,27 @@ Route::prefix('overview')->group(function () {
     Route::get('/station/{id}/shifts', [OverviewController::class, 'getStationShifts']);
     Route::get('/station/{id}/manager', [OverviewController::class, 'getStationManager']);
 });
+
+Route::get('/loyalty/coupons', [LoyaltyController::class, 'coupons']);
+Route::post('/loyalty/coupons', [LoyaltyController::class, 'storeCoupon']);
+Route::put('/loyalty/coupons/{id}', [LoyaltyController::class, 'updateCoupon']);
+Route::patch('/loyalty/coupons/{id}/status', [LoyaltyController::class, 'updateCouponStatus']);
+Route::get('/loyalty/coupons/assign/page', [LoyaltyController::class, 'couponAssignmentPage']);
+Route::post('/loyalty/coupons/assign', [LoyaltyController::class, 'assignSpecificCoupons']);
+Route::post('/loyalty/coupons/assignments', [LoyaltyController::class, 'specificCouponAssignments']);
+Route::post('/loyalty/customers/{customerId}/coupons/assign', [LoyaltyController::class, 'assignSpecificCoupon']);
+Route::get('/loyalty/customers', [LoyaltyController::class, 'customers']);
+Route::post('/loyalty/customers', [LoyaltyController::class, 'storeCustomer']);
+Route::get('/loyalty/customers/page', [LoyaltyController::class, 'customerPage']);
+Route::get('/loyalty/customers/{id}', [LoyaltyController::class, 'customer']);
+Route::put('/loyalty/customers/{id}', [LoyaltyController::class, 'updateCustomer']);
+Route::patch('/loyalty/customers/{id}/status', [LoyaltyController::class, 'updateCustomerStatus']);
+Route::post('/loyalty/customers/register', [LoyaltyController::class, 'registerCustomer']);
+Route::post('/loyalty/customers/login', [LoyaltyController::class, 'loginCustomer']);
+Route::post('/loyalty/customers/{id}/details', [LoyaltyController::class, 'customerDetailsForApp']);
+Route::get('/loyalty/customers/{id}/coupons', [LoyaltyController::class, 'customerCouponsForApp']);
+Route::put('/loyalty/customers/{id}/password', [LoyaltyController::class, 'changeCustomerPassword']);
+Route::post('/loyalty/lubes', [LoyaltyController::class, 'storeLubeSaleWithCoupon']);
 
 Route::middleware('auth')->group(function () {
     Route::get('/main-dashboard', [MainDashboardController::class, 'index']);

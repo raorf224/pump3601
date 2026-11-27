@@ -122,6 +122,37 @@
             </li>
 
 
+            <li class="pe-menu-title">Loyalty</li>
+            <li class="pe-slide pe-has-sub">
+                <a href="#collapseLoyalty" class="pe-nav-link" data-bs-toggle="collapse" aria-expanded="false"
+                    aria-controls="collapseLoyalty">
+                    <i class="bi bi-ticket-perforated pe-nav-icon"></i>
+                    <span class="pe-nav-content">Loyalty</span>
+                    <i class="ri-arrow-down-s-line pe-nav-arrow"></i>
+                </a>
+                <ul class="pe-slide-menu collapse" id="collapseLoyalty">
+                    <li class="pe-slide">
+                        <a href="{{ url('loyalty-coupons') }}" data-page="loyalty_coupons" class="pe-nav-link">
+                            <i class="bi bi-ticket-detailed pe-nav-icon"></i>
+                            <span class="pe-nav-content">Coupons</span>
+                        </a>
+                    </li>
+                    <li class="pe-slide">
+                        <a href="{{ url('api/loyalty/coupons/assign/page') }}" data-page="loyalty_coupons"
+                            class="pe-nav-link">
+                            <i class="bi bi-person-check pe-nav-icon"></i>
+                            <span class="pe-nav-content">Assign Coupons</span>
+                        </a>
+                    </li>
+                    <li class="pe-slide">
+                        <a href="{{ url('api/loyalty/customers/page') }}" data-page="loyalty_coupons" class="pe-nav-link">
+                            <i class="bi bi-people pe-nav-icon"></i>
+                            <span class="pe-nav-content">Customers</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
             <li class="pe-menu-title">Accounts & Transactions</li>
             <li class="pe-slide pe-has-sub">
                 <a href="#collapseAccountsTransactions" class="pe-nav-link" data-bs-toggle="collapse"
